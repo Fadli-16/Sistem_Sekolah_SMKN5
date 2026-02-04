@@ -1,0 +1,486 @@
+:root {
+    /* Color System - updated to match perpustakaan theme */
+    --primary: #e7541e;
+    --primary-dark: #b13e14;
+    --primary-light: #ff6b35;
+    --secondary: #000000;
+    --secondary-dark: #3bafa6;
+    --secondary-light: #e8f7f6;
+    --navbar-bg: #ff6b35;
+    --accent: #ca5429;
+    --accent-light: #fff1eb;
+
+    /* Text Colors */
+    --text-light: #ffffff;
+    --text-dark: #1a2a3a;
+    --text-muted: #6c757d;
+
+    /* Background Colors */
+    --bg-light: #f8fafc;
+    --bg-gray: #f8fafc;
+
+    /* Shadow System */
+    --shadow-sm: 0 2px 4px rgba(26, 42, 58, 0.05);
+    --shadow: 0 4px 8px rgba(26, 42, 58, 0.08);
+    --shadow-lg: 0 8px 16px rgba(26, 42, 58, 0.1);
+
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+
+    /* Transitions */
+    --transition-fast: all 0.2s ease;
+    --transition: all 0.3s ease;
+    --transition-slow: all 0.4s ease;
+}
+
+/* Base Styles */
+html {
+    height: 100%;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: "Poppins", sans-serif;
+    background-color: var(--bg-gray);
+    color: var(--text-dark);
+    min-height: 100vh;
+    padding-top: 60px;
+    padding-left: 250px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.sidebar-collapsed {
+    padding-left: 70px;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-left: 0;
+    }
+
+    body.sidebar-collapsed {
+        padding-left: 0;
+    }
+}
+
+/* Header Styles */
+.navbar-custom {
+    background: var(--navbar-bg);
+    padding: 0;
+    height: 60px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 300px; /* Sidebar width (250px) + toggle width (50px) */
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.sidebar-collapsed .navbar-custom {
+    left: 120px; /* Collapsed sidebar (70px) + toggle width (50px) */
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    color: white;
+    font-weight: 700;
+    gap: 0.5rem;
+    margin-right: 2rem;
+}
+
+.navbar-brand img {
+    width: 32px;
+    height: auto;
+    transition: var(--transition);
+}
+
+.navbar-brand span {
+    transition: var(--transition);
+}
+
+.navbar-toggler {
+    color: white;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-item .nav-link {
+    color: rgba(255, 255, 255, 0.85);
+    padding: 0.5rem 1rem;
+    transition: var(--transition);
+    position: relative;
+}
+
+.nav-item .nav-link::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    background-color: rgba(78, 205, 196, 0.2);
+    z-index: -1;
+    transition: var(--transition);
+    border-radius: 4px;
+}
+
+.nav-item .nav-link:hover {
+    color: var(--secondary);
+    transform: translateY(-2px);
+}
+
+.nav-item .nav-link:hover::before {
+    height: 100%;
+}
+
+.user-dropdown {
+    color: white;
+    font-weight: 500;
+}
+
+/* Sidebar Toggle Button */
+.toggle-container {
+    position: fixed;
+    top: 0;
+    left: 250px; /* Sejajar dengan akhir sidebar normal */
+    z-index: 1001;
+    height: 60px;
+    width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--navbar-bg); /* Samakan dengan navbar */
+}
+
+body.sidebar-collapsed .toggle-container {
+    left: 70px; /* Sejajar dengan akhir sidebar collapsed */
+}
+
+#sidebarToggle {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    height: 40px;
+    width: 40px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease, transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#sidebarToggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#sidebarToggle i {
+    font-size: 1.25rem;
+    transition: transform 0.3s ease;
+}
+
+/* Rotate icon based on sidebar state */
+body:not(.sidebar-collapsed) #sidebarToggle i {
+    transform: rotate(0deg);
+}
+
+body.sidebar-collapsed #sidebarToggle i {
+    transform: rotate(180deg);
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    background-color: var(
+        --primary
+    ); /* Gunakan warna yang sama dengan sidebar */
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease; /* Tambahkan transisi */
+}
+
+.sidebar-header .navbar-brand {
+    margin: 0;
+    width: 100%;
+    justify-content: center;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar.collapsed .sidebar-header {
+    padding: 0;
+    justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-header .navbar-brand {
+    justify-content: center;
+    width: 70px; /* Sesuaikan dengan lebar collapsed sidebar */
+}
+
+.sidebar.collapsed .sidebar-header .navbar-brand img {
+    margin: 0;
+    /* Opsional: bisa ditambahkan untuk membuat logo sedikit lebih besar saat collapsed */
+    height: 36px;
+    transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-header .navbar-brand span {
+    opacity: 0;
+    width: 0;
+    display: none;
+    transition: opacity 0.2s ease, width 0.2s ease;
+}
+
+/* Sidebar */
+.sidebar {
+    background-color: var(--primary);
+    color: white;
+    height: 100%;
+    width: 250px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    padding-top: 0;
+    padding-bottom: 70px;
+    z-index: 999;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.collapsed {
+    width: 70px;
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar li {
+    margin-bottom: 5px;
+}
+
+.sidebar li a {
+    display: flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.85);
+    padding: 12px 20px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    position: relative;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar li a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--secondary);
+    transform: translateY(-2px);
+}
+
+.sidebar li.active a {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-left: 4px solid var(--secondary);
+    color: var(--secondary);
+}
+
+.sidebar li.active a::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--secondary);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.sidebar i {
+    margin-right: 16px;
+    font-size: 1.1rem;
+    min-width: 24px;
+    text-align: center;
+    transition: margin 0.3s ease, font-size 0.3s ease;
+}
+
+.sidebar.collapsed li a {
+    padding: 12px;
+    justify-content: center;
+}
+
+.sidebar.collapsed i {
+    margin-right: 0;
+    font-size: 1.25rem; /* Sedikit lebih besar saat collapsed */
+    transition: margin 0.3s ease, font-size 0.3s ease;
+}
+
+.sidebar.collapsed .menu-text {
+    opacity: 0;
+    width: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, width 0.2s ease, visibility 0.2s ease;
+}
+
+/* Sidebar tooltip */
+.sidebar.collapsed li a:hover::after {
+    content: attr(data-title);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--primary-dark);
+    color: white;
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1001;
+    box-shadow: var(--shadow);
+    margin-left: 10px;
+}
+
+.sidebar .menu-items {
+    padding-top: 20px;
+}
+
+.sidebar .menu-text {
+    transition: opacity 0.3s ease, width 0.3s ease;
+    opacity: 1;
+    width: auto;
+    white-space: nowrap;
+}
+
+/* Content area */
+.content-wrapper {
+    padding: 2rem;
+    margin-bottom: 60px;
+    flex: 1;
+}
+
+/* Page Titles */
+.page-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    position: relative;
+    display: inline-block;
+}
+
+.page-title::after {
+    content: "";
+    display: block;
+    width: 70px;
+    height: 3px;
+    background: linear-gradient(
+        to right,
+        var(--secondary-dark),
+        var(--secondary)
+    );
+    margin-top: 0.5rem;
+    border-radius: 2px;
+}
+
+/* Footer */
+.footer {
+    background-color: var(--bg-light);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-dark);
+    padding: 1rem 0;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 998;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body:not(.sidebar-collapsed) .footer {
+    left: 250px;
+    padding-right: 250px;
+}
+
+body.sidebar-collapsed .footer {
+    left: 70px;
+    padding-right: 70px;
+}
+
+.footer p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .toggle-container {
+        left: 0;
+        width: 50px;
+    }
+
+    body.sidebar-collapsed .toggle-container {
+        left: 0;
+    }
+
+    .navbar-custom,
+    body.sidebar-collapsed .navbar-custom {
+        left: 50px; /* Only account for toggle width on mobile */
+        right: 0;
+    }
+
+    .sidebar {
+        transform: translateX(-250px);
+        width: 250px;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .sidebar.collapsed {
+        width: 70px;
+        transform: translateX(-70px);
+    }
+
+    .sidebar.collapsed.active {
+        transform: translateX(0);
+    }
+
+    .toggle-container {
+        left: 0 !important;
+    }
+
+    body:not(.sidebar-collapsed) .footer,
+    body.sidebar-collapsed .footer {
+        left: 0;
+        padding-right: 0;
+    }
+}

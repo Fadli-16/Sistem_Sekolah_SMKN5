@@ -1,0 +1,628 @@
+/* Reset dan Styling Dasar */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #af5a0b;
+    --primary-dark: #af5a0b;
+    --primary-light: #af5a0b;
+    --secondary-color: #ff6b35;
+    --text-light: #ffffff;
+    --text-dark: #333333;
+    --bg-light: #ffffff;
+    --bg-dark: #f4f4f8;
+    --success: #28a745;
+    --danger: #dc3545;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+    --radius: 8px;
+}
+
+body {
+    font-family: "Poppins", Arial, sans-serif;
+    line-height: 1.6;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+}
+
+/* Header */
+header {
+    background-color: var(--primary-dark);
+    color: var(--text-light);
+    padding: 20px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+header .logo img {
+    width: 120px;
+    transition: var(--transition);
+}
+
+header .logo img:hover {
+    transform: scale(1.05);
+}
+
+header h1 {
+    font-size: 2rem;
+    margin-top: 10px;
+    font-weight: 700;
+}
+
+/* Navigation */
+
+/* Add this to your CSS files if needed */
+.navbar .dropdown-menu {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: none;
+    padding: 0.5rem 0;
+}
+
+.navbar .dropdown-item {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+}
+
+.navbar .dropdown-item:hover, .navbar .dropdown-item:focus {
+    background-color: #f8f9fa;
+    color: #ec6f21;
+}
+
+nav {
+    background-color: var(--primary-color);
+    padding: 12px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+nav ul {
+    list-style: none;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+nav ul li {
+    display: inline-block;
+    margin: 0 15px;
+    position: relative;
+}
+
+nav ul li a {
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 8px 0;
+    transition: var(--transition);
+    position: relative;
+}
+
+nav ul li a::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: var(--text-light);
+    transition: width 0.3s ease;
+}
+
+nav ul li a:hover::after {
+    width: 100%;
+}
+
+/* Banner */
+.banner {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+        url("../images/banner.jpg");
+    background-size: cover;
+    background-position: center;
+    padding: 80px 20px;
+    text-align: center;
+    color: var(--text-light);
+}
+
+.banner h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    animation: fadeInDown 1s ease;
+}
+
+.banner p {
+    font-size: 1.2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    animation: fadeInUp 1s ease;
+}
+
+/* Tentang Laboratorium */
+.tentang-laboratorium {
+    background-color: var(--bg-light);
+    padding: 60px 20px;
+    text-align: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.tentang-laboratorium h2 {
+    font-size: 2.2rem;
+    color: var(--primary-dark);
+    margin-bottom: 1.5rem;
+    position: relative;
+    display: inline-block;
+}
+
+.tentang-laboratorium h2::after {
+    content: "";
+    position: absolute;
+    width: 60px;
+    height: 3px;
+    background-color: var(--secondary-color);
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.tentang-laboratorium p {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 30px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tentang-laboratorium .btn {
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    padding: 12px 25px;
+    font-size: 1.1rem;
+    text-decoration: none;
+    border-radius: var(--radius);
+    transition: var(--transition);
+    display: inline-block;
+    font-weight: 600;
+}
+
+.tentang-laboratorium .btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow);
+}
+
+/* Fitur Section */
+.fitur {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.fitur-card {
+    background-color: var(--bg-light);
+    padding: 30px 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: var(--transition);
+    border-bottom: 3px solid transparent;
+}
+
+.fitur-card:hover {
+    transform: translateY(-10px);
+    border-bottom: 3px solid var(--primary-color);
+}
+
+.fitur-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+}
+
+.fitur-card h3 {
+    font-size: 1.8rem;
+    color: var(--primary-dark);
+    margin: 15px 0;
+}
+
+.fitur-card p {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.fitur-card .btn {
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    padding: 10px 20px;
+    font-size: 1rem;
+    text-decoration: none;
+    border-radius: var(--radius);
+    transition: var(--transition);
+    display: inline-block;
+    font-weight: 600;
+}
+
+.fitur-card .btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-3px);
+}
+
+/* Profil Laboratorium */
+.profil-laboratorium {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding: 40px 20px;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 50px auto;
+}
+
+.laboratorium-card {
+    background-color: var(--bg-light);
+    padding: 25px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 350px;
+    text-align: center;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.laboratorium-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.laboratorium-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    transition: var(--transition);
+}
+
+.laboratorium-card:hover img {
+    transform: scale(1.05);
+}
+
+.laboratorium-card h3 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: var(--primary-dark);
+}
+
+.laboratorium-card p {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.laboratorium-card .guru {
+    font-weight: 600;
+    color: var(--primary-dark);
+    font-style: italic;
+    margin: 12px 0;
+}
+
+.laboratorium-card .btn {
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    padding: 10px 20px;
+    font-size: 1.1rem;
+    text-decoration: none;
+    border-radius: var(--radius);
+    transition: var(--transition);
+    display: inline-block;
+}
+
+.laboratorium-card .btn:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Detail Laboratorium */
+.detail-laboratorium {
+    padding: 60px 20px;
+}
+
+.laboratorium-detail-card {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: var(--bg-light);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 30px;
+}
+
+.laboratorium-detail-card .detail-img {
+    width: 100%;
+    max-width: 450px;
+    height: auto;
+    object-fit: cover;
+    border-radius: var(--radius);
+    transition: var(--transition);
+}
+
+.laboratorium-detail-card .detail-img:hover {
+    transform: scale(1.02);
+}
+
+.laboratorium-detail-card .detail-info {
+    flex: 1;
+    min-width: 300px;
+    text-align: left;
+}
+
+.laboratorium-detail-card h2 {
+    color: var(--primary-dark);
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+}
+
+.laboratorium-detail-card p {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 15px;
+    line-height: 1.7;
+}
+
+.laboratorium-detail-card ul {
+    list-style-type: disc;
+    margin-left: 20px;
+    margin-bottom: 20px;
+}
+
+.laboratorium-detail-card ul li {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.laboratorium-detail-card .guru {
+    font-weight: 600;
+    color: var(--primary-dark);
+    font-style: italic;
+    margin: 15px 0;
+}
+
+/* Inventaris Section */
+.inventaris {
+    padding: 60px 20px;
+    text-align: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.inventaris h2 {
+    font-size: 2.2rem;
+    color: var(--primary-dark);
+    margin-bottom: 20px;
+    position: relative;
+    display: inline-block;
+}
+
+.inventaris h2::after {
+    content: "";
+    position: absolute;
+    width: 60px;
+    height: 3px;
+    background-color: var(--secondary-color);
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.inventaris p {
+    font-size: 1.1rem;
+    color: #555;
+    max-width: 800px;
+    margin: 0 auto 30px;
+}
+
+.inventaris-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.inventaris-item {
+    background-color: var(--bg-light);
+    padding: 25px 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.inventaris-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.inventaris-item img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    margin-bottom: 15px;
+    transition: var(--transition);
+}
+
+.inventaris-item:hover img {
+    transform: scale(1.05);
+}
+
+.inventaris-item h3 {
+    font-size: 1.5rem;
+    margin: 10px 0;
+    color: var(--primary-dark);
+}
+
+.inventaris-item p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.inventaris-item .status {
+    font-weight: 600;
+    margin: 10px 0;
+}
+
+.inventaris-item .status.available {
+    color: var(--success);
+}
+
+.inventaris-item .status.unavailable {
+    color: var(--danger);
+}
+
+.action-buttons {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.action-buttons .btn {
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    padding: 10px 15px;
+    font-size: 1rem;
+    text-decoration: none;
+    border-radius: var(--radius);
+    transition: var(--transition);
+    display: inline-block;
+}
+
+.action-buttons .btn:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Footer */
+footer {
+    background-color: var(--primary-dark);
+    color: var(--text-light);
+    text-align: center;
+    padding: 30px 20px;
+}
+
+footer p {
+    margin: 5px 0;
+    font-size: 1rem;
+}
+
+/* Animations */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsiveness */
+@media (max-width: 1024px) {
+    .fitur {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .inventaris-list {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.8rem;
+    }
+
+    .banner h2 {
+        font-size: 2rem;
+    }
+
+    .banner p {
+        font-size: 1.1rem;
+    }
+
+    .laboratorium-detail-card {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .laboratorium-detail-card .detail-img {
+        max-width: 100%;
+    }
+
+    .laboratorium-detail-card .detail-info {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .fitur {
+        grid-template-columns: 1fr;
+    }
+
+    nav ul li {
+        margin: 0 8px;
+    }
+
+    nav ul li a {
+        font-size: 1rem;
+    }
+
+    .banner {
+        padding: 60px 15px;
+    }
+
+    .banner h2 {
+        font-size: 1.8rem;
+    }
+
+    .tentang-laboratorium h2,
+    .inventaris h2 {
+        font-size: 1.8rem;
+    }
+
+    .fitur-card h3,
+    .laboratorium-card h3 {
+        font-size: 1.5rem;
+    }
+}
