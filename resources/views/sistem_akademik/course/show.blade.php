@@ -9,35 +9,35 @@
         border-radius: 8px 8px 0 0;
         margin-bottom: 0;
     }
-    
+
     .course-content {
         background: white;
         padding: 2rem;
         border-radius: 0 0 8px 8px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
-    
+
     .info-label {
         font-weight: 600;
         color: #1a2a3a;
-        width: 120px;
+        width: 140px;
         display: inline-block;
     }
-    
+
     .info-value {
         color: #495057;
     }
-    
+
     .info-item {
         margin-bottom: 1rem;
         padding-bottom: 1rem;
         border-bottom: 1px solid #f0f0f0;
     }
-    
+
     .info-item:last-child {
         border-bottom: none;
     }
-    
+
     .back-btn {
         background-color: #004080;
         color: white;
@@ -48,12 +48,12 @@
         display: inline-block;
         margin-top: 1.5rem;
     }
-    
+
     .back-btn:hover {
         background-color: #002b5c;
         color: white;
     }
-    
+
     .student-list {
         margin-top: 1rem;
         max-height: 200px;
@@ -62,16 +62,16 @@
         border-radius: 5px;
         padding: 0.5rem;
     }
-    
+
     .student-list-item {
         padding: 0.5rem;
         border-bottom: 1px solid #f0f0f0;
     }
-    
+
     .student-list-item:last-child {
         border-bottom: none;
     }
-    
+
     .student-badge {
         display: inline-block;
         padding: 0.25rem 0.5rem;
@@ -86,51 +86,92 @@
 @section('content')
 <div class="container mt-4 mb-4">
     <div class="course-header">
-        <h2>{{ $course->nama_course }}</h2>
-        <p class="mb-0">{{ $course->mataPelajaran->nama_mata_pelajaran }}</p>
+        <h2>
+            {{
+            data_get($course, 'kelas.nama_kelas')
+                ? data_get($course, 'kelas.nama_kelas')
+                    . ' - ' . data_get($course, 'kelas.jurusan', '-')
+                    . ' (' . data_get($course, 'kelas.tahun_ajaran', '-') . ')'
+                : '-'
+        }}
+        </h2>
+        <p class="mb-0">
+            {{ data_get($course, 'mataPelajaran.nama_mata_pelajaran') ?? '-' }}
+        </p>
     </div>
-    
+
     <div class="course-content">
         <div class="info-item">
             <span class="info-label">Kelas:</span>
-            <span class="info-value">{{ $course->kelas->nama_kelas }} - {{ $course->kelas->jurusan }} ({{ $course->kelas->tahun_ajaran }})</span>
+            <span class="info-value">
+                {{
+                    data_get($course, 'kelas.nama_kelas')
+                    ? data_get($course, 'kelas.nama_kelas') . ' - ' . data_get($course, 'kelas.jurusan', '-') . ' (' . data_get($course, 'kelas.tahun_ajaran', '-') . ')'
+                    : '-'
+                }}
+            </span>
         </div>
-        
+
         <div class="info-item">
             <span class="info-label">Guru:</span>
-            <span class="info-value">{{ $course->guru->nama }}</span>
+            @php
+            // cari nama guru: coba (guru.nama) lalu (guru.name) lalu fallback '-'
+            $guruName = data_get($course, 'mataPelajaran.guru.nama')
+            ?? data_get($course, 'mataPelajaran.guru.name')
+            ?? '-';
+            @endphp
+            <span class="info-value">{{ $guruName }}</span>
         </div>
-        
+
         <div class="info-item">
             <span class="info-label">Jadwal:</span>
-            <span class="info-value">{{ $course->hari }}, {{ date('H:i', strtotime($course->jam_mulai)) }} - {{ date('H:i', strtotime($course->jam_selesai)) }}</span>
+            <span class="info-value">
+                {{ $course->hari ?? '-' }},
+                {{
+                    $course->jam_mulai
+                        ? \Carbon\Carbon::createFromFormat('H:i:s', $course->jam_mulai)->format('H:i')
+                        : ( $course->jam_mulai ? date('H:i', strtotime($course->jam_mulai)) : '-' )
+                }}
+                -
+                {{
+                    $course->jam_selesai
+                        ? \Carbon\Carbon::createFromFormat('H:i:s', $course->jam_selesai)->format('H:i')
+                        : ( $course->jam_selesai ? date('H:i', strtotime($course->jam_selesai)) : '-' )
+                }}
+            </span>
         </div>
-        
+
         <div class="info-item">
-            <span class="info-label">Deskripsi:</span>
-            <div class="info-value mt-2">
-                {!! nl2br(e($course->deskripsi)) !!}
-            </div>
+            <span class="info-label">Ruangan:</span>
+            <span class="info-value">
+                {{ $course->ruangan ?? '-' }}
+            </span>
         </div>
-        
+
         <div class="info-item">
             <span class="info-label">Siswa:</span>
             <div class="info-value">
-                @if($course->siswa->count() > 0)
-                    <div class="student-list">
-                        @foreach($course->siswa as $siswa)
-                            <div class="student-list-item">
-                                {{ $siswa->user->nama }}
-                                <span class="student-badge">{{ $siswa->nisn }}</span>
-                            </div>
-                        @endforeach
+                @if(method_exists($course, 'siswa') && $course->siswa->count() > 0)
+                <div class="student-list">
+                    @foreach($course->siswa as $s)
+                    @php
+                    // fallbacks: siswa->user->nama || siswa->nama || nisn
+                    $sNama = data_get($s, 'user.nama') ?? data_get($s, 'user.name') ?? ($s->nama ?? ($s->nisn ?? '-'));
+                    @endphp
+                    <div class="student-list-item">
+                        {{ $sNama }}
+                        @if(!empty($s->nisn))
+                        <span class="student-badge">{{ $s->nisn }}</span>
+                        @endif
                     </div>
+                    @endforeach
+                </div>
                 @else
-                    <p class="text-muted">Belum ada siswa yang terdaftar di course ini.</p>
+                <p class="text-muted">Belum ada siswa yang terdaftar di course ini.</p>
                 @endif
             </div>
         </div>
-        
+
         <a href="{{ route('sistem_akademik.course.index') }}" class="back-btn">
             <i class="bi bi-arrow-left me-1"></i> Kembali
         </a>

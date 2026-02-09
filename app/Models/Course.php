@@ -10,12 +10,12 @@ class Course extends Model
     use HasFactory;
 
     protected $fillable = [
+        'kelas_id',
         'mata_pelajaran_id',
-        'guru_id',
-        'nama_course',
         'hari',
         'jam_mulai',
         'jam_selesai',
+        'ruangan'
     ];
 
     public function kelas()

@@ -279,7 +279,7 @@
                         <li><a href="{{ route('lab.jadwal') }}"><i class="bi bi-chevron-right"></i> Jadwal Laboratorium</a></li>
                         <li><a href="{{ route('inv.index') }}"><i class="bi bi-chevron-right"></i> Inventaris Lab</a></li>
                         <li><a href="{{ route('inv.laporan') }}"><i class="bi bi-chevron-right"></i> Laporan Kerusakan</a></li>
-                        <li><a href="{{ route('sistem_akademik.mataPelajaran.index') }}"><i class="bi bi-chevron-right"></i> Mata Pelajaran</a></li>
+                        <li><a href="{{ route('sistem_akademik.mata_pelajaran.index') }}"><i class="bi bi-chevron-right"></i> Mata Pelajaran</a></li>
                         <li><a href="{{ route('perpustakaan.buku.index') }}"><i class="bi bi-chevron-right"></i> Buku Perpustakaan</a></li>
                     </ul>
                 </div>

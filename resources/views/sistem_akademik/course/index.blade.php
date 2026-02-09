@@ -8,7 +8,7 @@
     <div class="table-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Daftar Course</h5>
-            @if(Auth::user()->role == 'admin' || Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa')
+            @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
             <a href="{{ route('sistem_akademik.course.create') }}" class="btn-primary-app">
                 <i class="bi bi-plus-circle"></i> Tambah Course
             </a>
@@ -20,41 +20,72 @@
                 <thead>
                     <tr>
                         <th width="5%">No</th>
-                        <th>Nama Course</th>
                         <th>Kelas</th>
                         <th>Mata Pelajaran</th>
                         <th>Guru</th>
-                        <th>Jadwal</th>
-                        <th>Jumlah Siswa</th>
-                        <th width="15%">Aksi</th>
+                        <th>Hari</th>
+                        <th>Jam Mulai</th>
+                        <th>Jam Selesai</th>
+                        <th>Ruangan</th>
+                        <th width="12%">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($courses as $index => $course)
                     <tr>
                         <td>{{ $index + 1 }}</td>
-                        <td>{{ $course->nama_course }}</td>
+
+                        {{-- Kelas (null-safe) --}}
                         <td>
-                            <span class="badge bg-info text-dark">{{ $course->kelas->nama_kelas }}</span>
-                            <br>
-                            <small>{{ $course->kelas->jurusan }}</small>
+                            @if($course->kelas)
+                            <span class="badge bg-info text-dark">{{ $course->kelas->nama_kelas ?? '-' }}</span><br>
+                            <small>{{ $course->kelas->jurusan ?? '-' }}</small>
+                            @else
+                            <span class="text-muted">-</span>
+                            @endif
                         </td>
-                        <td>{{ $course->mataPelajaran->nama_mata_pelajaran }}</td>
-                        <td>{{ $course->guru->nama }}</td>
-                        <td>{{ $course->hari }}, {{ date('H:i', strtotime($course->jam_mulai)) }} - {{ date('H:i', strtotime($course->jam_selesai)) }}</td>
+
+                        {{-- Mata Pelajaran --}}
+                        <td>{{ optional($course->mataPelajaran)->nama_mata_pelajaran ?? '-' }}</td>
+
+                        {{-- Guru: berasal dari mataPelajaran -> guru --}}
+                        <td>{{ optional(optional($course->mataPelajaran)->guru)->nama ?? optional(optional($course->mataPelajaran)->guru)->name ?? '-' }}</td>
+
+                        {{-- Hari --}}
+                        <td>{{ $course->hari ?? '-' }}</td>
+
+                        {{-- Jam Mulai --}}
                         <td>
-                            <span class="badge badge-primary text-dark">
-                                <i class="bi bi-people"></i> {{ $course->siswa->count() }}
-                            </span>
+                            @if(!empty($course->jam_mulai))
+                            {{ date('H:i', strtotime($course->jam_mulai)) }}
+                            @else
+                            -
+                            @endif
                         </td>
+
+                        {{-- Jam Selesai --}}
+                        <td>
+                            @if(!empty($course->jam_selesai))
+                            {{ date('H:i', strtotime($course->jam_selesai)) }}
+                            @else
+                            -
+                            @endif
+                        </td>
+
+                        {{-- Ruangan --}}
+                        <td>{{ $course->ruangan ?? '-' }}</td>
+
+                        {{-- Aksi --}}
                         <td>
                             <a href="{{ route('sistem_akademik.course.show', $course->id) }}" class="btn-action btn-view" title="Detail">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            @if(Auth::user()->role == 'admin' || Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa')
+
+                            @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
                             <a href="{{ route('sistem_akademik.course.edit', $course->id) }}" class="btn-action btn-edit" title="Edit">
                                 <i class="bi bi-pencil-square"></i>
                             </a>
+
                             <form action="{{ route('sistem_akademik.course.destroy', $course->id) }}" method="post" id="deleteForm{{ $course->id }}" class="d-inline">
                                 @csrf
                                 @method('delete')
@@ -74,7 +105,7 @@
         <div class="empty-state">
             <i class="bi bi-journal-x"></i>
             <p>Belum ada data course</p>
-            @if(Auth::user()->role == 'admin' || Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa')
+            @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
             <a href="{{ route('sistem_akademik.course.create') }}" class="btn-primary-app">
                 <i class="bi bi-plus-circle"></i> Tambah Course
             </a>

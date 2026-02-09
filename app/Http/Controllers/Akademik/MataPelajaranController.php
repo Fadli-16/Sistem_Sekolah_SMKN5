@@ -4,36 +4,37 @@ namespace App\Http\Controllers\Akademik;
 
 use App\Http\Controllers\Controller;
 use App\Models\MataPelajaran;
+use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\Siswa;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class MataPelajaranController extends Controller
 {
-    public function __construct()
-    {
-        // Opsi: batasi akses create/update/delete hanya untuk role tertentu
-        // jika Anda punya middleware role, aktifkan baris berikut; jika tidak, hapus/komentari.
-        // $this->middleware('role:super_admin,admin_sa')->except(['index', 'show']);
-    }
-
-    /**
-     * Tampilkan daftar mata pelajaran.
-     * View: sistem_akademik.mata_pelajaran.index
-     * Variabel: mapels (collection), title, header
-     */
     public function index()
     {
         $query = MataPelajaran::with('guru');
 
-        // Jika user adalah guru, tampilkan hanya mapel yang dia ampu (jika applicable)
         if (Auth::check() && Auth::user()->role === 'guru') {
             $user = Auth::user();
 
-            // Jika ada model Guru terpisah dan user mempunyai relasi guru, gunakan itu
             if (method_exists($user, 'guru') && $user->guru) {
-                $query->where('guru_id', $user->guru->id);
+                $guruModel = $user->guru;
+                $guruModelId = $guruModel->id ?? null;
+                $guruUserId = $guruModel->user_id ?? null;
+
+                if ($guruUserId) {
+                    $query->where('guru_id', $guruUserId);
+                } else {
+                    $query->where(function ($q) use ($user, $guruModelId) {
+                        $q->where('guru_id', $user->id); 
+                        if ($guruModelId) {
+                            $q->orWhere('guru_id', $guruModelId);
+                        }
+                    });
+                }
             } else {
-                // fallback: guru_id menyimpan users.id
                 $query->where('guru_id', $user->id);
             }
         }
@@ -42,136 +43,133 @@ class MataPelajaranController extends Controller
 
         return view('sistem_akademik.mata_pelajaran.index', [
             'mapels' => $mapels,
-            'title'  => 'Data Mata Pelajaran',
-            'header' => 'Data Mata Pelajaran',
+            'title'  => 'Daftar Mata Pelajaran',
+            'header' => 'Daftar Mata Pelajaran',
         ]);
     }
 
-    /**
-     * Tampilkan form tambah.
-     * View: sistem_akademik.mata_pelajaran.createOrEdit
-     * Variabel: mataPelajaran (null), gurus (collection), header
-     */
     public function create()
     {
         $gurus = $this->getGuruList();
 
         return view('sistem_akademik.mata_pelajaran.createOrEdit', [
-            'mataPelajaran' => null,
-            'gurus' => $gurus,
+            'mapel'  => null,
+            'gurus'  => $gurus,
             'header' => 'Tambah Mata Pelajaran',
         ]);
     }
 
-    /**
-     * Simpan mata pelajaran baru.
-     */
     public function store(Request $request)
     {
+        // Validasi menggunakan tabel users (guru disimpan di users dengan role = 'guru')
+        $userTable = (new User())->getTable();
+
         $request->validate([
             'nama_mata_pelajaran' => 'required|string|max:255',
-            'guru_id' => 'required|integer',
+            'guru_id' => [
+                'required',
+                'integer',
+                Rule::exists($userTable, 'id'),
+            ],
         ]);
-
-        // validasi existence guru sesuai model yang tersedia
-        $guruModel = $this->detectGuruModel();
-        if (! $guruModel::find($request->guru_id)) {
-            return back()->withErrors(['guru_id' => 'Guru tidak ditemukan.'])->withInput();
-        }
 
         MataPelajaran::create([
             'nama_mata_pelajaran' => $request->nama_mata_pelajaran,
             'guru_id' => $request->guru_id,
         ]);
 
-        return redirect()->route('sistem_akademik.mataPelajaran.index')
+        return redirect()->route('sistem_akademik.mata_pelajaran.index')
             ->with('status', 'success')
             ->with('message', 'Mata pelajaran berhasil ditambahkan.');
     }
 
-    /**
-     * Tampilkan form edit.
-     */
     public function edit(MataPelajaran $mataPelajaran)
     {
         $gurus = $this->getGuruList();
 
         return view('sistem_akademik.mata_pelajaran.createOrEdit', [
-            'mataPelajaran' => $mataPelajaran,
-            'gurus' => $gurus,
+            'mapel'  => $mataPelajaran,
+            'gurus'  => $gurus,
             'header' => 'Edit Mata Pelajaran',
         ]);
     }
 
-    /**
-     * Update data mata pelajaran.
-     */
     public function update(Request $request, MataPelajaran $mataPelajaran)
     {
+        $userTable = (new User())->getTable();
+
         $request->validate([
             'nama_mata_pelajaran' => 'required|string|max:255',
-            'guru_id' => 'required|integer',
+            'guru_id' => [
+                'required',
+                'integer',
+                Rule::exists($userTable, 'id'),
+            ],
         ]);
-
-        $guruModel = $this->detectGuruModel();
-        if (! $guruModel::find($request->guru_id)) {
-            return back()->withErrors(['guru_id' => 'Guru tidak ditemukan.'])->withInput();
-        }
 
         $mataPelajaran->update([
             'nama_mata_pelajaran' => $request->nama_mata_pelajaran,
             'guru_id' => $request->guru_id,
         ]);
 
-        return redirect()->route('sistem_akademik.mataPelajaran.index')
+        return redirect()->route('sistem_akademik.mata_pelajaran.index')
             ->with('status', 'success')
             ->with('message', 'Mata pelajaran berhasil diperbarui.');
     }
 
-    /**
-     * Hapus mata pelajaran.
-     */
     public function destroy(MataPelajaran $mataPelajaran)
     {
         $mataPelajaran->delete();
 
-        return redirect()->route('sistem_akademik.mataPelajaran.index')
+        return redirect()->route('sistem_akademik.mata_pelajaran.index')
             ->with('status', 'success')
             ->with('message', 'Mata pelajaran berhasil dihapus.');
     }
 
-    /* -----------------------
-     * Helper methods
-     * ---------------------- */
-
     /**
-     * Tentukan class model yang menyimpan data guru:
-     * - Jika ada App\Models\Guru gunakan itu
-     * - Jika tidak ada, fallback ke App\Models\User
+     * Ambil daftar guru untuk dropdown.
+     * Prioritas:
+     * 1) Jika ada model Guru khusus yang menyimpan relasi ke User, coba gunakan dan ambil user terkait.
+     * 2) Default: ambil user dengan role = 'guru' dari tabel users.
      *
-     * @return string
-     */
-    protected function detectGuruModel(): string
-    {
-        if (class_exists(\App\Models\Guru::class)) {
-            return \App\Models\Guru::class;
-        }
-
-        return \App\Models\User::class;
-    }
-
-    /**
-     * Ambil daftar guru untuk dropdown (collection).
-     * Jika menggunakan model Guru, ambil semua Guru; jika tidak, ambil users dengan role guru.
+     * Mengembalikan koleksi objek dengan properti minimal: id, nama (atau name).
      */
     protected function getGuruList()
     {
-        $model = $this->detectGuruModel();
+        // Jika ada model Guru spesifik, coba gunakan (opsional)
+        if (class_exists(\App\Models\Guru::class)) {
+            $gurus = \App\Models\Guru::query();
 
-        if ($model === \App\Models\Guru::class) {
-            return \App\Models\Guru::all();
+            // jika model Guru punya relasi 'user', eager load supaya kita bisa ambil nama user
+            if (method_exists(\App\Models\Guru::class, 'user')) {
+                $gurus = $gurus->with('user');
+            }
+
+            $gurus = $gurus->get();
+
+            // normalisasi: kembalikan collection yang punya id (user id jika tersedia) dan nama
+            $normalized = $gurus->map(function ($g) {
+                // jika Guru menyimpan user_id, gunakan itu; kalau tidak, fallback ke id Guru sendiri
+                $id = $g->user_id ?? $g->id;
+                $nama = $g->nama ?? $g->name ?? (isset($g->user) ? ($g->user->nama ?? $g->user->name ?? null) : null);
+
+                // buat objek sederhana yang blade bisa baca ->id dan ->nama / ->name
+                return (object) [
+                    'id'   => $id,
+                    'nama' => $nama,
+                    // keep original untuk referensi bila perlu
+                    'original' => $g,
+                ];
+            });
+
+            // filter null nama (opsional)
+            return $normalized->filter(function ($item) {
+                return ! empty($item->id);
+            })->values();
         }
 
-        return \App\Models\User::where('role', 'guru')->get();
+        return User::where('role', 'guru')
+            ->select('id', 'name as nama', 'name')
+            ->get();
     }
 }

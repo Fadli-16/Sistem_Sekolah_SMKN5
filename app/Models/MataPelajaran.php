@@ -13,19 +13,13 @@ class MataPelajaran extends Model
 
     protected $fillable = [
         'guru_id',
-        'kelas_id',
         'nama_mata_pelajaran',
     ];
 
     // Relations
     public function guru()
     {
-        return $this->belongsTo(\App\Models\User::class, 'id');
-    }
-
-    public function kelas()
-    {
-        return $this->belongsTo(\App\Models\Kelas::class, 'id');
+        return $this->belongsTo(\App\Models\User::class, 'guru_id');
     }
 
     public function courses()

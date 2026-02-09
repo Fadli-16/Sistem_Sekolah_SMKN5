@@ -10,8 +10,8 @@ $isEdit = ! empty($mapel) && $mapel !== null;
 
     <form method="POST"
         action="{{ $isEdit
-              ? route('sistem_akademik.course.update', ['course' => $mapel->id])
-              : route('sistem_akademik.course.store')
+              ? route('sistem_akademik.mata_pelajaran.update', ['mata_pelajaran' => $mapel->id])
+              : route('sistem_akademik.mata_pelajaran.store')
           }}">
         @csrf
         @if($isEdit)
@@ -48,7 +48,7 @@ $isEdit = ! empty($mapel) && $mapel !== null;
         </div>
 
         <div class="d-flex mt-4">
-            <a href="{{ route('sistem_akademik.course.index') }}" class="btn-secondary-app">
+            <a href="{{ route('sistem_akademik.mata_pelajaran.index') }}" class="btn-secondary-app">
                 <i class="bi bi-arrow-left"></i> Batal
             </a>
             <button type="submit" class="btn-primary-app ms-auto">
@@ -58,4 +58,7 @@ $isEdit = ! empty($mapel) && $mapel !== null;
         </div>
     </form>
 </div>
+@endsection
+@section('script')
+
 @endsection

@@ -39,7 +39,7 @@
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ route('sistem_akademik.dashboard') }}">Dashboard Akademik</a></li>
-                        <li><a class="dropdown-item" href="{{ route('sistem_akademik.mataPelajaran.index') }}">Mata Pelajaran</a></li>
+                        <li><a class="dropdown-item" href="{{ route('sistem_akademik.mata_pelajaran.index') }}">Mata Pelajaran</a></li>
                         <li><a class="dropdown-item" href="#kompetensi-keahlian">Kompetensi Keahlian</a></li>
                     </ul>
                 </li>

@@ -175,8 +175,13 @@ Route::prefix('sistem-akademik')
         Route::patch('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('updatePhoto'); 
         Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('updatePassword');
 
-        Route::resource('mataPelajaran', MataPelajaranController::class);
+        Route::resource('mata_pelajaran', MataPelajaranController::class);
         Route::resource('peminatan', PeminatanController::class);
+
+        // Course Routes with additional AJAX endpoints
+        Route::get('course/get-recommendations', [CourseController::class, 'getRecommendations'])->name('sistem_akademik.get-recommendations');
+        Route::get('course/get-students-by-jurusan', [CourseController::class, 'getStudentsByJurusan'])->name('sistem_akademik.get-students-by-jurusan');
+        Route::post('/course/check-conflicts', [CourseController::class, 'ajaxCheckConflicts'])->name('course.check-conflicts');
         Route::resource('course', CourseController::class);
     });
 

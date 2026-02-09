@@ -124,7 +124,14 @@
                 <div class="stat-card compact fade-in-up" style="animation-delay: 0.1s">
                     <div class="stat-icon"><i class="bi bi-journal-text"></i></div>
                     <div class="stat-body">
-                        <div class="stat-value">{{ App\Models\Course::where('guru_id', Auth::user()->id)->count() }}</div>
+                        {{-- Count courses where related mataPelajaran.guru_id == current guru --}}
+                        <div class="stat-value">
+                            {{
+                        \App\Models\Course::whereHas('mataPelajaran', function($q) {
+                            $q->where('guru_id', Auth::id());
+                        })->count()
+                    }}
+                        </div>
                         <div class="stat-label">Course Saya</div>
                     </div>
                     <a href="{{ route('sistem_akademik.course.index') }}" class="stretched-link"></a>
@@ -135,10 +142,15 @@
                 <div class="stat-card compact fade-in-up" style="animation-delay: 0.2s">
                     <div class="stat-icon"><i class="bi bi-people"></i></div>
                     <div class="stat-body">
+                        {{-- Count distinct siswa that have any course whose mataPelajaran.guru_id == current guru --}}
                         <div class="stat-value">
-                            {{ App\Models\Siswa::whereHas('courses', function($query) {
-                            $query->where('guru_id', Auth::user()->id);
-                        })->count() }}
+                            {{
+                        \App\Models\Siswa::whereHas('courses', function($q) {
+                            $q->whereHas('mataPelajaran', function($q2) {
+                                $q2->where('guru_id', Auth::id());
+                            });
+                        })->count()
+                    }}
                         </div>
                         <div class="stat-label">Total Siswa</div>
                     </div>
@@ -149,7 +161,13 @@
                 <div class="stat-card compact fade-in-up" style="animation-delay: 0.3s">
                     <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
                     <div class="stat-body">
-                        <div class="stat-value">{{ App\Models\Course::where('guru_id', Auth::user()->id)->where('hari', \Carbon\Carbon::now()->locale('id')->isoFormat('dddd'))->count() }}</div>
+                        <div class="stat-value">
+                            {{
+                        \App\Models\Course::whereHas('mataPelajaran', function($q) {
+                            $q->where('guru_id', Auth::id());
+                        })->where('hari', \Carbon\Carbon::now()->locale('id')->isoFormat('dddd'))->count()
+                    }}
+                        </div>
                         <div class="stat-label">Jadwal Hari Ini</div>
                     </div>
                 </div>
@@ -331,7 +349,7 @@
                 </div>
                 <div class="action-title">Profil Saya</div>
             </a>
-            <a href="{{ route('sistem_akademik.mataPelajaran.index') }}" class="action-card fade-in-up" style="animation-delay: 0.3s">
+            <a href="{{ route('sistem_akademik.mata_pelajaran.index') }}" class="action-card fade-in-up" style="animation-delay: 0.3s">
                 <div class="action-icon">
                     <i class="bi bi-book"></i>
                 </div>

@@ -44,8 +44,8 @@
                 </a>
             </li>
 
-            <li class="{{ request()->routeIs('sistem_akademik.mataPelajaran.*') ? 'active' : '' }}">
-                <a href="{{ route('sistem_akademik.mataPelajaran.index') }}" data-title="Kelola Mata Pelajaran">
+            <li class="{{ request()->routeIs('sistem_akademik.mata_pelajaran.*') ? 'active' : '' }}">
+                <a href="{{ route('sistem_akademik.mata_pelajaran.index') }}" data-title="Kelola Mata Pelajaran">
                     <i class="bi bi-book"></i>
                     <span class="menu-text">Kelola Mata Pelajaran</span>
                 </a>
@@ -74,8 +74,8 @@
                 </a>
             </li>
 
-            <li class="{{ request()->routeIs('sistem_akademik.mataPelajaran.*') ? 'active' : '' }}">
-                <a href="{{ route('sistem_akademik.mataPelajaran.index') }}" data-title="Mata Pelajaran">
+            <li class="{{ request()->routeIs('sistem_akademik.mata_pelajaran.*') ? 'active' : '' }}">
+                <a href="{{ route('sistem_akademik.mata_pelajaran.index') }}" data-title="Mata Pelajaran">
                     <i class="bi bi-book"></i>
                     <span class="menu-text">Mata Pelajaran</span>
                 </a>
