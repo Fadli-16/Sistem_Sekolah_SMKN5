@@ -17,7 +17,7 @@
         @endphp
 
         @if($canCreate)
-        <a href="{{ route('sistem_akademik.peminatan.create') }}" class="btn btn-success d-flex align-items-center" style="gap:.6rem;">
+        <a href="{{ route('sistem_akademik.peminatan.create') }}" class="btn btn-success d-flex align-items-center mt-4" style="gap:.6rem;">
             <i class="bi bi-plus-circle fs-5"></i>
             <div class="text-start">
                 <div style="font-weight:700;line-height:1;">Tambah Peminatan</div>

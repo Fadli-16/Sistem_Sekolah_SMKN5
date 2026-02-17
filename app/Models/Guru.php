@@ -13,10 +13,13 @@ class Guru extends Model
 
     protected $fillable = [
         'user_id',
+        'image',
         'nip',
         'kelas',
         'jurusan',
         'tanggal_lahir',
+        'jenis_kelamin',
+        'agama',
         'alamat',
         'no_hp',
     ];

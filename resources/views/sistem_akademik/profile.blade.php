@@ -83,6 +83,14 @@
                     </div>
 
                     <div class="col-md-6">
+                        <label class="form-label">Jenis Kelamin</label>
+                        <select name="jenis_kelamin" class="form-control">
+                            <option value="Laki-laki" {{ old('jenis_kelamin', $siswa->jenis_kelamin ?? $guru->jenis_kelamin ?? '') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                            <option value="Perempuan" {{ old('jenis_kelamin', $siswa->jenis_kelamin ?? $guru->jenis_kelamin ?? '') == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
                         <label class="form-label">Tanggal Lahir</label>
                         <input name="tanggal_lahir" type="date" class="form-control"
                             value="{{ old('tanggal_lahir', $siswa->tanggal_lahir ?? $guru->tanggal_lahir ?? $admin->tanggal_lahir ?? '') }}">
@@ -98,12 +106,11 @@
                         <input name="no_hp" type="text" class="form-control" value="{{ old('no_hp', $siswa->no_hp ?? $guru->no_hp ?? $admin->no_hp ?? '') }}">
                     </div>
 
-                    <div class="col-12">
+                    <div class="col-6">
                         <label class="form-label">Alamat</label>
                         <input name="alamat" type="text" class="form-control" value="{{ old('alamat', $siswa->alamat ?? $guru->alamat ?? $admin->alamat ?? '') }}">
                     </div>
 
-                    {{-- jurusan only for admin selection? but we still accept jurusan input --}}
                     <div class="col-md-6">
                         <label class="form-label">Jurusan</label>
                         <input name="jurusan" type="text" class="form-control" value="{{ old('jurusan', $admin->jurusan ?? '') }}">

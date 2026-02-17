@@ -183,7 +183,11 @@ Route::prefix('sistem-akademik')
         Route::get('course/get-students-by-jurusan', [CourseController::class, 'getStudentsByJurusan'])->name('sistem_akademik.get-students-by-jurusan');
         Route::post('/course/check-conflicts', [CourseController::class, 'ajaxCheckConflicts'])->name('course.check-conflicts');
         Route::resource('course', CourseController::class);
-    });
+        Route::get('course/timetable', [CourseController::class, 'timetable'])
+        ->name('course.timetable');
+        Route::get('course/timetable/download', [CourseController::class, 'downloadTimetable'])
+        ->name('course.download-timetable');
+});
 
 // Perpustakaan Routes - Split into public and admin routes
 Route::prefix('perpustakaan')->name('perpustakaan.')->group(function () {

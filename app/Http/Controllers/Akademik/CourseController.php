@@ -12,10 +12,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class CourseController extends Controller
 {
-    protected function slotOrder(): array   
+    protected function slotOrder(): array
     {
         return [
             '1',
@@ -49,7 +50,7 @@ class CourseController extends Controller
             '6' => ['label' => 'Jam 6',  'start' => '11:30', 'end' => '12:15',  'selectable' => true],
             'ISHOMA' => ['label' => 'ISHOMA', 'start' => '12:15', 'end' => '13:15', 'selectable' => false],
             '7' => ['label' => 'Jam 7',  'start' => '13:15', 'end' => '13:45',  'selectable' => true],
-            '8' => ['label' => 'Jam 8',  'start' => '13:45', 'end' => '14:45',  'selectable' => true],
+            '8' => ['label' => 'Jam 8',  'start' => '13:45', 'end' => '14:15',  'selectable' => true],
             '9' => ['label' => 'Jam 9',  'start' => '14:15', 'end' => '14:45',  'selectable' => true],
             '10' => ['label' => 'Jam 10', 'start' => '14:45', 'end' => '15:15',  'selectable' => true],
             'ISHO' => ['label' => 'ISHO', 'start' => '15:15', 'end' => '15:45', 'selectable' => false],
@@ -208,11 +209,114 @@ class CourseController extends Controller
         return $available;
     }
 
+    protected function buildTimetableData($courses, array $slotOrder, array $slotDetails): array
+    {
+        // ensure collection
+        $courses = collect($courses);
+        $days = $this->allowedDays();
+
+        // initialize empty matrix day -> slot -> null
+        $matrix = [];
+        foreach ($days as $d) {
+            foreach ($slotOrder as $sid) {
+                $matrix[$d][$sid] = null;
+            }
+        }
+
+        // helper: map slot start/end times and pos
+        $pos = array_flip($slotOrder); // slotId => index
+        $slotStart = [];
+        $slotEnd = [];
+        foreach ($slotOrder as $sid) {
+            $slotStart[$sid] = isset($slotDetails[$sid]['start']) ? substr($slotDetails[$sid]['start'], 0, 5) : null;
+            $slotEnd[$sid] = isset($slotDetails[$sid]['end']) ? substr($slotDetails[$sid]['end'], 0, 5) : null;
+        }
+
+        // function to find slot index by time (start or end). returns index or null
+        $findSlotIndexByTime = function (string $time, array $slotTimes, array $slotOrder) {
+            $time = substr(trim($time), 0, 5);
+            // exact match first
+            foreach ($slotOrder as $sid) {
+                if (isset($slotTimes[$sid]) && $slotTimes[$sid] === $time) {
+                    return array_search($sid, $slotOrder, true);
+                }
+            }
+            // fallback: choose first slot whose start >= time (for starts) or end >= time (for ends)
+            foreach ($slotOrder as $sid) {
+                if (isset($slotTimes[$sid]) && $slotTimes[$sid] >= $time) {
+                    return array_search($sid, $slotOrder, true);
+                }
+            }
+            // or last slot
+            return count($slotOrder) - 1;
+        };
+
+        // iterate courses and place them
+        foreach ($courses as $course) {
+            $hari = $course->hari ?? null;
+            if (! $hari || ! in_array($hari, $days)) {
+                // skip courses with unexpected day names
+                continue;
+            }
+
+            $cStart = $course->jam_mulai ? substr($course->jam_mulai, 0, 5) : null;
+            $cEnd = $course->jam_selesai ? substr($course->jam_selesai, 0, 5) : null;
+
+            if (!$cStart || !$cEnd) {
+                // skip incomplete time entries
+                continue;
+            }
+
+            // find start and end indices (try match start to slotStart, end to slotEnd)
+            $sIndex = $findSlotIndexByTime($cStart, $slotStart, $slotOrder);
+            $eIndex = $findSlotIndexByTime($cEnd, $slotEnd, $slotOrder);
+
+            // safety: ensure sIndex <= eIndex
+            if ($sIndex === null) continue;
+            if ($eIndex === null) $eIndex = $sIndex;
+            if ($sIndex > $eIndex) {
+                // swap if reversed due to mismatched rounding
+                [$sIndex, $eIndex] = [$eIndex, $sIndex];
+            }
+
+            $span = $eIndex - $sIndex + 1;
+            if ($span < 1) $span = 1;
+
+            $startSlotId = $slotOrder[$sIndex];
+
+            // if the place is already occupied (collision), skip or optionally push to log
+            if (! empty($matrix[$hari][$startSlotId])) {
+                // collision — skip placing to avoid overrides (could log)
+                Log::warning("Timetable collision placing course id {$course->id} on {$hari} slot {$startSlotId}");
+                continue;
+            }
+
+            // assign the course cell at start slot
+            $matrix[$hari][$startSlotId] = [
+                'course' => $course,
+                'span' => $span,
+            ];
+
+            // mark subsequent slots as skipped so blade won't render them separately
+            for ($i = $sIndex + 1; $i <= $eIndex; $i++) {
+                $sid = $slotOrder[$i];
+                $matrix[$hari][$sid] = ['skipped' => true];
+            }
+        }
+
+        return [
+            'days' => $days,
+            'slotOrder' => $slotOrder,
+            'slotDetails' => $slotDetails,
+            'matrix' => $matrix,
+        ];
+    }
+
     /* ===========================
      * PUBLIC ACTIONS (resource)
      * =========================== */
 
-    public function index()
+    public function index(Request $request)
     {
         $title = 'Kelola Course & Mata Pelajaran';
         $header = 'Jadwal Mata Pelajaran';
@@ -257,7 +361,33 @@ class CourseController extends Controller
 
         $courses = $query->get();
 
-        return view('sistem_akademik.course.index', compact('courses', 'title', 'header'));
+        $kelasList = Kelas::orderBy('nama_kelas')->get();
+        if (Auth::check() && Auth::user()->role === 'guru') {
+            // hanya kelas dimana guru punya course
+            $user = Auth::user();
+            $guruUserId = $user->id;
+            if (method_exists($user, 'guru') && $user->guru) {
+                $possibleUserId = $user->guru->user_id ?? null;
+                if ($possibleUserId) $guruUserId = $possibleUserId;
+            }
+
+            $kelasIds = Course::whereHas('mataPelajaran', function ($q) use ($guruUserId) {
+                $q->where('guru_id', $guruUserId);
+            })->pluck('kelas_id')->unique()->filter()->values()->toArray();
+
+            $kelasList = Kelas::whereIn('id', $kelasIds)->orderBy('nama_kelas')->get();
+        }
+
+        // terima selectedKelas dari querystring (bila user memilih langsung dari index)
+        $selectedKelasId = $request->query('kelas_id', null);
+
+        return view('sistem_akademik.course.index', compact(
+            'courses',
+            'title',
+            'header',
+            'kelasList',
+            'selectedKelasId'
+        ));
     }
 
     public function create()
@@ -618,7 +748,7 @@ class CourseController extends Controller
         }
 
         $exclude = $request->input('exclude_course_id') ? (int) $request->input('exclude_course_id') : null;
-        
+
         $available = $this->findAvailableSlots($request->kelas_id, $guruId, $request->ruangan, $request->hari, $exclude);
 
         return response()->json([
@@ -736,5 +866,191 @@ class CourseController extends Controller
             'conflict_details' => $conflictDetails,
             'has_conflict' => (!$conflicts['guru']->isEmpty() || !$conflicts['ruangan']->isEmpty() || !$conflicts['kelas']->isEmpty())
         ]);
+    }
+
+    /**
+     * Tampilkan preview timetable (HTML). 
+     * Query params:
+     *  - kelas_id (optional) => tampilkan timetable per kelas
+     *  - view_as (optional) => 'guru' atau 'siswa' untuk override (biasanya tidak perlu)
+     */
+    public function timetable(Request $request)
+    {
+        $slotOrder = $this->slotOrder();
+        $slotDetails = $this->slotDetails();
+
+        // daftar kelas untuk selector (admin/guru bisa pilih)
+        $kelasList = Kelas::orderBy('nama_kelas')->get();
+
+        // tentukan kelas yang diminta / default
+        $selectedKelasId = $request->input('kelas_id');
+
+        // role-specific defaults
+        if (! $selectedKelasId) {
+            if (Auth::check() && Auth::user()->role === 'siswa' && Auth::user()->siswa) {
+                $selectedKelasId = Auth::user()->siswa->kelas_id;
+            } elseif (Auth::check() && Auth::user()->role === 'guru') {
+                // default: null -> tampilkan semua course milik guru (across kelas)
+                $selectedKelasId = null;
+            } else {
+                // admin: default pilih kelas pertama jika ada
+                $selectedKelasId = $kelasList->first()?->id ?? null;
+            }
+        }
+
+        // build base query for courses to include in timetable
+        $query = Course::with(['mataPelajaran.guru', 'kelas', 'siswa.user']);
+
+        // filter by kelas if provided
+        if ($selectedKelasId) {
+            $query->where('kelas_id', $selectedKelasId);
+        }
+
+        // jika user role guru: batasi ke mata pelajaran yang milik guru (tetapi biarkan optional untuk admin)
+        if (Auth::check() && Auth::user()->role === 'guru') {
+            $user = Auth::user();
+            $guruUserId = $user->id;
+            $guruModelId = null;
+            if (method_exists($user, 'guru') && $user->guru) {
+                $guruModelId = $user->guru->id ?? null;
+                $possibleUserId = $user->guru->user_id ?? null;
+                if ($possibleUserId) $guruUserId = $possibleUserId;
+            }
+            $query->whereHas('mataPelajaran', function ($q) use ($guruUserId, $guruModelId) {
+                $q->where('guru_id', $guruUserId);
+                if ($guruModelId) $q->orWhere('guru_id', $guruModelId);
+            });
+        }
+
+        // jika siswa: batasi sesuai kelas (sudah di atas) - atau pakai pivot jika ingin ketat
+        if (Auth::check() && Auth::user()->role === 'siswa' && Auth::user()->siswa) {
+            // already handled with selectedKelasId above (default). Optionally ensure where('kelas_id', ...)
+        }
+
+        $courses = $query->get();
+
+        $timetable = $this->buildTimetableData($courses, $slotOrder, $slotDetails);
+
+        return view('sistem_akademik.course.show', [
+            'timetable' => $timetable,
+            'kelasList' => $kelasList,
+            'selectedKelasId' => $selectedKelasId,
+            'title' => 'Jadwal Kelas',
+        ]);
+    }
+
+    /**
+     * Download timetable as PDF.
+     * Query params same as timetable (kelas_id).
+     * Returns streamed PDF (download) and opens in browser if target _blank used.
+     */
+    public function downloadTimetable(Request $request)
+    {
+        $slotOrder = $this->slotOrder();
+        $slotDetails = $this->slotDetails();
+
+        $selectedKelasId = $request->input('kelas_id');
+
+        // base query helper for guru filter
+        $isGuru = Auth::check() && Auth::user()->role === 'guru';
+        $guruUserId = null;
+        if ($isGuru) {
+            $user = Auth::user();
+            $guruUserId = $user->id;
+            if (method_exists($user, 'guru') && $user->guru) {
+                $possibleUserId = $user->guru->user_id ?? null;
+                if ($possibleUserId) $guruUserId = $possibleUserId;
+            }
+        }
+
+        // If a single kelas is requested -> render single page only
+        $pages = [];
+
+        if ($selectedKelasId) {
+            $kelas = Kelas::find($selectedKelasId);
+            if ($kelas) {
+                $query = Course::with(['mataPelajaran.guru', 'kelas', 'siswa.user'])
+                    ->where('kelas_id', $kelas->id);
+
+                if ($isGuru) {
+                    $query->whereHas('mataPelajaran', function ($q) use ($guruUserId) {
+                        $q->where('guru_id', $guruUserId)->orWhere('guru_id', $guruUserId);
+                    });
+                }
+
+                $courses = $query->get();
+                $timetable = $this->buildTimetableData($courses, $slotOrder, $slotDetails);
+
+                $pages[] = [
+                    'kelas' => $kelas,
+                    'timetable' => $timetable,
+                ];
+            }
+        } else {
+            // No kelas selected -> generate pages per kelas
+            if ($isGuru) {
+                // only kelas where this guru has courses
+                $kelasIds = Course::whereHas('mataPelajaran', function ($q) use ($guruUserId) {
+                    $q->where('guru_id', $guruUserId)->orWhere('guru_id', $guruUserId);
+                })->pluck('kelas_id')->unique()->filter()->values()->toArray();
+
+                $kelasList = Kelas::whereIn('id', $kelasIds)->orderBy('nama_kelas')->get();
+            } else {
+                // admin / other -> all kelas
+                $kelasList = Kelas::orderBy('nama_kelas')->get();
+            }
+
+            foreach ($kelasList as $kelas) {
+                $query = Course::with(['mataPelajaran.guru', 'kelas', 'siswa.user'])
+                    ->where('kelas_id', $kelas->id);
+
+                if ($isGuru) {
+                    $query->whereHas('mataPelajaran', function ($q) use ($guruUserId) {
+                        $q->where('guru_id', $guruUserId)->orWhere('guru_id', $guruUserId);
+                    });
+                }
+
+                $courses = $query->get();
+                $timetable = $this->buildTimetableData($courses, $slotOrder, $slotDetails);
+
+                $pages[] = [
+                    'kelas' => $kelas,
+                    'timetable' => $timetable,
+                ];
+            }
+        }
+
+        // if nothing to render, fallback to single empty page with message
+        if (empty($pages)) {
+            // create an empty "dummy" page
+            $pages[] = [
+                'kelas' => null,
+                'timetable' => [
+                    'days' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'],
+                    'slotOrder' => $slotOrder,
+                    'slotDetails' => $slotDetails,
+                    'matrix' => [], // view will render empties
+                ],
+            ];
+        }
+
+        // kelasList for header lookups (optional)
+        $kelasListAll = Kelas::orderBy('nama_kelas')->get();
+
+        // render a single view that loops pages
+        $viewHtml = view('sistem_akademik.course.download', [
+            'pages' => $pages,
+            'kelasList' => $kelasListAll,
+            'selectedKelasId' => $selectedKelasId,
+        ])->render();
+
+        if (class_exists(Pdf::class)) {
+            $fileLabel = $selectedKelasId ? ('kelas_' . $selectedKelasId) : ($isGuru ? 'guru_' . ($guruUserId ?? 'user') : 'semua_kelas');
+            $pdf = Pdf::loadHTML($viewHtml)->setPaper('a4', 'landscape');
+            return $pdf->stream("jadwal_{$fileLabel}.pdf");
+        }
+
+        // fallback: HTML preview
+        return response($viewHtml);
     }
 }

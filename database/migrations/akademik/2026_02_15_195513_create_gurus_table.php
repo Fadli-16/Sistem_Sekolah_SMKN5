@@ -17,10 +17,11 @@ class CreateGurusTable extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('id')->on('users')->onDelete('cascade');
             $table->string('image')->nullable();
-            $table->string('nip')->unique();
+            $table->string('nip')->nullable()->unique();
             $table->string('kelas');
             $table->string('jurusan');
             $table->date('tanggal_lahir');
+            $table->string('jenis_kelamin')->default('Laki-laki');
             $table->string('agama', 50)->nullable();
             $table->text('alamat');
             $table->string('no_hp');

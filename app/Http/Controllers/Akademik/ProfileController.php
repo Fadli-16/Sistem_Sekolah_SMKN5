@@ -51,6 +51,7 @@ class ProfileController extends Controller
             'nama' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'tanggal_lahir' => 'nullable|date',
+            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
             'alamat' => 'nullable|string|max:2000',
             'no_hp' => 'nullable|string|max:50',
             'agama' => 'nullable|string|max:100',
@@ -68,6 +69,7 @@ class ProfileController extends Controller
         // update role-specific profile
         $profilePayload = [
             'tanggal_lahir' => $data['tanggal_lahir'] ?? null,
+            'jenis_kelamin' => $data['jenis_kelamin'] ?? null,
             'alamat' => $data['alamat'] ?? null,
             'no_hp' => $data['no_hp'] ?? null,
             'agama' => $data['agama'] ?? null,
