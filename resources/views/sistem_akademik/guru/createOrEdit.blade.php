@@ -62,8 +62,8 @@
 
             <div class="row">
                 <div class="col-md-6 field-row">
-                    <label for="nama" class="form-label">Nama</label>
-                    <input type="text" class="form-control" id="nama" name="nama" value="{{ old('nama', $guru->user->nama ?? '') }}" required>
+                    <label for="nip" class="form-label">NIP</label>
+                    <input type="text" class="form-control" id="nip" name="nip" value="{{ old('nip', $guru->nip ?? '') }}" required>
                 </div>
 
                 <div class="col-md-6 field-row">
@@ -72,13 +72,13 @@
                 </div>
 
                 <div class="col-md-6 field-row">
-                    <label for="password" class="form-label">Password <small class="text-muted">({{ isset($guru) ? 'isi untuk mengubah' : 'wajib' }})</small></label>
-                    <input type="password" class="form-control" id="password" name="password" {{ isset($guru) ? '' : 'required' }}>
+                    <label for="nama" class="form-label">Nama</label>
+                    <input type="text" class="form-control" id="nama" name="nama" value="{{ old('nama', $guru->user->nama ?? '') }}" required>
                 </div>
 
                 <div class="col-md-6 field-row">
-                    <label for="nip" class="form-label">NIP</label>
-                    <input type="text" class="form-control" id="nip" name="nip" value="{{ old('nip', $guru->nip ?? '') }}" required>
+                    <label for="password" class="form-label">Password <small class="text-muted">({{ isset($guru) ? 'isi untuk mengubah' : 'wajib' }})</small></label>
+                    <input type="password" class="form-control" id="password" name="password" {{ isset($guru) ? '' : 'required' }}>
                 </div>
 
                 <div class="col-md-6 field-row">
@@ -110,14 +110,14 @@
                     <input type="text" id="agama" name="agama" class="form-control" value="{{ old('agama', $guru->agama ?? '') }}" required>
                 </div>
 
-                <div class="col-md-12 field-row">
-                    <label for="alamat" class="form-label">Alamat</label>
-                    <textarea name="alamat" id="alamat" class="form-control" rows="3" required>{{ old('alamat', $guru->alamat ?? '') }}</textarea>
-                </div>
-
                 <div class="col-md-6 field-row">
                     <label for="no_hp" class="form-label">Nomor HP</label>
                     <input type="text" id="no_hp" name="no_hp" class="form-control" value="{{ old('no_hp', $guru->no_hp ?? '') }}" required>
+                </div>
+
+                <div class="col-md-12 field-row">
+                    <label for="alamat" class="form-label">Alamat</label>
+                    <textarea name="alamat" id="alamat" class="form-control" rows="3" required>{{ old('alamat', $guru->alamat ?? '') }}</textarea>
                 </div>
             </div>
 

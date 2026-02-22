@@ -2,6 +2,63 @@
 
 @section('css')
 @include('sistem_akademik.layouts.css')
+<style>
+    /* locked look for readonly fields (abu-abu) */
+    .locked-field {
+        background-color: #e9ecef !important;
+        color: #495057 !important;
+        cursor: not-allowed;
+    }
+
+    /* ensure disabled select looks same */
+    select.locked-field:disabled {
+        background-color: #e9ecef !important;
+        color: #495057 !important;
+        cursor: not-allowed;
+    }
+
+    .profile-photo-container {
+        display: inline-block;
+        margin-right: 16px;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .profile-photo-container .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity .15s;
+        background: rgba(0, 0, 0, 0.25);
+        color: #fff;
+        font-size: 14px;
+    }
+
+    .profile-photo-container:hover .overlay {
+        opacity: 1;
+    }
+
+    .avatar {
+        width: 96px;
+        height: 96px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+    }
+
+    .profile-info h2 {
+        margin: 0 0 .25rem 0;
+    }
+
+    .identifier {
+        color: #666;
+        font-size: .95rem;
+        margin-bottom: .25rem;
+    }
+</style>
 @endsection
 
 @section('content')
@@ -11,9 +68,17 @@
     $siswa = $user->siswa ?? null;
     $guru = $user->guru ?? null;
     $admin = $user->adminProfile ?? null;
+
     $image = $siswa->image ?? $guru->image ?? $admin->image ?? null;
     $imageUrl = $image ? asset('assets/profile/' . $image) : asset('assets/profile/default.png');
-    $identifier = $user->nis_nip ?? ($siswa->nis ?? ($guru->nip ?? '-'));
+
+    // identifier: nis_nip or siswa.nis or guru.nip or admin.identifier or '-'
+    $identifier = $user->nis_nip ?? $siswa->nis ?? $guru->nip ?? ($admin->identifier ?? '-');
+
+    // role flags (use lowercase to be tolerant)
+    $role = strtolower($user->role ?? '');
+    $isStudentOrTeacher = in_array($role, ['siswa', 'guru']);
+    $isAdminOrSuper = in_array($role, ['admin', 'superadmin']);
     @endphp
 
     <div class="profile-card">
@@ -22,8 +87,8 @@
         </div>
 
         <!-- Top row: avatar + basic info -->
-        <div class="card-body top">
-            <div class="profile-photo-container" id="photoContainer">
+        <div class="card-body top d-flex align-items-center">
+            <div class="profile-photo-container" id="photoContainer" tabindex="0" role="button" aria-label="Ganti foto profil">
                 <form id="photoForm"
                     action="{{ route('sistem_akademik.updatePhoto') }}"
                     method="POST"
@@ -34,13 +99,13 @@
                     <!-- FOTO (klik langsung) -->
                     <img id="avatarPreview" class="avatar" src="{{ $imageUrl }}" alt="Foto profil {{ $user->nama }}">
 
-                    <!-- Overlay hanya indikator -->
+                    <!-- Overlay indikator -->
                     <div class="overlay">
                         <i class="fas fa-camera"></i>
-                        <span>Ganti Foto</span>
+                        <span class="ms-2">Ganti Foto</span>
                     </div>
 
-                    <!-- input DISMBUNYIKAN -->
+                    <!-- input tersembunyi -->
                     <input id="photoInput" type="file" name="image" accept="image/*" hidden>
                 </form>
             </div>
@@ -49,9 +114,9 @@
                 <h2>{{ $user->nama }}</h2>
                 <div class="identifier">{{ $identifier }}</div>
                 <div class="role">
-                    @if($user->role === 'siswa')
+                    @if($role === 'siswa')
                     {{ $siswa ? ($siswa->kelas . ' - ' . $siswa->jurusan) : 'Siswa' }}
-                    @elseif($user->role === 'guru')
+                    @elseif($role === 'guru')
                     {{ $guru ? ($guru->kelas . ' - ' . $guru->jurusan) : 'Guru' }}
                     @else
                     Administrator
@@ -67,55 +132,76 @@
                 @method('PUT')
 
                 <div class="row g-3 form-equal">
+                    {{-- NIS / NIP--}}
                     <div class="col-md-6">
                         <label class="form-label">NIS / NIP</label>
-                        <input type="text" class="form-control" value="{{ old('nis_nip', $user->nis_nip) }}" readonly>
+                        <input name="nis_nip"
+                            type="text"
+                            class="form-control {{ $isStudentOrTeacher ? 'locked-field' : '' }}"
+                            value="{{ old('nis_nip', $user->nis_nip) }}"
+                            {{ $isStudentOrTeacher ? 'readonly' : 'required' }}>
                     </div>
 
+                    {{-- Jurusan --}}
+                    <div class="col-md-6">
+                        <label class="form-label">Jurusan</label>
+                        <input name="jurusan"
+                            type="text"
+                            class="form-control {{ $isStudentOrTeacher ? 'locked-field' : '' }}"
+                            value="{{ old('jurusan', $siswa->jurusan ?? $guru->jurusan ?? $admin->jurusan ?? '') }}"
+                            {{ $isStudentOrTeacher ? 'readonly' : '' }}>
+                    </div>
+
+                    {{-- Nama --}}
+                    <div class="col-md-6">
+                        <label class="form-label">Nama</label>
+                        <input name="nama"
+                            type="text"
+                            class="form-control {{ $isStudentOrTeacher ? 'locked-field' : '' }}"
+                            value="{{ old('nama', $user->nama) }}"
+                            {{ $isStudentOrTeacher ? 'readonly' : 'required' }}>
+                    </div>
+
+                    {{-- Jenis Kelamin --}}
+                    <div class="col-md-6">
+                        <label class="form-label">Jenis Kelamin</label>
+                        <select name="jenis_kelamin" class="form-control" required>
+                            <option value="">— Pilih —</option>
+                            <option value="Laki-laki" {{ old('jenis_kelamin', $siswa->jenis_kelamin ?? $guru->jenis_kelamin ?? $admin->jenis_kelamin ?? '') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                            <option value="Perempuan" {{ old('jenis_kelamin', $siswa->jenis_kelamin ?? $guru->jenis_kelamin ?? $admin->jenis_kelamin ?? '') == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                        </select>
+                    </div>
+
+                    {{-- Email --}}
                     <div class="col-md-6">
                         <label class="form-label">Email</label>
                         <input name="email" type="email" class="form-control" value="{{ old('email', $user->email) }}" required>
                     </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label">Nama</label>
-                        <input name="nama" type="text" class="form-control" value="{{ old('nama', $user->nama) }}" required>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Jenis Kelamin</label>
-                        <select name="jenis_kelamin" class="form-control">
-                            <option value="Laki-laki" {{ old('jenis_kelamin', $siswa->jenis_kelamin ?? $guru->jenis_kelamin ?? '') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
-                            <option value="Perempuan" {{ old('jenis_kelamin', $siswa->jenis_kelamin ?? $guru->jenis_kelamin ?? '') == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
-                        </select>
-                    </div>
-
+                    {{-- Tanggal Lahir --}}
                     <div class="col-md-6">
                         <label class="form-label">Tanggal Lahir</label>
                         <input name="tanggal_lahir" type="date" class="form-control"
                             value="{{ old('tanggal_lahir', $siswa->tanggal_lahir ?? $guru->tanggal_lahir ?? $admin->tanggal_lahir ?? '') }}">
                     </div>
 
+                    {{-- Agama --}}
                     <div class="col-md-6">
                         <label class="form-label">Agama</label>
                         <input name="agama" type="text" class="form-control" value="{{ old('agama', $siswa->agama ?? $guru->agama ?? $admin->agama ?? '') }}">
                     </div>
 
+                    {{-- No HP --}}
                     <div class="col-md-6">
                         <label class="form-label">No HP</label>
                         <input name="no_hp" type="text" class="form-control" value="{{ old('no_hp', $siswa->no_hp ?? $guru->no_hp ?? $admin->no_hp ?? '') }}">
                     </div>
 
+                    {{-- Alamat --}}
                     <div class="col-6">
                         <label class="form-label">Alamat</label>
                         <input name="alamat" type="text" class="form-control" value="{{ old('alamat', $siswa->alamat ?? $guru->alamat ?? $admin->alamat ?? '') }}">
                     </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Jurusan</label>
-                        <input name="jurusan" type="text" class="form-control" value="{{ old('jurusan', $admin->jurusan ?? '') }}">
-                    </div>
-
                 </div>
 
                 <div class="profile-actions mt-3">
@@ -255,6 +341,7 @@
         });
     });
 
+    // password show/hide toggle
     document.addEventListener('click', function(e) {
         const toggle = e.target.closest('.password-toggle');
         if (!toggle) return;

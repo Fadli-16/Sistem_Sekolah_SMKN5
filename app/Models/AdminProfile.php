@@ -12,6 +12,7 @@ class AdminProfile extends Model
         'user_id',
         'image',
         'jurusan',
+        'jenis_kelamin',
         'tanggal_lahir',
         'agama',
         'alamat',
@@ -27,4 +28,9 @@ class AdminProfile extends Model
     {
         return $this->attributes['jurusan'];
     }
-}
+
+    public function getJenisKelaminAttribute()
+    {
+        return $this->attributes['jenis_kelamin'];
+    }
+    }

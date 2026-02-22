@@ -69,7 +69,7 @@
 
             <div class="add-course-wrap">
                 @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
-                <a href="{{ route('sistem_akademik.course.create') }}" class="btn-primary-app">
+                <a href="{{ route('sistem_akademik.course.create') }}" class="btn btn-success">
                     <i class="bi bi-plus-circle"></i> Tambah Course
                 </a>
                 @endif
@@ -145,17 +145,9 @@
                         <span class="text-muted">-</span>
                         @endif
                     </td>
-
-                    {{-- Mata Pelajaran --}}
                     <td>{{ optional($course->mataPelajaran)->nama_mata_pelajaran ?? '-' }}</td>
-
-                    {{-- Guru: berasal dari mataPelajaran -> guru --}}
                     <td>{{ optional(optional($course->mataPelajaran)->guru)->nama ?? optional(optional($course->mataPelajaran)->guru)->name ?? '-' }}</td>
-
-                    {{-- Hari --}}
                     <td>{{ $course->hari ?? '-' }}</td>
-
-                    {{-- Jam Mulai --}}
                     <td>
                         @if(!empty($course->jam_mulai))
                         {{ date('H:i', strtotime($course->jam_mulai)) }}
@@ -163,8 +155,6 @@
                         -
                         @endif
                     </td>
-
-                    {{-- Jam Selesai --}}
                     <td>
                         @if(!empty($course->jam_selesai))
                         {{ date('H:i', strtotime($course->jam_selesai)) }}
@@ -172,25 +162,21 @@
                         -
                         @endif
                     </td>
-
-                    {{-- Ruangan --}}
                     <td>{{ $course->ruangan ?? '-' }}</td>
-
-                    {{-- Aksi --}}
                     <td>
-                        <a href="{{ route('sistem_akademik.course.show', $course->id) }}" class="btn-action btn-view" title="Detail">
+                        <a href="{{ route('sistem_akademik.course.show', $course->id) }}" class="btn btn-secondary btn-sm" title="Detail">
                             <i class="bi bi-eye"></i>
                         </a>
 
                         @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
-                        <a href="{{ route('sistem_akademik.course.edit', $course->id) }}" class="btn-action btn-edit" title="Edit">
+                        <a href="{{ route('sistem_akademik.course.edit', $course->id) }}" class="btn btn-warning btn-sm" title="Edit">
                             <i class="bi bi-pencil-square"></i>
                         </a>
 
                         <form action="{{ route('sistem_akademik.course.destroy', $course->id) }}" method="post" id="deleteForm{{ $course->id }}" class="d-inline">
                             @csrf
                             @method('delete')
-                            <button type="button" onclick="confirmDelete('{{ $course->id }}')" class="btn-action btn-delete" title="Hapus">
+                            <button type="button" onclick="confirmDelete('{{ $course->id }}')" class="btn btn-danger btn-sm" title="Hapus">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
@@ -269,7 +255,8 @@
             try {
                 sel.value = sel.dataset.selectedKelas;
             } catch (e) {
-                /* ignore */ }
+                /* ignore */
+            }
         }
 
         // ---------- URLs ----------

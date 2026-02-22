@@ -9,7 +9,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="mb-0"><i class="bi bi-book me-2"></i>Daftar Mata Pelajaran</h5>
             @if(Auth::check() && (Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa'))
-            <a href="{{ route('sistem_akademik.mata_pelajaran.create') }}" class="btn-primary-app">
+            <a href="{{ route('sistem_akademik.mata_pelajaran.create') }}" class="btn btn-success">
                 <i class="bi bi-plus-circle"></i> Tambah Mata Pelajaran
             </a>
             @endif
@@ -35,14 +35,14 @@
                         <td>{{ optional($mapel->guru)->nama ?? optional($mapel->guru)->name ?? '-' }}</td>
                         @if(Auth::check() && (Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa'))
                         <td>
-                            <a href="{{ route('sistem_akademik.mata_pelajaran.edit', $mapel->id) }}" class="btn-action btn-edit" title="Edit">
+                            <a href="{{ route('sistem_akademik.mata_pelajaran.edit', $mapel->id) }}" class="btn btn-warning btn-sm me-1" title="Edit">
                                 <i class="bi bi-pencil-square"></i>
                             </a>
 
                             <form action="{{ route('sistem_akademik.mata_pelajaran.destroy', $mapel->id) }}" method="post" id="deleteForm{{ $mapel->id }}" class="d-inline">
                                 @csrf
                                 @method('delete')
-                                <button type="button" onclick="confirmDelete('{{ $mapel->id }}')" class="btn-action btn-delete" title="Hapus">
+                                <button type="button" onclick="confirmDelete('{{ $mapel->id }}')" class="btn btn-danger btn-sm" title="Hapus">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>

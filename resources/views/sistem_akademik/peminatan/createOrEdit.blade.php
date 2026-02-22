@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mt-4 mb-4">
-    <h2>{{ $header }}</h2>
+    <h1 class="page-title">{{ $header }}</h1>
     <div class="card p-4">
         <form action="{{ isset($peminatan) 
                 ? route('sistem_akademik.peminatan.update', $peminatan->id) 

@@ -1,4 +1,3 @@
-{{-- resources/views/sistem_akademik/siswa/index.blade.php --}}
 @extends('sistem_akademik.layouts.main')
 
 @section('css')

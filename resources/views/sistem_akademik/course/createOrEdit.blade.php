@@ -57,7 +57,8 @@ $conflictDetails = session('conflict_details', null);
     data-slot-ids='@json(array_keys($slots))'
     data-slot-details='@json($slots)'
     class="container mt-4 mb-4">
-    <h2>{{ $header }}</h2>
+
+    <h1 class="page-title">{{ $header }}</h1>
 
     <div class="card p-4">
         <form action="{{ isset($course) ? route('sistem_akademik.course.update', $course->id) : route('sistem_akademik.course.store') }}" method="POST">
@@ -191,8 +192,8 @@ $conflictDetails = session('conflict_details', null);
             </div>
 
             <div class="d-flex mt-4">
-                <a href="{{ route('sistem_akademik.course.index') }}" class="btn-secondary-app"><i class="bi bi-arrow-left"></i> Kembali</a>
-                <button type="submit" class="btn-primary-app ms-auto">
+                <a href="{{ route('sistem_akademik.course.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Kembali</a>
+                <button type="submit" class="btn btn-primary ms-auto">
                     <i class="bi bi-{{ isset($course) ? 'save' : 'plus-circle' }}"></i>
                     {{ isset($course) ? 'Update Course' : 'Simpan Course' }}
                 </button>

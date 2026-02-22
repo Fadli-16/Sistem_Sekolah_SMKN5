@@ -74,7 +74,7 @@
 
 @section('content')
 <div class="container mt-4 mb-4">
-    <h2>{{ isset($berita) ? 'Edit Berita' : 'Tambah Berita' }}</h2>
+    <h1 class="page-title">{{ $header }}</h1>
 
     <div class="card p-4">
         <form id="beritaForm"

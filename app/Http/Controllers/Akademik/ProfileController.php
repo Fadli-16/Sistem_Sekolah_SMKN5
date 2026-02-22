@@ -59,22 +59,32 @@ class ProfileController extends Controller
         ];
 
         $data = $request->validate($rules);
+        $isRestricted = (bool) ($user->siswa || $user->guru);
 
-        // Update user core fields
-        $user->update([
-            'nama' => $data['nama'],
-            'email' => $data['email'],
-        ]);
+        if ($isRestricted) {
+            unset($data['nama'], $data['jurusan']);
+        }
 
-        // update role-specific profile
-        $profilePayload = [
-            'tanggal_lahir' => $data['tanggal_lahir'] ?? null,
-            'jenis_kelamin' => $data['jenis_kelamin'] ?? null,
-            'alamat' => $data['alamat'] ?? null,
-            'no_hp' => $data['no_hp'] ?? null,
-            'agama' => $data['agama'] ?? null,
-            'jurusan' => $data['jurusan'] ?? null,
-        ];
+        $updateUser = [];
+        if (isset($data['nama'])) $updateUser['nama'] = $data['nama'];
+        if (isset($data['email'])) $updateUser['email'] = $data['email'];
+
+        if (!empty($updateUser)) {
+            $user->update($updateUser);
+        } else {
+        }
+
+        $allowedProfileFields = ['tanggal_lahir', 'jenis_kelamin', 'alamat', 'no_hp', 'agama', 'jurusan'];
+        if ($isRestricted) {
+            $allowedProfileFields = array_diff($allowedProfileFields, ['jurusan']);
+        }
+
+        $profilePayload = [];
+        foreach ($allowedProfileFields as $f) {
+            if (array_key_exists($f, $data)) {
+                $profilePayload[$f] = $data[$f];
+            }
+        }
 
         // filter out nulls so we don't overwrite with null
         $filtered = array_filter($profilePayload, function ($v) {

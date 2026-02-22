@@ -29,6 +29,19 @@
     justify-content: space-between;
 }
 
+.locked-field {
+    background-color: #e9ecef !important;
+    color: #495057 !important;
+    cursor: not-allowed;
+}
+
+/* ensure disabled select looks same */
+select.locked-field:disabled {
+    background-color: #e9ecef !important;
+    color: #495057 !important;
+    cursor: not-allowed;
+}
+
 /* Top area: photo + basic info */
 .card-body.top {
     display: flex;

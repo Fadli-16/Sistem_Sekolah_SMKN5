@@ -48,10 +48,10 @@ $isEdit = ! empty($mapel) && $mapel !== null;
         </div>
 
         <div class="d-flex mt-4">
-            <a href="{{ route('sistem_akademik.mata_pelajaran.index') }}" class="btn-secondary-app">
+            <a href="{{ route('sistem_akademik.mata_pelajaran.index') }}" class="btn btn-secondary btn-sm">
                 <i class="bi bi-arrow-left"></i> Batal
             </a>
-            <button type="submit" class="btn-primary-app ms-auto">
+            <button type="submit" class="btn btn-primary btn-sm ms-auto">
                 <i class="bi bi-{{ $isEdit ? 'save' : 'plus-circle' }}"></i>
                 {{ $isEdit ? 'Update' : 'Simpan' }}
             </button>

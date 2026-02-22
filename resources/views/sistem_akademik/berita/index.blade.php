@@ -87,8 +87,7 @@
 
 @section('content')
 <div class="container mt-3 mb-3">
-    <h1>DAFTAR BERITA</h1>
-
+    <h1 class="page-title">{{ $header }}</h1>
     <div class="card p-3">
         <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap" style="gap:10px;">
             <a href="{{ route('sistem_akademik.berita.create') }}" class="btn btn-success btn-add">

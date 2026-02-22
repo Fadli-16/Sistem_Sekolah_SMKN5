@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Berita;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class BeritaController extends Controller
 {
@@ -15,7 +16,7 @@ class BeritaController extends Controller
     public function index(Request $request)
     {
         $title = 'Berita';
-        $header = 'Sistem Akademik SMK';
+        $header = 'Daftar Berita';
 
         $query = Berita::query();
 
@@ -105,6 +106,7 @@ class BeritaController extends Controller
         }
 
         $berita = new Berita();
+        $berita->user_id = Auth::id();
         $berita->judul = $request->judul;
         $berita->isi = $request->isi;
         $berita->kategori = $request->kategori;

@@ -124,6 +124,14 @@
     <h1 class="news-title">{{ $berita->judul }}</h1>
     <div class="meta">
         <small>Tanggal Posting: {{ optional($berita->created_at)->format('d M Y H:i') }}</small>
+        <br>
+        <small>Diposting oleh:
+            {{ optional($berita->user)->nama ?? optional($berita->user)->name ?? '—' }}
+            @if(optional($berita->user)->id)
+            {{-- jika mau link ke profil penulis, aktifkan baris di bawah (pastikan rute ada) --}}
+            {{-- — <a href="{{ route('sistem_akademik.user.profile', $berita->user->id) }}">{{ $berita->user->nama ?? $berita->user->name }}</a> --}}
+            @endif
+        </small>
     </div>
 
     {{-- Media area: image + content --}}
@@ -157,7 +165,6 @@
             </div>
         </div>
     </div>
-
 </div>
 @endsection
 

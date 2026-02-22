@@ -8,7 +8,7 @@
     <div class="table-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="mb-0"><i class="bi bi-building me-2"></i>Daftar Kelas</h5>
-            <a href="{{ route('sistem_akademik.kelas.create') }}" class="btn-primary-app">
+            <a href="{{ route('sistem_akademik.kelas.create') }}" class="btn btn-success">
                 <i class="bi bi-plus-circle"></i> Tambah Kelas
             </a>
         </div>
@@ -38,13 +38,13 @@
                         <td>{{ optional($item->guruBK)->nama ?? '-' }}</td>
                         <td>{{ $item->ruangan ?? '-' }}</td>
                         <td>
-                            <a href="{{ route('sistem_akademik.kelas.edit', $item->id) }}" class="btn-action btn-edit" title="Edit">
+                            <a href="{{ route('sistem_akademik.kelas.edit', $item->id) }}" class="btn btn-warning btn-sm" title="Edit">
                                 <i class="bi bi-pencil-square"></i>
                             </a>
-                            <form action="{{ route('sistem_akademik.kelas.destroy', $item->id) }}" method="post" id="deleteForm{{ $item->id }}" class="d-inline">
+                            <form action="{{ route('sistem_akademik.kelas.destroy', $item->id) }}" method="post"  id="deleteForm{{ $item->id }}" class="d-inline">
                                 @csrf
                                 @method('delete')
-                                <button type="button" onclick="confirmDelete('{{ $item->id }}')" class="btn-action btn-delete" title="Hapus">
+                                <button type="button" onclick="confirmDelete('{{ $item->id }}')" class="btn btn-danger btn-sm" title="Hapus">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
