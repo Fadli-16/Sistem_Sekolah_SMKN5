@@ -201,7 +201,6 @@
                         <div class="col-12 col-md-2">
                             <select id="kategoriFilter" name="filter" class="form-select">
                                 <option value="">Semua</option>
-                                <option value="terbaru" {{ request('filter')=='terbaru'?'selected':'' }}>Terbaru</option>
                                 <option value="terlama" {{ request('filter')=='terlama'?'selected':'' }}>Terlama</option>
                                 <option value="informasi" {{ request('filter')=='informasi'?'selected':'' }}>Informasi</option>
                                 <option value="prestasi" {{ request('filter')=='prestasi'?'selected':'' }}>Prestasi</option>

@@ -17,10 +17,8 @@ class BeritaController extends Controller
     {
         $title = 'Berita';
         $header = 'Daftar Berita';
+        $query = Berita::query()->latest();
 
-        $query = Berita::query();
-
-        // Search
         if ($request->filled('search')) {
             $q = $request->search;
             $query->where(function ($sub) use ($q) {
@@ -29,27 +27,14 @@ class BeritaController extends Controller
             });
         }
 
-        // Filter / ordering
         if ($request->filled('filter')) {
-            switch ($request->filter) {
-                case 'terbaru':
-                    $query->orderBy('created_at', 'desc');
-                    break;
-                case 'terlama':
-                    $query->orderBy('created_at', 'asc');
-                    break;
-                case 'informasi':
-                case 'prestasi':
-                case 'pemberitahuan':
-                    // assuming there is a 'kategori' column
-                    $query->where('kategori', $request->filter)->orderBy('created_at', 'desc');
-                    break;
-                default:
-                    $query->latest();
-                    break;
+
+            if ($request->filter === 'terlama') {
+                $query->orderBy('created_at', 'asc');
             }
-        } else {
-            $query->latest();
+            if (in_array($request->filter, ['informasi', 'prestasi', 'pemberitahuan'])) {
+                $query->where('kategori', $request->filter);
+            }
         }
 
         if ($request->filled('from') && $request->filled('to')) {
@@ -59,9 +44,7 @@ class BeritaController extends Controller
             ]);
         }
 
-        // Pagination: adjust per page as needed; keep query string so links keep search/filter
-        $perPage = 10;
-        $berita = $query->paginate($perPage)->appends($request->query());
+        $berita = $query->paginate(10)->appends($request->query());
 
         return view('sistem_akademik.berita.index', compact('berita', 'title', 'header'));
     }

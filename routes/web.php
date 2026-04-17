@@ -38,7 +38,6 @@ use App\Http\Controllers\WakilPerusahaanOpeningsController;
 use App\Http\Controllers\Admin\JadwalLaboratoriumController;
 use App\Http\Controllers\Admin\LaborCrudController;
 use App\Http\Controllers\Siswa\LaborController;
-use App\Http\Controllers\Siswa\JadwalController;
 use App\Http\Controllers\Siswa\InventarisController as SiswaInventarisController;
 use App\Http\Controllers\Siswa\LaporanController;
 use App\Http\Controllers\WakilPerusahaanInternsController;
@@ -355,12 +354,6 @@ Route::prefix('siswa')->name('siswa.')->middleware(['auth', 'role:siswa'])->grou
     // Laboratory routes
     Route::get('/labor', [LaborController::class, 'index'])->name('labor.index');
     Route::get('/labor/{id}', [LaborController::class, 'show'])->name('labor.show');
-
-    // Laboratory schedule routes
-    Route::get('/jadwal', [JadwalController::class, 'index'])->name('jadwal.index');
-    Route::prefix('admin')->name('admin.')->group(function () {
-        Route::resource('jadwal', \App\Http\Controllers\Admin\JadwalController::class);
-    });
 
     // Inventory routes
     Route::get('/inventaris', [SiswaInventarisController::class, 'index'])->name('inventaris.index');

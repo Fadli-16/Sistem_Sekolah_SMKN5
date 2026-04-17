@@ -230,6 +230,25 @@
             dt = $('#data-table').DataTable();
         }
 
+        $('#filter-kelas').on('change', function() {
+            var kelasId = $(this).val();
+            var url = new URL(window.location.href);
+
+            if (kelasId) {
+                url.searchParams.set('kelas_id', kelasId);
+            } else {
+                url.searchParams.delete('kelas_id');
+            }
+
+            window.location.href = url.toString();
+        });
+
+        // restore selected value
+        var sel = document.getElementById('filter-kelas');
+        if (sel && sel.dataset && sel.dataset.selectedKelas) {
+            sel.value = sel.dataset.selectedKelas;
+        }
+
         function moveDownloadButtonToFilter() {
             try {
                 var $filter = $('.dataTables_filter');

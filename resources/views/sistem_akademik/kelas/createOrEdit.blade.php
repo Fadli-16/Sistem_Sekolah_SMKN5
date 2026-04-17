@@ -8,7 +8,7 @@
             <p class="text-muted mb-4">{{ isset($kelas) ? 'Edit data kelas yang sudah ada' : 'Tambahkan data kelas baru' }}</p>
 
             <div class="form-container">
-                <form action="{{ isset($kelas) ? route('sistem_akademik.kelas.update', $kelas->id) : route('sistem_akademik.kelas.store') }}" method="POST">
+                <form action="{{ isset($kelas) ? route('sistem_akademik.kelas.update', $kelas) : route('sistem_akademik.kelas.store') }}" method="POST">
                     @csrf
                     @if(isset($kelas))
                     @method('PUT')
@@ -87,7 +87,7 @@
                             class="form-control @error('tahun_ajaran') is-invalid @enderror"
                             id="tahun_ajaran"
                             name="tahun_ajaran"
-                            placeholder="Contoh: 2025/2026"
+                            placeholder="Contoh: 2026/2027"
                             value="{{ old('tahun_ajaran', $kelas->tahun_ajaran ?? date('Y').'/'.((int)date('Y')+1)) }}"
                             required>
                         @error('tahun_ajaran')
@@ -111,7 +111,7 @@
                             @endif
 
                             {{-- include current wali if not in available list (defensive) --}}
-                            @if(isset($kelas) && $kelas->wali_kelas_id && !($availableWali->pluck('id')->contains($kelas->wali_kelas_id ?? null)))
+                            @if(isset($kelas) && $kelas->wali_kelas_id && isset($availableWali) && !$availableWali->pluck('id')->contains($kelas->wali_kelas_id))
                             <option value="{{ $kelas->wali_kelas_id }}" selected>{{ optional($kelas->waliKelas)->nama ?? 'Guru (terpilih)' }}</option>
                             @endif
                         </select>
@@ -141,7 +141,7 @@
                             @endif
 
                             {{-- include current guru_bk if not in available list --}}
-                            @if(isset($kelas) && $kelas->guru_bk_id && (isset($availableGuruBk) ? !$availableGuruBk->pluck('id')->contains($kelas->guru_bk_id) : true))
+                            @if(isset($kelas) && $kelas->guru_bk_id && isset($availableGuruBk) && !$availableGuruBk->pluck('id')->contains($kelas->guru_bk_id))
                             <option value="{{ $kelas->guru_bk_id }}" selected>{{ optional($kelas->guruBK)->nama ?? 'Guru BK (terpilih)' }}</option>
                             @endif
                         </select>

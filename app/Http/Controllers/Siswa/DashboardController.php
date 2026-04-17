@@ -36,7 +36,7 @@ class DashboardController extends Controller
                 $query->whereDate('start', now())
                     ->where('start', '<=', now())
                     ->where('end', '>=', now())
-            })
+                    ->where('status', 'active');})
             ->count();
         
         return view('siswa.main.index', compact('title', 'header', 'laborCount', 'jadwalToday', 'activeLabs'));

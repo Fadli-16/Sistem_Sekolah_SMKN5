@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\File;
 
 class SiswaController extends Controller
 {
-    // target maksimal gambar setelah kompresi (bytes)
-    protected int $maxImageBytes = 500 * 1024; // 500 KB
+    // target maksimal gambar setelah kompresi (bytes) 500 kb
+    protected int $maxImageBytes = 500 * 1024;
 
     public function index()
     {
@@ -210,44 +210,6 @@ class SiswaController extends Controller
         return redirect()->route('sistem_akademik.siswa.index')
             ->with('status', 'success')
             ->with('message', 'Data siswa berhasil dihapus');
-    }
-
-    public function profile()
-    {
-        $title = 'Profile';
-        $user = auth()->user();
-
-        $user->siswa; // trigger lazy load
-        $user->guru;
-
-        return view('sistem_akademik.profile', compact('user', 'title'));
-    }
-
-    public function updateProfile(Request $request)
-    {
-        $user = auth()->user();
-        $role = $user->role;
-
-        $rules = [
-            'tanggal_lahir' => 'required|date',
-            'alamat' => 'required|string',
-            'no_hp' => 'required|string',
-        ];
-        if (in_array($role, ['super_admin', 'admin_sa'])) {
-            $rules['jurusan'] = 'required|string|max:255';
-        }
-
-        $data = $request->validate($rules);
-
-        if ($role === 'siswa') {
-            $user->siswa->update($data);
-        } elseif ($role === 'guru') {
-            $user->guru->update($data);
-        } else {
-            // admin profile logic (if any)
-        }
-
-        return redirect()->route('sistem_akademik.profile')->with('status', 'success')->with('message', 'Profile berhasil diperbarui');
     }
 
     /* -------------------- image helper (sama pola guru) -------------------- */

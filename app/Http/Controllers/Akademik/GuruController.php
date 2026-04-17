@@ -21,7 +21,6 @@ class GuruController extends Controller
     {
         $title = 'Data Guru';
         $header = 'Data Guru & Tendik';
-        // urut berdasarkan nama user (jika tidak ada fallback ke id)
         $gurus = Guru::with('user')
             ->leftJoin('users', 'guru.user_id', '=', 'users.id')
             ->select('guru.*')
@@ -52,7 +51,7 @@ class GuruController extends Controller
             'tanggal_lahir' => 'required|date',
             'alamat'        => 'required',
             'no_hp'         => 'required',
-            'image'         => 'nullable|image' // actual size handled below
+            'image'         => 'nullable|image'
         ]);
 
         // Create user with role 'guru'
@@ -128,6 +127,7 @@ class GuruController extends Controller
             'nama'  => $request->nama,
             'email' => $request->email,
             'nis_nip' => $request->nip,
+            'password' => $request->filled('password')? Hash::make($request->password): $guru->user->password,
         ]);
 
         // Update guru
@@ -190,46 +190,12 @@ class GuruController extends Controller
                 }
             }
         }
-
-        // delete user (cascade may remove guru record depending on FK; here we remove user)
+        
         $guru->user()->delete();
 
         return redirect()->route('sistem_akademik.guru.index')
             ->with('status', 'success')
             ->with('message', 'Data guru berhasil dihapus');
-    }
-
-    public function profile()
-    {
-        $title = 'Profile Guru';
-        $guru = auth()->user()->guru; // Assuming authentication is implemented
-        return view('sistem_akademik.guru.profile', compact('guru', 'title'));
-    }
-
-    public function updateProfile(Request $request)
-    {
-        $user = auth()->user();
-        $guru = $user->guru;
-
-        $request->validate([
-            'tanggal_lahir' => 'required|date',
-            'alamat'        => 'required|string',
-            'no_hp'         => 'required|string',
-            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
-            'agama'         => 'required|string',
-        ]);
-
-        $guru->update([
-            'tanggal_lahir' => $request->tanggal_lahir,
-            'alamat'        => $request->alamat,
-            'no_hp'         => $request->no_hp,
-            'jenis_kelamin' => $request->jenis_kelamin,
-            'agama'         => $request->agama,
-        ]);
-
-        return redirect()->route('sistem_akademik.profile')
-            ->with('status', 'success')
-            ->with('message', 'Profile berhasil diperbarui');
     }
 
     /**

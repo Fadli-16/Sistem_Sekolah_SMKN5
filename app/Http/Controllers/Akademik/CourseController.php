@@ -321,9 +321,16 @@ class CourseController extends Controller
         $title = 'Kelola Course & Mata Pelajaran';
         $header = 'Jadwal Mata Pelajaran';
 
+        $selectedKelasId = $request->query('kelas_id');
+
         $query = Course::with(['mataPelajaran.guru', 'kelas', 'siswa'])
             ->orderBy('hari')
             ->orderBy('jam_mulai');
+
+        // Filter berdasarkan kelas yang dipilih
+        if (!empty($selectedKelasId)) {
+            $query->where('kelas_id', $selectedKelasId);
+        }
 
         // jika user adalah guru, batasi hanya ke course yang berkaitan dengan guru tersebut
         if (Auth::check() && Auth::user()->role === 'guru') {
@@ -331,10 +338,8 @@ class CourseController extends Controller
             $guruUserId = $user->id;
             $guruModelId = null;
 
-            // jika ada relasi guru() pada User dan instance tersedia, ambil id model Guru (jika ada)
             if (method_exists($user, 'guru') && $user->guru) {
                 $guruModelId = $user->guru->id ?? null;
-                // juga jika model Guru menyimpan user_id, kita bisa gunakan user id-nya
                 $possibleUserId = $user->guru->user_id ?? null;
                 if ($possibleUserId) {
                     $guruUserId = $possibleUserId;
@@ -342,10 +347,13 @@ class CourseController extends Controller
             }
 
             $query->whereHas('mataPelajaran', function ($q) use ($guruUserId, $guruModelId) {
-                $q->where('guru_id', $guruUserId);
-                if ($guruModelId) {
-                    $q->orWhere('guru_id', $guruModelId);
-                }
+                $q->where(function ($subQ) use ($guruUserId, $guruModelId) {
+                    $subQ->where('guru_id', $guruUserId);
+
+                    if ($guruModelId) {
+                        $subQ->orWhere('guru_id', $guruModelId);
+                    }
+                });
             });
         }
 
@@ -354,7 +362,6 @@ class CourseController extends Controller
             if ($kelasId) {
                 $query->where('kelas_id', $kelasId);
             } else {
-                // kalau siswa record ada tapi belum ada kelas, hasilkan kosong
                 $query->whereRaw('1 = 0');
             }
         }
@@ -362,10 +369,11 @@ class CourseController extends Controller
         $courses = $query->get();
 
         $kelasList = Kelas::orderBy('nama_kelas')->get();
+
         if (Auth::check() && Auth::user()->role === 'guru') {
-            // hanya kelas dimana guru punya course
             $user = Auth::user();
             $guruUserId = $user->id;
+
             if (method_exists($user, 'guru') && $user->guru) {
                 $possibleUserId = $user->guru->user_id ?? null;
                 if ($possibleUserId) $guruUserId = $possibleUserId;
@@ -377,9 +385,6 @@ class CourseController extends Controller
 
             $kelasList = Kelas::whereIn('id', $kelasIds)->orderBy('nama_kelas')->get();
         }
-
-        // terima selectedKelas dari querystring (bila user memilih langsung dari index)
-        $selectedKelasId = $request->query('kelas_id', null);
 
         return view('sistem_akademik.course.index', compact(
             'courses',
@@ -398,8 +403,6 @@ class CourseController extends Controller
         $kelas = Kelas::all();
         $mapels = MataPelajaran::with('guru')->get();
         $slots = $this->selectableSlots();
-
-        // KUNCI: kirim semua siswa agar view menampilkan nama siswa secara default (fallback)
         $siswa = Siswa::with('user')->orderBy('id')->get();
 
         return view('sistem_akademik.course.createOrEdit', compact('kelas', 'mapels', 'slots', 'siswa', 'title', 'header'));
@@ -496,7 +499,6 @@ class CourseController extends Controller
                 ->withInput();
         }
 
-        // simpan course
         $course = Course::create([
             'kelas_id' => $request->kelas_id,
             'mata_pelajaran_id' => $request->mata_pelajaran_id ?? null,
@@ -650,7 +652,6 @@ class CourseController extends Controller
 
             if (!$conflicts['guru']->isEmpty() || !$conflicts['ruangan']->isEmpty() || !$conflicts['kelas']->isEmpty()) {
                 $recommendations = $this->findAvailableSlots($request->kelas_id, $newGuruId, $request->ruangan, $request->hari);
-
                 $conflictDetails = [
                     'guru' => $conflicts['guru']->map(fn($c) => [
                         'course_id' => $c->id,
@@ -704,7 +705,8 @@ class CourseController extends Controller
             $course->siswa()->detach();
         }
 
-        Log::info('Update debug', compact('oldHari', 'oldJamMulai', 'oldJamSelesai', 'oldRuangan', 'oldKelasId', 'oldGuruId', 'newHari', 'newJamMulai', 'newJamSelesai', 'newRuangan', 'newKelasId', 'newGuruId'));
+        Log::info('Update debug', compact('oldHari', 'oldJamMulai', 'oldJamSelesai', 'oldRuangan', 'oldKelasId', 'oldGuruId',
+        'newHari', 'newJamMulai', 'newJamSelesai', 'newRuangan', 'newKelasId', 'newGuruId'));
 
         return redirect()->route('sistem_akademik.course.index')
             ->with('status', 'success')
@@ -878,11 +880,7 @@ class CourseController extends Controller
     {
         $slotOrder = $this->slotOrder();
         $slotDetails = $this->slotDetails();
-
-        // daftar kelas untuk selector (admin/guru bisa pilih)
         $kelasList = Kelas::orderBy('nama_kelas')->get();
-
-        // tentukan kelas yang diminta / default
         $selectedKelasId = $request->input('kelas_id');
 
         // role-specific defaults
@@ -928,7 +926,6 @@ class CourseController extends Controller
         }
 
         $courses = $query->get();
-
         $timetable = $this->buildTimetableData($courses, $slotOrder, $slotDetails);
 
         return view('sistem_akademik.course.show', [
@@ -1045,7 +1042,8 @@ class CourseController extends Controller
         ])->render();
 
         if (class_exists(Pdf::class)) {
-            $fileLabel = $selectedKelasId ? ('kelas_' . $selectedKelasId) : ($isGuru ? 'guru_' . ($guruUserId ?? 'user') : 'semua_kelas');
+            $fileLabel = $selectedKelasId ? ('kelas_' . $selectedKelasId) : 
+            ($isGuru ? 'guru_' . ($guruUserId ?? 'user') : 'semua_kelas');
             $pdf = Pdf::loadHTML($viewHtml)->setPaper('a4', 'landscape');
             return $pdf->stream("jadwal_{$fileLabel}.pdf");
         }
