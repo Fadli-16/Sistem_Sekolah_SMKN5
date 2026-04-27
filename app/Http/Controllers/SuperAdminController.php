@@ -49,7 +49,7 @@ class SuperAdminController extends Controller
         $data = $request->validate([
             'nama' => 'required|string|max:255',
             'nis_nip' => 'required|string|max:20',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'nullable|string|email|max:255|unique:users',
             'password' => 'required|string|min:4',
             'role' => ['required', Rule::in(['super_admin', 'admin_ppdb', 'admin_sa', 'admin_perpus', 'admin_lab', 'admin_magang', 'wakil_perusahaan', 'guru', 'siswa'])],
         ]);
@@ -112,8 +112,8 @@ class SuperAdminController extends Controller
     {
         $data = $request->validate([
             'nama'              => 'required|string|max:255',
-            'nis_nip'           => 'nullable|string|max:20',
-            'email'             => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'nis_nip'           => 'required|string|max:20',
+            'email'             => 'nullable|string|email|max:255|unique:users,email,' . $user->id,
             'old_password'      => ['required_with:password', function ($attr, $value, $fail) use ($user) {
                 if (!Hash::check($value, $user->password)) {
                     $fail('Password lama tidak sesuai.');

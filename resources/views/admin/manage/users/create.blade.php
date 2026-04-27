@@ -243,8 +243,8 @@
                                 </div>
 
                                 <div class="mb-4">
-                                    <label for="email" class="sa-form-label">Email Address</label>
-                                    <input type="email" name="email" id="email" class="sa-form-control @error('email') is-invalid @enderror" value="{{ old('email') }}" required>
+                                    <label for="email" class="sa-form-label">Email Addressqwerty</label>
+                                    <input type="email" name="email" id="email" class="sa-form-control @error('email') is-invalid @enderror" value="{{ old('email') }}">
                                     @error('email')
                                     <div class="sa-form-error">{{ $message }}</div>
                                     @enderror

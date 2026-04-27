@@ -68,7 +68,7 @@
 
                 <div class="col-md-6 field-row">
                     <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $guru->user->email ?? '') }}" required>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $guru->user->email ?? '') }}">
                 </div>
 
                 <div class="col-md-6 field-row">
@@ -83,17 +83,17 @@
 
                 <div class="col-md-6 field-row">
                     <label for="kelas" class="form-label">Kelas</label>
-                    <input type="text" class="form-control" id="kelas" name="kelas" value="{{ old('kelas', $guru->kelas ?? '') }}" required>
+                    <input type="text" class="form-control" id="kelas" name="kelas" value="{{ old('kelas', $guru->kelas ?? '') }}">
                 </div>
 
                 <div class="col-md-6 field-row">
                     <label for="jurusan" class="form-label">Jurusan</label>
-                    <input type="text" class="form-control" id="jurusan" name="jurusan" value="{{ old('jurusan', $guru->jurusan ?? '') }}" required>
+                    <input type="text" class="form-control" id="jurusan" name="jurusan" value="{{ old('jurusan', $guru->jurusan ?? '') }}">
                 </div>
 
                 <div class="col-md-6 field-row">
                     <label for="jenis_kelamin" class="form-label">Jenis Kelamin</label>
-                    <select name="jenis_kelamin" id="jenis_kelamin" class="form-control" required>
+                    <select name="jenis_kelamin" id="jenis_kelamin" class="form-control">
                         <option value="">Pilih...</option>
                         <option value="Laki-laki" {{ old('jenis_kelamin', $guru->jenis_kelamin ?? '') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
                         <option value="Perempuan" {{ old('jenis_kelamin', $guru->jenis_kelamin ?? '') == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
@@ -102,22 +102,22 @@
 
                 <div class="col-md-6 field-row">
                     <label for="tanggal_lahir" class="form-label">Tanggal Lahir</label>
-                    <input type="date" id="tanggal_lahir" name="tanggal_lahir" class="form-control" value="{{ old('tanggal_lahir', $guru->tanggal_lahir ?? '') }}" required>
+                    <input type="date" id="tanggal_lahir" name="tanggal_lahir" class="form-control" value="{{ old('tanggal_lahir', $guru->tanggal_lahir ?? '') }}">
                 </div>
 
                 <div class="col-md-6 field-row">
                     <label for="agama" class="form-label">Agama</label>
-                    <input type="text" id="agama" name="agama" class="form-control" value="{{ old('agama', $guru->agama ?? '') }}" required>
+                    <input type="text" id="agama" name="agama" class="form-control" value="{{ old('agama', $guru->agama ?? '') }}">
                 </div>
 
                 <div class="col-md-6 field-row">
                     <label for="no_hp" class="form-label">Nomor HP</label>
-                    <input type="text" id="no_hp" name="no_hp" class="form-control" value="{{ old('no_hp', $guru->no_hp ?? '') }}" required>
+                    <input type="text" id="no_hp" name="no_hp" class="form-control" value="{{ old('no_hp', $guru->no_hp ?? '') }}">
                 </div>
 
                 <div class="col-md-12 field-row">
                     <label for="alamat" class="form-label">Alamat</label>
-                    <textarea name="alamat" id="alamat" class="form-control" rows="3" required>{{ old('alamat', $guru->alamat ?? '') }}</textarea>
+                    <textarea name="alamat" id="alamat" class="form-control" rows="3">{{ old('alamat', $guru->alamat ?? '') }}</textarea>
                 </div>
             </div>
 

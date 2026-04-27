@@ -156,7 +156,7 @@ Route::prefix('sistem-akademik')
     |--------------------------------------------------------------------------
     */
         Route::middleware(['role:super_admin,admin_sa'])->group(function () {
-            Route::resource('kelas', KelasController::class);
+            Route::resource('kelas', KelasController::class)->parameters(['kelas' => 'kelas']);
             Route::resource('guru', GuruController::class);
             Route::resource('siswa', SiswaController::class);
 

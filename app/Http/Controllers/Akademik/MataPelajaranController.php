@@ -14,29 +14,12 @@ class MataPelajaranController extends Controller
 {
     public function index()
     {
+        $user = Auth::user();
+
         $query = MataPelajaran::with('guru');
 
-        if (Auth::check() && Auth::user()->role === 'guru') {
-            $user = Auth::user();
-
-            if (method_exists($user, 'guru') && $user->guru) {
-                $guruModel = $user->guru;
-                $guruModelId = $guruModel->id ?? null;
-                $guruUserId = $guruModel->user_id ?? null;
-
-                if ($guruUserId) {
-                    $query->where('guru_id', $guruUserId);
-                } else {
-                    $query->where(function ($q) use ($user, $guruModelId) {
-                        $q->where('guru_id', $user->id); 
-                        if ($guruModelId) {
-                            $q->orWhere('guru_id', $guruModelId);
-                        }
-                    });
-                }
-            } else {
-                $query->where('guru_id', $user->id);
-            }
+        if ($user && $user->role === 'guru') {
+            $query->where('guru_id', $user->id);
         }
 
         $mapels = $query->get();

@@ -57,8 +57,6 @@ class KelasController extends Controller
             'ruangan' => ['nullable', 'string', 'max:255', 'unique:kelas,ruangan'],
         ]);
 
-        // tambahan validasi business rules
-        // 1) wali_kelas tidak boleh sudah terpilih pada kelas lain
         if ($request->filled('wali_kelas_id')) {
             $exists = Kelas::where('wali_kelas_id', $request->wali_kelas_id)->exists();
             if ($exists) {
@@ -66,7 +64,6 @@ class KelasController extends Controller
             }
         }
 
-        // 2) guru_bk boleh max 2 kelas
         if ($request->filled('guru_bk_id')) {
             $count = Kelas::where('guru_bk_id', $request->guru_bk_id)->count();
             if ($count >= 2) {
@@ -74,7 +71,6 @@ class KelasController extends Controller
             }
         }
 
-        // 3) wali_kelas dan guru_bk tidak boleh sama
         if ($request->filled('wali_kelas_id') && $request->filled('guru_bk_id') && $request->wali_kelas_id == $request->guru_bk_id) {
             return back()->withInput()->withErrors(['guru_bk_id' => 'Wali kelas dan Guru BK tidak boleh sama orang.']);
         }

@@ -41,7 +41,7 @@ class GuruController extends Controller
     {
         $request->validate([
             'nama'          => 'required|string|max:255',
-            'email'         => 'required|email|unique:users',
+            'email'         => 'nullable|email|unique:users',
             'password'      => 'required|min:6',
             'nip'           => 'required|string|unique:guru',
             'kelas'         => 'required|string',
@@ -110,7 +110,7 @@ class GuruController extends Controller
     {
         $request->validate([
             'nama'          => 'required|string|max:255',
-            'email'         => 'required|email|unique:users,email,' . $guru->user_id,
+            'email'         => 'nullable|email|unique:users,email,' . $guru->user_id,
             'nip'           => 'required|string|unique:guru,nip,' . $guru->id,
             'kelas'         => 'required|string',
             'jurusan'       => 'required|string',
@@ -127,7 +127,7 @@ class GuruController extends Controller
             'nama'  => $request->nama,
             'email' => $request->email,
             'nis_nip' => $request->nip,
-            'password' => $request->filled('password')? Hash::make($request->password): $guru->user->password,
+            'password' => $request->filled('password') ? Hash::make($request->password) : $guru->user->password,
         ]);
 
         // Update guru
@@ -190,7 +190,7 @@ class GuruController extends Controller
                 }
             }
         }
-        
+
         $guru->user()->delete();
 
         return redirect()->route('sistem_akademik.guru.index')

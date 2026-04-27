@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class CourseController extends Controller
@@ -312,6 +313,48 @@ class CourseController extends Controller
         ];
     }
 
+    protected function resolveGuruIds(?User $user): array
+    {
+        if (! $user || $user->role !== 'guru') {
+            return [];
+        }
+
+        $guruModel = $user->guru;
+
+        return array_values(array_filter([
+            $guruModel?->user_id ?? $user->id,
+            $guruModel?->id,
+        ]));
+    }
+
+    protected function applyGuruFilter($query, array $guruIds): void
+    {
+        if (!empty($guruIds)) {
+            $query->whereHas('mataPelajaran', function ($q) use ($guruIds) {
+                $q->whereIn('guru_id', $guruIds);
+            });
+        }
+    }
+
+    protected function resolveVisibleKelas(array $guruIds)
+    {
+        if (empty($guruIds)) {
+            return Kelas::orderBy('nama_kelas')->get();
+        }
+
+        $kelasIds = Course::whereHas('mataPelajaran', function ($q) use ($guruIds) {
+            $q->whereIn('guru_id', $guruIds);
+        })
+            ->pluck('kelas_id')
+            ->unique()
+            ->filter()
+            ->values();
+
+        return Kelas::whereIn('id', $kelasIds)
+            ->orderBy('nama_kelas')
+            ->get();
+    }
+
     /* ===========================
      * PUBLIC ACTIONS (resource)
      * =========================== */
@@ -322,31 +365,24 @@ class CourseController extends Controller
         $header = 'Jadwal Mata Pelajaran';
 
         $selectedKelasId = $request->query('kelas_id');
+        $user = Auth::user();
 
         $query = Course::with(['mataPelajaran.guru', 'kelas', 'siswa'])
             ->orderBy('hari')
             ->orderBy('jam_mulai');
 
-        // Filter berdasarkan kelas yang dipilih
         if (!empty($selectedKelasId)) {
             $query->where('kelas_id', $selectedKelasId);
         }
 
-        // jika user adalah guru, batasi hanya ke course yang berkaitan dengan guru tersebut
-        if (Auth::check() && Auth::user()->role === 'guru') {
-            $user = Auth::user();
-            $guruUserId = $user->id;
-            $guruModelId = null;
+        $guruKelasIds = [];
 
-            if (method_exists($user, 'guru') && $user->guru) {
-                $guruModelId = $user->guru->id ?? null;
-                $possibleUserId = $user->guru->user_id ?? null;
-                if ($possibleUserId) {
-                    $guruUserId = $possibleUserId;
-                }
-            }
+        if ($user?->role === 'guru') {
+            $guruModel = $user->guru;
+            $guruUserId = $guruModel?->user_id ?? $user->id;
+            $guruModelId = $guruModel?->id;
 
-            $query->whereHas('mataPelajaran', function ($q) use ($guruUserId, $guruModelId) {
+            $guruFilter = function ($q) use ($guruUserId, $guruModelId) {
                 $q->where(function ($subQ) use ($guruUserId, $guruModelId) {
                     $subQ->where('guru_id', $guruUserId);
 
@@ -354,11 +390,19 @@ class CourseController extends Controller
                         $subQ->orWhere('guru_id', $guruModelId);
                     }
                 });
-            });
-        }
+            };
 
-        if (Auth::check() && Auth::user()->role === 'siswa' && Auth::user()->siswa) {
-            $kelasId = Auth::user()->siswa->kelas_id;
+            $query->whereHas('mataPelajaran', $guruFilter);
+
+            $guruKelasIds = Course::whereHas('mataPelajaran', $guruFilter)
+                ->pluck('kelas_id')
+                ->unique()
+                ->filter()
+                ->values()
+                ->toArray();
+        } elseif ($user?->role === 'siswa' && $user->siswa) {
+            $kelasId = $user->siswa->kelas_id;
+
             if ($kelasId) {
                 $query->where('kelas_id', $kelasId);
             } else {
@@ -368,23 +412,9 @@ class CourseController extends Controller
 
         $courses = $query->get();
 
-        $kelasList = Kelas::orderBy('nama_kelas')->get();
-
-        if (Auth::check() && Auth::user()->role === 'guru') {
-            $user = Auth::user();
-            $guruUserId = $user->id;
-
-            if (method_exists($user, 'guru') && $user->guru) {
-                $possibleUserId = $user->guru->user_id ?? null;
-                if ($possibleUserId) $guruUserId = $possibleUserId;
-            }
-
-            $kelasIds = Course::whereHas('mataPelajaran', function ($q) use ($guruUserId) {
-                $q->where('guru_id', $guruUserId);
-            })->pluck('kelas_id')->unique()->filter()->values()->toArray();
-
-            $kelasList = Kelas::whereIn('id', $kelasIds)->orderBy('nama_kelas')->get();
-        }
+        $kelasList = $user?->role === 'guru'
+            ? Kelas::whereIn('id', $guruKelasIds)->orderBy('nama_kelas')->get()
+            : Kelas::orderBy('nama_kelas')->get();
 
         return view('sistem_akademik.course.index', compact(
             'courses',
@@ -405,63 +435,48 @@ class CourseController extends Controller
         $slots = $this->selectableSlots();
         $siswa = Siswa::with('user')->orderBy('id')->get();
 
-        return view('sistem_akademik.course.createOrEdit', compact('kelas', 'mapels', 'slots', 'siswa', 'title', 'header'));
+        return view('sistem_akademik.course.createOrEdit', 
+        compact('kelas', 'mapels', 'slots', 'siswa', 'title', 'header'));
     }
 
     public function store(Request $request)
     {
+        $selectableSlots = array_keys($this->selectableSlots());
+
         $request->validate([
-            'mata_pelajaran_id' => 'nullable|exists:mata_pelajaran,id',
-            'guru_id' => 'nullable|exists:users,id',
+            'mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
             'kelas_id' => 'required|exists:kelas,id',
-            'nama_course' => 'nullable|string|max:255',
-            'hari' => 'required|string',
-            'slot_start' => 'nullable|string',
-            'slot_end' => 'nullable|string',
-            'jam_mulai' => 'nullable|date_format:H:i',
-            'jam_selesai' => 'nullable|date_format:H:i|after:jam_mulai',
+            'hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat',
+            'slot_start' => ['required', 'string', Rule::in($selectableSlots)],
+            'slot_end' => ['required', 'string', Rule::in($selectableSlots)],
             'ruangan' => 'nullable|string|max:255',
             'siswa_ids' => 'nullable|array',
             'siswa_ids.*' => 'exists:siswa,id',
         ]);
 
-        if (!in_array($request->hari, $this->allowedDays())) {
-            return back()->withErrors(['hari' => 'Hari harus antara Senin sampai Jumat.'])->withInput();
+        [$jamMulai, $jamSelesai] = $this->slotRangeToTimes(
+            $request->slot_start,
+            $request->slot_end
+        );
+
+        $mp = MataPelajaran::find($request->mata_pelajaran_id);
+        if (! $mp || ! $mp->guru_id) {
+            return back()
+                ->withErrors
+                (['mata_pelajaran_id' => 'Mata pelajaran tidak valid atau belum memiliki guru.'])
+                ->withInput();
         }
 
-        try {
-            if ($request->filled('slot_start') && $request->filled('slot_end')) {
-                [$jamMulai, $jamSelesai] = $this->slotRangeToTimes($request->slot_start, $request->slot_end);
-            } elseif ($request->filled('jam_mulai') && $request->filled('jam_selesai')) {
-                $jamMulai = $request->jam_mulai;
-                $jamSelesai = $request->jam_selesai;
-            } else {
-                return back()->withErrors(['slot' => 'Pilih slot atau masukkan jam mulai & selesai.'])->withInput();
-            }
-        } catch (\Exception $e) {
-            return back()->withErrors(['slot' => $e->getMessage()])->withInput();
-        }
-
-        $guruId = null;
-        if ($request->filled('mata_pelajaran_id')) {
-            $mp = MataPelajaran::find($request->mata_pelajaran_id);
-            if (! $mp) {
-                return back()->withErrors(['mata_pelajaran_id' => 'Mata pelajaran tidak ditemukan.'])->withInput();
-            }
-            $guruId = $mp->guru_id ?? null;
-        } elseif ($request->filled('guru_id')) {
-            $u = User::find($request->guru_id);
-            if (! $u || ($u->role ?? '') !== 'guru') {
-                return back()->withErrors(['guru_id' => 'Guru tidak valid.'])->withInput();
-            }
-            $guruId = $u->id;
-        }
+        $guruId = $mp->guru_id;
 
         // cek konflik (termasuk ruangan)
-        $conflicts = $this->checkConflicts($request->hari, $jamMulai, $jamSelesai, $guruId, $request->ruangan, $request->kelas_id);
+        $conflicts = $this->checkConflicts
+        ($request->hari, $jamMulai, $jamSelesai, $guruId, $request->ruangan, $request->kelas_id);
 
-        if (!$conflicts['guru']->isEmpty() || !$conflicts['ruangan']->isEmpty() || !$conflicts['kelas']->isEmpty()) {
-            $recommendations = $this->findAvailableSlots($request->kelas_id, $guruId, $request->ruangan, $request->hari);
+        if (!$conflicts['guru']->isEmpty() || 
+        !$conflicts['ruangan']->isEmpty() || !$conflicts['kelas']->isEmpty()) {
+            $recommendations = $this->findAvailableSlots
+            ($request->kelas_id, $guruId, $request->ruangan, $request->hari);
 
             $conflictDetails = [
                 'guru' => $conflicts['guru']->map(fn($c) => [
@@ -501,7 +516,7 @@ class CourseController extends Controller
 
         $course = Course::create([
             'kelas_id' => $request->kelas_id,
-            'mata_pelajaran_id' => $request->mata_pelajaran_id ?? null,
+            'mata_pelajaran_id' => $request->mata_pelajaran_id,
             'hari' => $request->hari,
             'jam_mulai' => $jamMulai,
             'jam_selesai' => $jamSelesai,
@@ -545,83 +560,55 @@ class CourseController extends Controller
 
         $selectedSiswaIds = method_exists($course, 'siswa') ? $course->siswa->pluck('id')->toArray() : [];
 
-        return view('sistem_akademik.course.createOrEdit', compact(
-            'course',
-            'kelas',
-            'mapels',
-            'slots',
-            'siswa',
-            'selected',
-            'selectedSiswaIds',
-            'title',
-            'header'
+        return view('sistem_akademik.course.createOrEdit', compact('course','kelas','mapels',
+            'slots','siswa','selected','selectedSiswaIds', 'title','header'
         ));
     }
 
     public function update(Request $request, Course $course)
     {
+        $selectableSlots = array_keys($this->selectableSlots());
+
         $request->validate([
-            'mata_pelajaran_id' => 'nullable|exists:mata_pelajaran,id',
-            'guru_id' => 'nullable|exists:users,id',
+            'mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
             'kelas_id' => 'required|exists:kelas,id',
-            'nama_course' => 'nullable|string|max:255',
-            'hari' => 'required|string',
-            'slot_start' => 'nullable|string',
-            'slot_end' => 'nullable|string',
-            'jam_mulai' => 'nullable|date_format:H:i',
-            'jam_selesai' => 'nullable|date_format:H:i|after:jam_mulai',
+            'hari' => ['required', Rule::in($this->allowedDays())],
+            'slot_start' => ['required', 'string', Rule::in($selectableSlots)],
+            'slot_end' => ['required', 'string', Rule::in($selectableSlots)],
             'ruangan' => 'nullable|string|max:255',
             'siswa_ids' => 'nullable|array',
             'siswa_ids.*' => 'exists:siswa,id',
         ]);
 
-        if (!in_array($request->hari, $this->allowedDays())) {
-            return back()->withErrors(['hari' => 'Hari harus antara Senin sampai Jumat.'])->withInput();
+        [$jamMulai, $jamSelesai] = $this->slotRangeToTimes(
+            $request->slot_start,
+            $request->slot_end
+        );
+
+        $mp = MataPelajaran::find($request->mata_pelajaran_id);
+
+        if (! $mp || ! $mp->guru_id) {
+            return back()
+                ->withErrors(['mata_pelajaran_id' => 
+                'Mata pelajaran tidak valid atau belum memiliki guru.'])
+                ->withInput();
         }
 
-        try {
-            if ($request->filled('slot_start') && $request->filled('slot_end')) {
-                [$jamMulai, $jamSelesai] = $this->slotRangeToTimes($request->slot_start, $request->slot_end);
-            } elseif ($request->filled('jam_mulai') && $request->filled('jam_selesai')) {
-                $jamMulai = $request->jam_mulai;
-                $jamSelesai = $request->jam_selesai;
-            } else {
-                return back()->withErrors(['slot' => 'Pilih slot atau masukkan jam mulai & selesai.'])->withInput();
-            }
-        } catch (\Exception $e) {
-            return back()->withErrors(['slot' => $e->getMessage()])->withInput();
-        }
+        $guruId = $mp->guru_id;
 
-        // tentukan guru berdasarkan mata_pelajaran_id jika ada; jika tidak, gunakan guru_id (jika diberikan)
-        $guruId = null;
-        if ($request->filled('mata_pelajaran_id')) {
-            $mp = MataPelajaran::find($request->mata_pelajaran_id);
-            if (! $mp) {
-                return back()->withErrors(['mata_pelajaran_id' => 'Mata pelajaran tidak ditemukan.'])->withInput();
-            }
-            $guruId = $mp->guru_id ?? null;
-        } elseif ($request->filled('guru_id')) {
-            $u = User::find($request->guru_id);
-            if (! $u || ($u->role ?? '') !== 'guru') {
-                return back()->withErrors(['guru_id' => 'Guru tidak valid.'])->withInput();
-            }
-            $guruId = $u->id;
-        }
-
-        // normalisasi nilai lama & baru untuk perbandingan
         $oldHari = $course->hari ?? '';
         $oldJamMulai = substr($course->jam_mulai ?? '', 0, 5);
         $oldJamSelesai = substr($course->jam_selesai ?? '', 0, 5);
         $oldRuangan = strtolower(trim($course->ruangan ?? ''));
         $oldKelasId = $course->kelas_id;
-        $oldGuruId = $course->mataPelajaran?->guru_id ?? null;
+        $oldMataPelajaranId = $course->mata_pelajaran_id;
 
         $newHari = $request->hari;
         $newJamMulai = substr($jamMulai, 0, 5);
         $newJamSelesai = substr($jamSelesai, 0, 5);
         $newRuangan = strtolower(trim($request->ruangan ?? ''));
         $newKelasId = $request->kelas_id;
-        $newGuruId = $guruId;
+        $newMataPelajaranId = $request->mata_pelajaran_id;
 
         $isCriticalChanged =
             ($oldHari !== $newHari) ||
@@ -629,29 +616,38 @@ class CourseController extends Controller
             ($oldJamSelesai !== $newJamSelesai) ||
             ($oldRuangan !== $newRuangan) ||
             ($oldKelasId != $newKelasId) ||
-            ($oldGuruId != $newGuruId);
+            ($oldMataPelajaranId != $newMataPelajaranId);
 
-        // HANYA cek konflik jika ada perubahan kritikal
         if ($isCriticalChanged) {
-            // gunakan ruangan tanpa perubahan case/space karena checkConflicts akan membandingkan trim,
-            // namun kita juga kirim lowercased value supaya konsisten.
             $conflicts = $this->checkConflicts(
                 $newHari,
                 $newJamMulai,
                 $newJamSelesai,
-                $newGuruId,
+                $guruId,
                 $request->ruangan,
                 $newKelasId,
-                $course->id // exclude current course
+                $course->id
             );
 
-            // Safety: filter apapun yang masih refer ke current course (kadang exclude belum bekerja jika id falsy)
-            $conflicts['guru'] = $conflicts['guru']->filter(fn($c) => $c->id !== $course->id)->values();
-            $conflicts['ruangan'] = $conflicts['ruangan']->filter(fn($c) => $c->id !== $course->id)->values();
-            $conflicts['kelas'] = $conflicts['kelas']->filter(fn($c) => $c->id !== $course->id)->values();
+            $conflicts['guru'] = $conflicts['guru']->filter(fn($c) 
+            => $c->id !== $course->id)->values();
+            $conflicts['ruangan'] = $conflicts['ruangan']->filter(fn($c) 
+            => $c->id !== $course->id)->values();
+            $conflicts['kelas'] = $conflicts['kelas']->filter(fn($c) 
+            => $c->id !== $course->id)->values();
 
-            if (!$conflicts['guru']->isEmpty() || !$conflicts['ruangan']->isEmpty() || !$conflicts['kelas']->isEmpty()) {
-                $recommendations = $this->findAvailableSlots($request->kelas_id, $newGuruId, $request->ruangan, $request->hari);
+            if (
+                !$conflicts['guru']->isEmpty() ||
+                !$conflicts['ruangan']->isEmpty() ||
+                !$conflicts['kelas']->isEmpty()
+            ) {
+                $recommendations = $this->findAvailableSlots(
+                    $newKelasId,
+                    $guruId,
+                    $request->ruangan,
+                    $newHari
+                );
+
                 $conflictDetails = [
                     'guru' => $conflicts['guru']->map(fn($c) => [
                         'course_id' => $c->id,
@@ -681,7 +677,8 @@ class CourseController extends Controller
 
                 return back()
                     ->with('status', 'error')
-                    ->with('message', 'Terjadi bentrok jadwal saat update. Lihat rekomendasi slot.')
+                    ->with('message', 
+                    'Terjadi bentrok jadwal saat update. Lihat rekomendasi slot.')
                     ->with('conflicts', $conflicts)
                     ->with('conflict_details', $conflictDetails)
                     ->with('recommendations', $recommendations)
@@ -689,24 +686,18 @@ class CourseController extends Controller
             }
         }
 
-        // Simpan perubahan (tidak terpengaruh pengecekan konflik bila tidak kritikal)
         $course->update([
-            'kelas_id' => $request->kelas_id,
-            'mata_pelajaran_id' => $request->mata_pelajaran_id ?? null,
-            'hari' => $request->hari,
+            'kelas_id' => $newKelasId,
+            'mata_pelajaran_id' => $newMataPelajaranId,
+            'hari' => $newHari,
             'jam_mulai' => $jamMulai,
             'jam_selesai' => $jamSelesai,
             'ruangan' => $request->ruangan,
         ]);
 
-        if ($request->filled('siswa_ids') && method_exists($course, 'siswa')) {
-            $course->siswa()->sync($request->siswa_ids);
-        } elseif (method_exists($course, 'siswa')) {
-            $course->siswa()->detach();
+        if (method_exists($course, 'siswa')) {
+            $course->siswa()->sync($request->input('siswa_ids', []));
         }
-
-        Log::info('Update debug', compact('oldHari', 'oldJamMulai', 'oldJamSelesai', 'oldRuangan', 'oldKelasId', 'oldGuruId',
-        'newHari', 'newJamMulai', 'newJamSelesai', 'newRuangan', 'newKelasId', 'newGuruId'));
 
         return redirect()->route('sistem_akademik.course.index')
             ->with('status', 'success')
@@ -729,29 +720,17 @@ class CourseController extends Controller
     {
         $request->validate([
             'kelas_id' => 'nullable|exists:kelas,id',
-            'mata_pelajaran_id' => 'nullable|exists:mata_pelajaran,id',
-            'guru_id' => 'nullable|exists:users,id',
-            'ruangan' => 'nullable|string',
-            'hari' => 'required|string',
+            'mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
+            'ruangan' => 'nullable|string|max:255',
+            'hari' => ['required', Rule::in($this->allowedDays())],
             'exclude_course_id' => 'nullable|integer',
         ]);
 
-        if (!in_array($request->hari, $this->allowedDays())) {
-            return response()->json(['success' => false, 'message' => 'Hari harus antara Senin sampai Jumat.'], 422);
-        }
-
-        $guruId = null;
-        if ($request->filled('mata_pelajaran_id')) {
-            $mp = MataPelajaran::find($request->mata_pelajaran_id);
-            $guruId = $mp->guru_id ?? null;
-        } elseif ($request->filled('guru_id')) {
-            $u = User::find($request->guru_id);
-            $guruId = ($u && ($u->role ?? '') === 'guru') ? $u->id : null;
-        }
-
-        $exclude = $request->input('exclude_course_id') ? (int) $request->input('exclude_course_id') : null;
-
-        $available = $this->findAvailableSlots($request->kelas_id, $guruId, $request->ruangan, $request->hari, $exclude);
+        $guruId = MataPelajaran::findOrFail($request->mata_pelajaran_id)->guru_id;
+        $exclude = $request->input('exclude_course_id') ? (int) 
+        $request->input('exclude_course_id') : null;
+        $available = $this->findAvailableSlots
+        ($request->kelas_id, $guruId, $request->ruangan, $request->hari, $exclude);
 
         return response()->json([
             'success' => true,
@@ -785,13 +764,10 @@ class CourseController extends Controller
     {
         $request->validate([
             'kelas_id' => 'nullable|exists:kelas,id',
-            'mata_pelajaran_id' => 'nullable|exists:mata_pelajaran,id',
-            'guru_id' => 'nullable|exists:users,id',
+            'mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
             'ruangan' => 'nullable|string',
             'slot_start' => 'nullable|string',
             'slot_end' => 'nullable|string',
-            'jam_mulai' => 'nullable|date_format:H:i',
-            'jam_selesai' => 'nullable|date_format:H:i',
             'hari' => 'required|string',
             'exclude_course_id' => 'nullable|integer'
         ]);
@@ -800,67 +776,34 @@ class CourseController extends Controller
             return response()->json(['success' => false, 'message' => 'Hari tidak valid.'], 422);
         }
 
-        // tentukan jam mulai & selesai dari slot atau gunakan jam langsung
+        // tentukan jam mulai & selesai
         try {
-            if ($request->filled('slot_start') && $request->filled('slot_end')) {
-                [$jamMulai, $jamSelesai] = $this->slotRangeToTimes($request->slot_start, $request->slot_end);
-            } elseif ($request->filled('jam_mulai') && $request->filled('jam_selesai')) {
-                $jamMulai = $request->jam_mulai;
-                $jamSelesai = $request->jam_selesai;
-            } else {
-                return response()->json(['success' => false, 'message' => 'Slot atau jam harus diisi.'], 422);
-            }
+            [$jamMulai, $jamSelesai] = $this->slotRangeToTimes($request->slot_start, $request->slot_end);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
 
-        // tentukan guru id seperti di store/update (jika mata_pelajaran_id diberikan)
-        $guruId = null;
-        if ($request->filled('mata_pelajaran_id')) {
-            $mp = MataPelajaran::find($request->mata_pelajaran_id);
-            $guruId = $mp->guru_id ?? null;
-        } elseif ($request->filled('guru_id')) {
-            $u = User::find($request->guru_id);
-            $guruId = ($u && ($u->role ?? '') === 'guru') ? $u->id : null;
-        }
-
+        // ambil guru langsung dari mata pelajaran (tanpa decision)
+        $guruId = MataPelajaran::findOrFail($request->mata_pelajaran_id)->guru_id;
         $excludeId = $request->input('exclude_course_id') ? (int)$request->input('exclude_course_id') : null;
         $conflicts = $this->checkConflicts($request->hari, $jamMulai, $jamSelesai, $guruId, $request->ruangan, $request->kelas_id, $excludeId);
 
+        $format = fn($c) => [
+            'course_id' => $c->id,
+            'kelas_id' => $c->kelas?->id ?? null,
+            'kelas' => $c->kelas?->nama_kelas ?? null,
+            'jurusan' => $c->kelas?->jurusan ?? null,
+            'tahun_ajaran' => $c->kelas?->tahun_ajaran ?? null,
+            'mata_pelajaran' => $c->mataPelajaran?->nama_mata_pelajaran ?? null,
+            'jam_mulai' => $c->jam_mulai,
+            'jam_selesai' => $c->jam_selesai,
+            'ruangan' => $c->ruangan,
+        ];
+
         $conflictDetails = [
-            'guru' => $conflicts['guru']->map(fn($c) => [
-                'course_id' => $c->id,
-                'kelas_id' => $c->kelas?->id ?? null,
-                'kelas' => $c->kelas?->nama_kelas ?? null,
-                'jurusan' => $c->kelas?->jurusan ?? null,
-                'tahun_ajaran' => $c->kelas?->tahun_ajaran ?? null,
-                'mata_pelajaran' => $c->mataPelajaran?->nama_mata_pelajaran ?? null,
-                'jam_mulai' => $c->jam_mulai,
-                'jam_selesai' => $c->jam_selesai,
-                'ruangan' => $c->ruangan,
-            ])->values(),
-            'ruangan' => $conflicts['ruangan']->map(fn($c) => [
-                'course_id' => $c->id,
-                'kelas_id' => $c->kelas?->id ?? null,
-                'kelas' => $c->kelas?->nama_kelas ?? null,
-                'jurusan' => $c->kelas?->jurusan ?? null,
-                'tahun_ajaran' => $c->kelas?->tahun_ajaran ?? null,
-                'mata_pelajaran' => $c->mataPelajaran?->nama_mata_pelajaran ?? null,
-                'jam_mulai' => $c->jam_mulai,
-                'jam_selesai' => $c->jam_selesai,
-                'ruangan' => $c->ruangan,
-            ])->values(),
-            'kelas' => $conflicts['kelas']->map(fn($c) => [
-                'course_id' => $c->id,
-                'kelas_id' => $c->kelas?->id ?? null,
-                'kelas' => $c->kelas?->nama_kelas ?? null,
-                'jurusan' => $c->kelas?->jurusan ?? null,
-                'tahun_ajaran' => $c->kelas?->tahun_ajaran ?? null,
-                'mata_pelajaran' => $c->mataPelajaran?->nama_mata_pelajaran ?? null,
-                'jam_mulai' => $c->jam_mulai,
-                'jam_selesai' => $c->jam_selesai,
-                'ruangan' => $c->ruangan,
-            ])->values(),
+            'guru' => $conflicts['guru']->map($format)->values(),
+            'ruangan' => $conflicts['ruangan']->map($format)->values(),
+            'kelas' => $conflicts['kelas']->map($format)->values(),
         ];
 
         return response()->json([
@@ -881,51 +824,49 @@ class CourseController extends Controller
         $slotOrder = $this->slotOrder();
         $slotDetails = $this->slotDetails();
         $kelasList = Kelas::orderBy('nama_kelas')->get();
+        $user = Auth::user();
+
         $selectedKelasId = $request->input('kelas_id');
-
-        // role-specific defaults
-        if (! $selectedKelasId) {
-            if (Auth::check() && Auth::user()->role === 'siswa' && Auth::user()->siswa) {
-                $selectedKelasId = Auth::user()->siswa->kelas_id;
-            } elseif (Auth::check() && Auth::user()->role === 'guru') {
-                // default: null -> tampilkan semua course milik guru (across kelas)
-                $selectedKelasId = null;
-            } else {
-                // admin: default pilih kelas pertama jika ada
-                $selectedKelasId = $kelasList->first()?->id ?? null;
-            }
-        }
-
-        // build base query for courses to include in timetable
         $query = Course::with(['mataPelajaran.guru', 'kelas', 'siswa.user']);
 
-        // filter by kelas if provided
-        if ($selectedKelasId) {
+        if ($user?->role === 'guru') {
+            $guruModel = $user->guru;
+            $guruUserId = $guruModel?->user_id ?? $user->id;
+            $guruModelId = $guruModel?->id;
+
+            $guruFilter = function ($q) use ($guruUserId, $guruModelId) {
+                $q->where(function ($subQ) use ($guruUserId, $guruModelId) {
+                    $subQ->where('guru_id', $guruUserId);
+                    if ($guruModelId) {
+                        $subQ->orWhere('guru_id', $guruModelId);
+                    }
+                });
+            };
+
+            $query->whereHas('mataPelajaran', $guruFilter);
+
+            $kelasIds = Course::whereHas('mataPelajaran', $guruFilter)
+                ->pluck('kelas_id')
+                ->unique()
+                ->filter()
+                ->values()
+                ->toArray();
+
+            $kelasList = Kelas::whereIn('id', $kelasIds)
+                ->orderBy('nama_kelas')
+                ->get();
+        } elseif ($user?->role === 'siswa' && $user->siswa) {
+            $selectedKelasId = $user->siswa->kelas_id;
             $query->where('kelas_id', $selectedKelasId);
-        }
+        } else {
+            $selectedKelasId = $selectedKelasId ?: $kelasList->first()?->id ?? null;
 
-        // jika user role guru: batasi ke mata pelajaran yang milik guru (tetapi biarkan optional untuk admin)
-        if (Auth::check() && Auth::user()->role === 'guru') {
-            $user = Auth::user();
-            $guruUserId = $user->id;
-            $guruModelId = null;
-            if (method_exists($user, 'guru') && $user->guru) {
-                $guruModelId = $user->guru->id ?? null;
-                $possibleUserId = $user->guru->user_id ?? null;
-                if ($possibleUserId) $guruUserId = $possibleUserId;
+            if ($selectedKelasId) {
+                $query->where('kelas_id', $selectedKelasId);
             }
-            $query->whereHas('mataPelajaran', function ($q) use ($guruUserId, $guruModelId) {
-                $q->where('guru_id', $guruUserId);
-                if ($guruModelId) $q->orWhere('guru_id', $guruModelId);
-            });
         }
 
-        // jika siswa: batasi sesuai kelas (sudah di atas) - atau pakai pivot jika ingin ketat
-        if (Auth::check() && Auth::user()->role === 'siswa' && Auth::user()->siswa) {
-            // already handled with selectedKelasId above (default). Optionally ensure where('kelas_id', ...)
-        }
-
-        $courses = $query->get();
+        $courses = $query->orderBy('hari')->orderBy('jam_mulai')->get();
         $timetable = $this->buildTimetableData($courses, $slotOrder, $slotDetails);
 
         return view('sistem_akademik.course.show', [
@@ -945,67 +886,36 @@ class CourseController extends Controller
     {
         $slotOrder = $this->slotOrder();
         $slotDetails = $this->slotDetails();
-
         $selectedKelasId = $request->input('kelas_id');
 
-        // base query helper for guru filter
-        $isGuru = Auth::check() && Auth::user()->role === 'guru';
-        $guruUserId = null;
-        if ($isGuru) {
-            $user = Auth::user();
-            $guruUserId = $user->id;
-            if (method_exists($user, 'guru') && $user->guru) {
-                $possibleUserId = $user->guru->user_id ?? null;
-                if ($possibleUserId) $guruUserId = $possibleUserId;
-            }
-        }
+        $user = Auth::user();
+        $guruIds = $this->resolveGuruIds($user);
 
-        // If a single kelas is requested -> render single page only
         $pages = [];
 
         if ($selectedKelasId) {
-            $kelas = Kelas::find($selectedKelasId);
-            if ($kelas) {
-                $query = Course::with(['mataPelajaran.guru', 'kelas', 'siswa.user'])
-                    ->where('kelas_id', $kelas->id);
+            $kelas = Kelas::findOrFail($selectedKelasId);
 
-                if ($isGuru) {
-                    $query->whereHas('mataPelajaran', function ($q) use ($guruUserId) {
-                        $q->where('guru_id', $guruUserId)->orWhere('guru_id', $guruUserId);
-                    });
-                }
+            $query = Course::with(['mataPelajaran.guru', 'kelas', 'siswa.user'])
+                ->where('kelas_id', $kelas->id);
 
-                $courses = $query->get();
-                $timetable = $this->buildTimetableData($courses, $slotOrder, $slotDetails);
+            $this->applyGuruFilter($query, $guruIds);
 
-                $pages[] = [
-                    'kelas' => $kelas,
-                    'timetable' => $timetable,
-                ];
-            }
+            $courses = $query->get();
+            $timetable = $this->buildTimetableData($courses, $slotOrder, $slotDetails);
+
+            $pages[] = [
+                'kelas' => $kelas,
+                'timetable' => $timetable,
+            ];
         } else {
-            // No kelas selected -> generate pages per kelas
-            if ($isGuru) {
-                // only kelas where this guru has courses
-                $kelasIds = Course::whereHas('mataPelajaran', function ($q) use ($guruUserId) {
-                    $q->where('guru_id', $guruUserId)->orWhere('guru_id', $guruUserId);
-                })->pluck('kelas_id')->unique()->filter()->values()->toArray();
-
-                $kelasList = Kelas::whereIn('id', $kelasIds)->orderBy('nama_kelas')->get();
-            } else {
-                // admin / other -> all kelas
-                $kelasList = Kelas::orderBy('nama_kelas')->get();
-            }
+            $kelasList = $this->resolveVisibleKelas($guruIds);
 
             foreach ($kelasList as $kelas) {
                 $query = Course::with(['mataPelajaran.guru', 'kelas', 'siswa.user'])
                     ->where('kelas_id', $kelas->id);
 
-                if ($isGuru) {
-                    $query->whereHas('mataPelajaran', function ($q) use ($guruUserId) {
-                        $q->where('guru_id', $guruUserId)->orWhere('guru_id', $guruUserId);
-                    });
-                }
+                $this->applyGuruFilter($query, $guruIds);
 
                 $courses = $query->get();
                 $timetable = $this->buildTimetableData($courses, $slotOrder, $slotDetails);
@@ -1017,38 +927,29 @@ class CourseController extends Controller
             }
         }
 
-        // if nothing to render, fallback to single empty page with message
         if (empty($pages)) {
-            // create an empty "dummy" page
             $pages[] = [
                 'kelas' => null,
                 'timetable' => [
                     'days' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'],
                     'slotOrder' => $slotOrder,
                     'slotDetails' => $slotDetails,
-                    'matrix' => [], // view will render empties
+                    'matrix' => [],
                 ],
             ];
         }
 
-        // kelasList for header lookups (optional)
         $kelasListAll = Kelas::orderBy('nama_kelas')->get();
 
-        // render a single view that loops pages
         $viewHtml = view('sistem_akademik.course.download', [
             'pages' => $pages,
             'kelasList' => $kelasListAll,
             'selectedKelasId' => $selectedKelasId,
         ])->render();
 
-        if (class_exists(Pdf::class)) {
-            $fileLabel = $selectedKelasId ? ('kelas_' . $selectedKelasId) : 
-            ($isGuru ? 'guru_' . ($guruUserId ?? 'user') : 'semua_kelas');
-            $pdf = Pdf::loadHTML($viewHtml)->setPaper('a4', 'landscape');
-            return $pdf->stream("jadwal_{$fileLabel}.pdf");
-        }
+        $fileLabel = $selectedKelasId ? ('kelas_' . $selectedKelasId) : 'semua_kelas';
+        $pdf = Pdf::loadHTML($viewHtml)->setPaper('a4', 'landscape');
 
-        // fallback: HTML preview
-        return response($viewHtml);
+        return $pdf->stream("jadwal_{$fileLabel}.pdf");
     }
 }

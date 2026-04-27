@@ -28,8 +28,6 @@ class ProfileController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-
-        // make sure relations exist and are loaded
         $user->load(['siswa', 'guru', 'adminProfile']);
 
         return view('sistem_akademik.profile', [
@@ -46,10 +44,9 @@ class ProfileController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        // validation
         $rules = [
             'nama' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'nullable|email|unique:users,email,' . $user->id,
             'tanggal_lahir' => 'nullable|date',
             'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
             'alamat' => 'nullable|string|max:2000',
@@ -113,7 +110,6 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        // choose relation model to store image (priority siswa -> guru -> adminProfile)
         $model = null;
         if ($user->relationLoaded('siswa') || $user->siswa) {
             $model = $user->siswa;
@@ -125,7 +121,6 @@ class ProfileController extends Controller
             $model = $user->adminProfile;
             $field = 'image';
         } else {
-            // fallback: store on user table if you prefer (not used here)
             return $request->wantsJson()
                 ? response()->json(['success' => false, 'message' => 'Tidak ada profil terkait untuk menyimpan foto.'], 422)
                 : redirect()->back()->with('status', 'error')->with('message', 'Tidak ada profil terkait.');
@@ -139,10 +134,8 @@ class ProfileController extends Controller
             File::makeDirectory($dest, 0755, true);
         }
 
-        // move new file
         $file->move($dest, $name);
 
-        // delete previous file if exists and not default
         if (!empty($model->{$field})) {
             $old = $dest . DIRECTORY_SEPARATOR . $model->{$field};
             if (File::exists($old)) {
@@ -150,13 +143,10 @@ class ProfileController extends Controller
             }
         }
 
-        // save new filename
         $model->{$field} = $name;
         $model->save();
-
         $url = asset('assets/profile/' . $name);
 
-        // respond differently for AJAX or normal request
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'file' => $name, 'url' => $url]);
         }
