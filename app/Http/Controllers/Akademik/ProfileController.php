@@ -16,6 +16,8 @@ use App\Models\AdminProfile;
  */
 class ProfileController extends Controller
 {
+    // MAX target file size after compression (bytes)
+    protected int $maxImageBytes = 500 * 1024; // 500 KB
     public function __construct()
     {
         $this->middleware('auth');
@@ -96,7 +98,7 @@ class ProfileController extends Controller
             AdminProfile::updateOrCreate(['user_id' => $user->id], $filtered);
         }
 
-        return back()->with('status', 'profile-updated');
+        return back()->with('status', 'success')->with('message', 'Profil berhasil diperbarui.');
     }
 
     /**
@@ -105,7 +107,7 @@ class ProfileController extends Controller
     public function updatePhoto(Request $request)
     {
         $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:4096',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg',
         ]);
 
         $user = $request->user();
@@ -126,32 +128,38 @@ class ProfileController extends Controller
                 : redirect()->back()->with('status', 'error')->with('message', 'Tidak ada profil terkait.');
         }
 
-        $file = $request->file('image');
-        $name = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-        $dest = public_path('assets/profile');
+        // handle image upload with compression
+        try {
+            $savedName = $this->saveUploadedImage($request->file('image'));
+            if ($savedName) {
+                // delete old file if exists
+                if (!empty($model->{$field})) {
+                    $old = public_path('assets/profile/' . $model->{$field});
+                    if (File::exists($old)) {
+                        @unlink($old);
+                    }
+                }
+                $model->{$field} = $savedName;
+                $model->save();
+                $url = asset('assets/profile/' . $savedName);
 
-        if (!File::exists($dest)) {
-            File::makeDirectory($dest, 0755, true);
-        }
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => true, 'file' => $savedName, 'url' => $url]);
+                }
 
-        $file->move($dest, $name);
-
-        if (!empty($model->{$field})) {
-            $old = $dest . DIRECTORY_SEPARATOR . $model->{$field};
-            if (File::exists($old)) {
-                @unlink($old);
+                return redirect()->back()->with('status', 'success')->with('message', 'Foto profil berhasil diperbarui.');
             }
+        } catch (\Throwable $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Upload gagal: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('status', 'error')->with('message', 'Unggah foto gagal: ' . $e->getMessage());
         }
-
-        $model->{$field} = $name;
-        $model->save();
-        $url = asset('assets/profile/' . $name);
 
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'file' => $name, 'url' => $url]);
+            return response()->json(['success' => false, 'message' => 'Gagal memproses gambar'], 500);
         }
-
-        return redirect()->back()->with('status', 'photo-updated')->with('message', 'Foto profil berhasil diperbarui.');
+        return redirect()->back()->with('status', 'error')->with('message', 'Gagal memproses gambar profil.');
     }
 
     /**
@@ -173,6 +181,160 @@ class ProfileController extends Controller
 
         $user->update(['password' => Hash::make($request->password)]);
 
-        return back()->with('status', 'password-updated');
+        return back()->with('status', 'success')->with('message', 'Password berhasil diperbarui.');
+    }
+
+    /* -------------------- image helper -------------------- */
+
+    protected function saveUploadedImage(\Illuminate\Http\UploadedFile $file): ?string
+    {
+        $destDir = public_path('assets/profile');
+        if (! File::exists($destDir)) {
+            File::makeDirectory($destDir, 0755, true);
+        }
+
+        $orig = $file->getClientOriginalName();
+        $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+        $base = pathinfo($orig, PATHINFO_FILENAME);
+        $base = Str::slug(substr($base, 0, 50), '_');
+        $name = time() . '_' . $base . '.' . $ext;
+        $tmpPath = $file->getRealPath();
+        $destPath = $destDir . DIRECTORY_SEPARATOR . $name;
+
+        // if already small -> move
+        if ($file->getSize() !== null && $file->getSize() <= $this->maxImageBytes) {
+            $file->move($destDir, $name);
+            return $name;
+        }
+
+        // try compressing
+        try {
+            $ok = $this->compressImageIfNeeded($tmpPath, $destPath, $ext, $this->maxImageBytes);
+            if ($ok && File::exists($destPath)) return $name;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("compressImageIfNeeded failed for profile upload: " . $e->getMessage());
+        }
+
+        // fallback: move original
+        try {
+            $file->move($destDir, $name);
+            \Illuminate\Support\Facades\Log::warning("Image compression fallback used for profile upload: {$name}");
+            return $name;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Failed moving uploaded image after compression fallback: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    protected function compressImageIfNeeded(string $sourcePath, string $destinationPath, string $ext, int $maxBytes): bool
+    {
+        if (! file_exists($sourcePath)) {
+            throw new \InvalidArgumentException("Source file not found: {$sourcePath}");
+        }
+
+        $contents = @file_get_contents($sourcePath);
+        if ($contents === false) {
+            throw new \RuntimeException("Unable to read uploaded file");
+        }
+
+        $img = @imagecreatefromstring($contents);
+        if ($img === false) {
+            throw new \RuntimeException("Unsupported image format or corrupt image");
+        }
+
+        // Optionally scale down image if it's too large to ensure we hit < 500kb
+        $width = imagesx($img);
+        $height = imagesy($img);
+        if ($width > 1200 || $height > 1200) {
+            $ratio = $width / $height;
+            if ($width > $height) {
+                $newWidth = 1200;
+                $newHeight = 1200 / $ratio;
+            } else {
+                $newHeight = 1200;
+                $newWidth = 1200 * $ratio;
+            }
+            $tmpImg = imagecreatetruecolor((int)$newWidth, (int)$newHeight);
+            
+            // preserve transparency for PNG/WebP
+            $mime = getimagesize($sourcePath)['mime'] ?? null;
+            if ($mime === 'image/png' || $mime === 'image/webp') {
+                imagealphablending($tmpImg, false);
+                imagesavealpha($tmpImg, true);
+                $transparent = imagecolorallocatealpha($tmpImg, 255, 255, 255, 127);
+                imagefilledrectangle($tmpImg, 0, 0, (int)$newWidth, (int)$newHeight, $transparent);
+            }
+            
+            imagecopyresampled($tmpImg, $img, 0, 0, 0, 0, (int)$newWidth, (int)$newHeight, $width, $height);
+            imagedestroy($img);
+            $img = $tmpImg;
+        }
+
+        $destroyImage = function ($im) {
+            if (! $im) return;
+            if (is_resource($im) || (class_exists('GdImage') && $im instanceof \GdImage)) {
+                @imagedestroy($im);
+            }
+        };
+
+        $success = false;
+        $mime = getimagesize($sourcePath)['mime'] ?? null;
+
+        if ($mime === 'image/jpeg' || $mime === 'image/jpg' || $mime === 'image/webp') {
+            $quality = 90;
+            while ($quality >= 40) {
+                if ($mime === 'image/webp' && function_exists('imagewebp')) {
+                    @imagewebp($img, $destinationPath, $quality);
+                } else {
+                    @imagejpeg($img, $destinationPath, $quality);
+                }
+                clearstatcache(true, $destinationPath);
+                if (file_exists($destinationPath) && filesize($destinationPath) <= $maxBytes) {
+                    $success = true;
+                    break;
+                }
+                $quality -= 10;
+            }
+        }
+
+        if (! $success && $mime === 'image/png') {
+            for ($level = 6; $level <= 9; $level++) {
+                @imagepng($img, $destinationPath, $level);
+                clearstatcache(true, $destinationPath);
+                if (file_exists($destinationPath) && filesize($destinationPath) <= $maxBytes) {
+                    $success = true;
+                    break;
+                }
+            }
+            if (! $success) {
+                $quality = 90;
+                while ($quality >= 40) {
+                    @imagejpeg($img, $destinationPath, $quality);
+                    clearstatcache(true, $destinationPath);
+                    if (file_exists($destinationPath) && filesize($destinationPath) <= $maxBytes) {
+                        $success = true;
+                        break;
+                    }
+                    $quality -= 10;
+                }
+            }
+        }
+
+        if (! $success && ! in_array($mime, ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'])) {
+            $quality = 85;
+            while ($quality >= 40) {
+                @imagejpeg($img, $destinationPath, $quality);
+                clearstatcache(true, $destinationPath);
+                if (file_exists($destinationPath) && filesize($destinationPath) <= $maxBytes) {
+                    $success = true;
+                    break;
+                }
+                $quality -= 10;
+            }
+        }
+
+        $destroyImage($img);
+
+        return $success;
     }
 }

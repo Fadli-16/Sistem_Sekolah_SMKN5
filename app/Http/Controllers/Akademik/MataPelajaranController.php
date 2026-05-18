@@ -22,7 +22,7 @@ class MataPelajaranController extends Controller
             $query->where('guru_id', $user->id);
         }
 
-        $mapels = $query->get();
+        $mapels = $query->orderBy('nama_mata_pelajaran')->get();
 
         return view('sistem_akademik.mata_pelajaran.index', [
             'mapels' => $mapels,
@@ -34,11 +34,14 @@ class MataPelajaranController extends Controller
     public function create()
     {
         $gurus = $this->getGuruList();
+        $namaMapelList = MataPelajaran::select('nama_mata_pelajaran')
+            ->distinct()->orderBy('nama_mata_pelajaran')->pluck('nama_mata_pelajaran');
 
         return view('sistem_akademik.mata_pelajaran.createOrEdit', [
-            'mapel'  => null,
-            'gurus'  => $gurus,
-            'header' => 'Tambah Mata Pelajaran',
+            'mapel'         => null,
+            'gurus'         => $gurus,
+            'namaMapelList' => $namaMapelList,
+            'header'        => 'Tambah Mata Pelajaran',
         ]);
     }
 
@@ -69,11 +72,14 @@ class MataPelajaranController extends Controller
     public function edit(MataPelajaran $mataPelajaran)
     {
         $gurus = $this->getGuruList();
+        $namaMapelList = MataPelajaran::select('nama_mata_pelajaran')
+            ->distinct()->orderBy('nama_mata_pelajaran')->pluck('nama_mata_pelajaran');
 
         return view('sistem_akademik.mata_pelajaran.createOrEdit', [
-            'mapel'  => $mataPelajaran,
-            'gurus'  => $gurus,
-            'header' => 'Edit Mata Pelajaran',
+            'mapel'         => $mataPelajaran,
+            'gurus'         => $gurus,
+            'namaMapelList' => $namaMapelList,
+            'header'        => 'Edit Mata Pelajaran',
         ]);
     }
 
@@ -107,6 +113,21 @@ class MataPelajaranController extends Controller
         return redirect()->route('sistem_akademik.mata_pelajaran.index')
             ->with('status', 'success')
             ->with('message', 'Mata pelajaran berhasil dihapus.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->ids;
+        if (!$ids || !is_array($ids)) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada data yang dipilih']);
+        }
+
+        try {
+            MataPelajaran::whereIn('id', $ids)->delete();
+            return response()->json(['success' => true, 'message' => count($ids) . ' data mata pelajaran berhasil dihapus']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus data: ' . $e->getMessage()]);
+        }
     }
 
     /**

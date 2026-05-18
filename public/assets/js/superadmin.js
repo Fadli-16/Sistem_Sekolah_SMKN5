@@ -314,12 +314,14 @@ const SuperAdmin = {
     logout: function () {
         if (typeof Swal !== "undefined" && typeof Swal.fire === "function") {
             Swal.fire({
-                title: "Log Out?",
-                text: "Are you sure you want to log out?",
+                title: "Keluar Akun?",
+                text: "Apakah Anda yakin ingin keluar dari sistem?",
                 icon: "question",
                 showCancelButton: true,
-                confirmButtonText: "Yes, log out",
-                cancelButtonText: "Cancel",
+                confirmButtonText: "Ya, Keluar",
+                cancelButtonText: "Batal",
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById("logoutForm").submit();
@@ -327,7 +329,7 @@ const SuperAdmin = {
             });
         } else {
             // fallback
-            if (confirm("Are you sure you want to log out?")) {
+            if (confirm("Apakah Anda yakin ingin keluar?")) {
                 document.getElementById("logoutForm").submit();
             }
         }

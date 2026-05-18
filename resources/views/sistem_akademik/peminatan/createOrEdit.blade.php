@@ -1,190 +1,238 @@
 @extends('sistem_akademik.layouts.main')
 
+@section('css')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        border: 1px solid #dee2e6;
+        height: 38px;
+        border-radius: 8px;
+        padding-top: 4px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+    .select2-dropdown {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+</style>
+@endsection
+
 @section('content')
-<div class="container mt-4 mb-4">
-    <h1 class="page-title">{{ $header }}</h1>
-    <div class="card p-4">
-        <form action="{{ isset($peminatan) 
-                ? route('sistem_akademik.peminatan.update', $peminatan->id) 
-                : route('sistem_akademik.peminatan.store') }}"
-            method="POST">
-            @csrf
-            @if(isset($peminatan))
-            @method('PUT')
-            @endif
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">{{ $header }}</h1>
+            <p class="page-subtitle">{{ isset($peminatan) ? 'Perbarui data peminatan' : 'Isi form peminatan sekolah' }}</p>
+        </div>
+        <a href="{{ route('sistem_akademik.peminatan.index') }}" class="btn-secondary-app">
+            <i class="bi bi-arrow-left"></i> Kembali
+        </a>
+    </div>
 
-            <div class="mb-3">
-                <label>Nama:</label>
-                @if(Auth::user()->role === 'admin_sa')
-                <select name="user_id" class="form-control" required>
-                    <option value="">-- Pilih Nama --</option>
-                    @foreach($users as $user)
-                    <option
-                        value="{{ $user->id }}"
-                        {{ old('user_id', $peminatan->user_id ?? '') == $user->id 
-                                ? 'selected' 
-                                : '' }}>
-                        {{ $user->nama }}
-                    </option>
-                    @endforeach
-                </select>
-                @else
-                {{-- siswa --}}
-                <input
-                    type="hidden"
-                    name="user_id"
-                    value="{{ Auth::id() }}">
-                <input
-                    type="text"
-                    class="form-control-plaintext"
-                    readonly
-                    value="{{ Auth::user()->nama }}">
-                @endif
-            </div>
+    <div class="form-card">
+        <div class="form-card-header">
+            <h5><i class="bi bi-diagram-3-fill me-2"></i>{{ isset($peminatan) ? 'Form Edit Peminatan' : 'Form Peminatan' }}</h5>
+            <p>Isi minat dan rencana setelah lulus SMK</p>
+        </div>
+        <div class="form-card-body">
+            <form action="{{ isset($peminatan) ? route('sistem_akademik.peminatan.update', $peminatan->id) : route('sistem_akademik.peminatan.store') }}"
+                  method="POST">
+                @csrf
+                @if(isset($peminatan)) @method('PUT') @endif
 
-            <div class="mb-3">
-                <label for="minat">Minat:</label>
-                <select id="minat" name="minat" class="form-control" required>
-                    <option value="">-- Pilih Minat --</option>
+                <p class="form-section-title">Identitas Siswa</p>
+                <div class="mb-3">
+                    <label class="form-label">Nama Siswa</label>
+                    @if(in_array(Auth::user()->role, ['admin_sa', 'super_admin']))
+                    <select name="user_id" class="form-select select2" required>
+                        <option value="">-- Pilih Nama --</option>
+                        @foreach($users as $user)
+                        <option value="{{ $user->id }}"
+                            {{ old('user_id', $peminatan->user_id ?? '') == $user->id ? 'selected' : '' }}>
+                            {{ $user->nama }}
+                        </option>
+                        @endforeach
+                    </select>
+                    @else
+                    <input type="hidden" name="user_id" value="{{ Auth::id() }}">
+                    <input type="text" class="form-control" readonly value="{{ Auth::user()->nama }}"
+                           style="background:#f8fafc;font-weight:600;">
+                    @endif
+                </div>
+
+                <p class="form-section-title mt-4">Pilihan Minat</p>
+                <div class="mb-3">
+                    <label for="minat" class="form-label">Minat Setelah Lulus <span class="text-danger">*</span></label>
                     @php
-                    $options = ['bekerja'=>'Bekerja','wirausaha'=>'Wirausaha','kuliah'=>'Kuliah','lainnya'=>'Lainnya'];
-                    $selectedMinat = old('minat', $peminatan->minat ?? '');
+                        $options = ['bekerja'=>'Bekerja','wirausaha'=>'Wirausaha','kuliah'=>'Kuliah','lainnya'=>'Lainnya'];
+                        $selectedMinat = old('minat', $peminatan->minat ?? '');
                     @endphp
-                    @foreach($options as $key => $label)
-                    <option value="{{ $key }}"
-                        {{ $selectedMinat === $key ? 'selected' : '' }}>
-                        {{ $label }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        @foreach($options as $key => $label)
+                        @php
+                            $iconMap = ['bekerja'=>'briefcase-fill','wirausaha'=>'shop','kuliah'=>'mortarboard-fill','lainnya'=>'three-dots'];
+                            $colorMap = ['bekerja'=>'badge-info','wirausaha'=>'badge-success','kuliah'=>'badge-purple','lainnya'=>'badge-gray'];
+                        @endphp
+                        <label style="cursor:pointer;flex:1;min-width:110px;">
+                            <input type="radio" name="minat" value="{{ $key }}" class="d-none minat-radio"
+                                   {{ $selectedMinat === $key ? 'checked' : '' }}>
+                            <div class="minat-card p-3 text-center rounded-3 border-2" style="border:2px solid #e2e8f0;transition:all 0.2s;border-radius:10px!important;">
+                                <i class="bi bi-{{ $iconMap[$key] }}" style="font-size:1.5rem;display:block;margin-bottom:4px;"></i>
+                                <span style="font-size:0.8rem;font-weight:600;">{{ $label }}</span>
+                            </div>
+                        </label>
+                        @endforeach
+                    </div>
+                </div>
 
-            <div class="mb-3">
-                <label>Alasan:</label>
-                <textarea name="alasan" class="form-control">{{ old('alasan', $peminatan->alasan ?? '') }}</textarea>
-            </div>
+                {{-- Conditional fields --}}
+                <div id="group-pemilihan-jurusan" class="conditional-field mb-3" data-for="kuliah" style="display:none;">
+                    <label class="form-label">Jurusan yang Dipilih</label>
+                    <input type="text" name="pemilihan_jurusan" class="form-control"
+                           value="{{ old('pemilihan_jurusan', $peminatan->pemilihan_jurusan ?? '') }}"
+                           placeholder="Contoh: Teknik Informatika, Akuntansi...">
+                </div>
 
-            {{-- PEMILIHAN JURUSAN (untuk minat = kuliah) --}}
-            <div class="mb-3 conditional-field" id="group-pemilihan-jurusan" data-for="kuliah" aria-hidden="true" style="display:none;">
-                <label>Jurusan yang dipilih:</label>
-                <input type="text" id="pemilihan_jurusan" name="pemilihan_jurusan" class="form-control"
-                    value="{{ old('pemilihan_jurusan', $peminatan->pemilihan_jurusan ?? '') }}">
-            </div>
+                <div id="group-jenis-pekerjaan" class="conditional-field mb-3" data-for="bekerja" style="display:none;">
+                    <label class="form-label">Jenis Pekerjaan</label>
+                    <input type="text" name="jenis_pekerjaan" class="form-control"
+                           value="{{ old('jenis_pekerjaan', $peminatan->jenis_pekerjaan ?? '') }}"
+                           placeholder="Contoh: Teknisi, Programmer, Mekanik...">
+                </div>
 
-            {{-- JENIS PEKERJAAN (untuk minat = bekerja) --}}
-            <div class="mb-3 conditional-field" id="group-jenis-pekerjaan" data-for="bekerja" aria-hidden="true" style="display:none;">
-                <label>Jenis Pekerjaan:</label>
-                <input type="text" id="jenis_pekerjaan" name="jenis_pekerjaan" class="form-control"
-                    value="{{ old('jenis_pekerjaan', $peminatan->jenis_pekerjaan ?? '') }}">
-            </div>
+                <div id="group-ide-bisnis" class="conditional-field mb-3" data-for="wirausaha" style="display:none;">
+                    <label class="form-label">Ide Bisnis</label>
+                    <input type="text" name="ide_bisnis" class="form-control"
+                           value="{{ old('ide_bisnis', $peminatan->ide_bisnis ?? '') }}"
+                           placeholder="Contoh: Bengkel, Toko Online, Katering...">
+                </div>
 
-            {{-- IDE BISNIS (untuk minat = wirausaha) --}}
-            <div class="mb-3 conditional-field" id="group-ide-bisnis" data-for="wirausaha" aria-hidden="true" style="display:none;">
-                <label>Ide Bisnis:</label>
-                <input type="text" id="ide_bisnis" name="ide_bisnis" class="form-control"
-                    value="{{ old('ide_bisnis', $peminatan->ide_bisnis ?? '') }}">
-            </div>
+                <div class="mb-3">
+                    <label class="form-label">Alasan</label>
+                    <textarea name="alasan" class="form-control" rows="3"
+                              placeholder="Ceritakan alasan Anda memilih minat tersebut...">{{ old('alasan', $peminatan->alasan ?? '') }}</textarea>
+                </div>
 
-            <div class="mb-3">
-                <label>Penghasilan Orang Tua:</label>
-                <input type="number" name="penghasilan_ortu" class="form-control"
-                    value="{{ old('penghasilan_ortu', $peminatan->penghasilan_ortu ?? '') }}">
-            </div>
+                <p class="form-section-title mt-4">Data Ekonomi Keluarga</p>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Penghasilan Orang Tua (Rp)</label>
+                        <input type="number" name="penghasilan_ortu" class="form-control"
+                               value="{{ old('penghasilan_ortu', $peminatan->penghasilan_ortu ?? '') }}"
+                               placeholder="0">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tanggungan Keluarga (Orang)</label>
+                        <input type="number" name="tanggungan_keluarga" class="form-control"
+                               value="{{ old('tanggungan_keluarga', $peminatan->tanggungan_keluarga ?? '') }}"
+                               placeholder="0" min="0">
+                    </div>
+                </div>
 
-            <div class="mb-3">
-                <label>Tanggungan Keluarga:</label>
-                <input type="number" name="tanggungan_keluarga" class="form-control"
-                    value="{{ old('tanggungan_keluarga', $peminatan->tanggungan_keluarga ?? '') }}">
-            </div>
+                <p class="form-section-title mt-4">Dokumen Pendukung</p>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Link Google Drive Raport</label>
+                        <input type="url" name="file_raport" class="form-control @error('file_raport') is-invalid @enderror"
+                               placeholder="https://drive.google.com/..."
+                               value="{{ old('file_raport', $peminatan->file_raport ?? '') }}">
+                        @if(isset($peminatan) && $peminatan->file_raport)
+                        <a href="{{ $peminatan->file_raport }}" target="_blank"
+                           class="badge-modern badge-info mt-2 d-inline-flex" style="text-decoration:none;">
+                            <i class="bi bi-box-arrow-up-right"></i> Lihat Raport
+                        </a>
+                        @endif
+                        @error('file_raport')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Link Google Drive Angket</label>
+                        <input type="url" name="file_angket" class="form-control @error('file_angket') is-invalid @enderror"
+                               placeholder="https://drive.google.com/..."
+                               value="{{ old('file_angket', $peminatan->file_angket ?? '') }}">
+                        @if(isset($peminatan) && $peminatan->file_angket)
+                        <a href="{{ $peminatan->file_angket }}" target="_blank"
+                           class="badge-modern badge-info mt-2 d-inline-flex" style="text-decoration:none;">
+                            <i class="bi bi-box-arrow-up-right"></i> Lihat Angket
+                        </a>
+                        @endif
+                        @error('file_angket')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                </div>
 
-            {{-- Kolom Link Raport --}}
-            <div class="mb-3">
-                <label>Link Google Drive Raport:</label>
-                <input type="url" name="file_raport" class="form-control"
-                    placeholder="https://drive.google.com/..."
-                    value="{{ old('file_raport', $peminatan->file_raport ?? '') }}">
-                @if(isset($peminatan) && $peminatan->file_raport)
-                <a href="{{ $peminatan->file_raport }}" target="_blank">
-                    Lihat Link Raport Saat Ini
-                </a>
-                @endif
-                @error('file_raport')
-                <div class="text-danger">{{ $message }}</div>
-                @enderror
-            </div>
-
-            {{-- Kolom Link Angket --}}
-            <div class="mb-3">
-                <label>Link Google Drive Angket:</label>
-                <input type="url" name="file_angket" class="form-control"
-                    placeholder="https://drive.google.com/..."
-                    value="{{ old('file_angket', $peminatan->file_angket ?? '') }}">
-                @if(isset($peminatan) && $peminatan->file_angket)
-                <a href="{{ $peminatan->file_angket }}" target="_blank">
-                    Lihat Link Angket Saat Ini
-                </a>
-                @endif
-                @error('file_angket')
-                <div class="text-danger">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <button class="btn btn-primary" type="submit">Simpan</button>
-        </form>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn-primary-app">
+                        <i class="bi bi-{{ isset($peminatan) ? 'save' : 'plus-lg' }}"></i>
+                        {{ isset($peminatan) ? 'Simpan Perubahan' : 'Simpan Peminatan' }}
+                    </button>
+                    <a href="{{ route('sistem_akademik.peminatan.index') }}" class="btn-secondary-app">Batal</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection
 
 @section('script')
+<style>
+    input.minat-radio:checked + .minat-card {
+        border-color: #f97316 !important;
+        background: #fff7ed;
+        color: #c2410c;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const selectMinat = document.getElementById('minat');
-        const groups = {
-            pemilihan_jurusan: document.getElementById('group-pemilihan-jurusan'),
-            jenis_pekerjaan: document.getElementById('group-jenis-pekerjaan'),
-            ide_bisnis: document.getElementById('group-ide-bisnis')
-        };
+    $(document).ready(function() {
+        // Initialize Select2
+        $('.select2').select2({
+            placeholder: "-- Pilih Nama --",
+            allowClear: true,
+            width: '100%'
+        });
 
-        // helper to show/hide and toggle required
-        function setGroupVisibility(groupEl, visible) {
-            if (!groupEl) return;
-            const inputs = groupEl.querySelectorAll('input, textarea, select');
-            if (visible) {
-                groupEl.style.display = '';
-                groupEl.setAttribute('aria-hidden', 'false');
-                inputs.forEach(i => i.setAttribute('required', 'required'));
-            } else {
-                groupEl.style.display = 'none';
-                groupEl.setAttribute('aria-hidden', 'true');
-                inputs.forEach(i => {
-                    i.removeAttribute('required');
-                    // do not clear value here: keep user input in case they switch back
-                });
+        // Minat Radio Toggle Logic
+        const radios = $('.minat-radio');
+        const cards = $('.minat-card');
+        const fields = $('.conditional-field');
+
+        function updateUI() {
+            const selected = $('.minat-radio:checked').val();
+            
+            // Update card styling
+            radios.each(function(index) {
+                const card = $(cards[index]);
+                if ($(this).is(':checked')) {
+                    card.css({
+                        'border-color': 'var(--primary-app)',
+                        'background-color': '#f0f7ff',
+                        'color': 'var(--primary-app)',
+                        'transform': 'translateY(-2px)',
+                        'box-shadow': '0 4px 12px rgba(30, 58, 95, 0.1)'
+                    });
+                } else {
+                    card.css({
+                        'border-color': '#e2e8f0',
+                        'background-color': 'white',
+                        'color': '#64748b',
+                        'transform': 'none',
+                        'box-shadow': 'none'
+                    });
+                }
+            });
+
+            // Show/hide fields
+            fields.hide();
+            if(selected) {
+                $(`.conditional-field[data-for="${selected}"]`).fadeIn();
             }
         }
 
-        function updateVisibility() {
-            const val = selectMinat.value;
-            // default hide all
-            setGroupVisibility(groups.pemilihan_jurusan, false);
-            setGroupVisibility(groups.jenis_pekerjaan, false);
-            setGroupVisibility(groups.ide_bisnis, false);
-
-            if (val === 'kuliah') {
-                setGroupVisibility(groups.pemilihan_jurusan, true);
-            } else if (val === 'bekerja') {
-                setGroupVisibility(groups.jenis_pekerjaan, true);
-            } else if (val === 'wirausaha') {
-                setGroupVisibility(groups.ide_bisnis, true);
-            }
-            // 'lainnya' -> keep all hidden
-        }
-
-        // init on load (uses server-side old()/model values)
-        updateVisibility();
-
-        // listen for changes
-        selectMinat.addEventListener('change', updateVisibility);
+        radios.on('change', updateUI);
+        updateUI(); // Initial run
     });
 </script>
 @endsection

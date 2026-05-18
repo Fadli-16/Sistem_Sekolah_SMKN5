@@ -26,7 +26,7 @@
 
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="document.getElementById('logoutForm').submit();">
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="logout(event)">
                                     <i class="bi bi-box-arrow-right me-1"></i> Logout
                                 </a>
                             </li>
@@ -44,6 +44,6 @@
     </div>
 </nav>
 
-<form id="logoutForm" action="{{ route('logout') }}" method="get" style="display: none;">
+<form id="logoutForm" action="{{ route('logout') }}" method="POST" style="display: none;">
     @csrf
 </form>

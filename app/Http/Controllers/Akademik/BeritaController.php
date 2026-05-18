@@ -110,6 +110,12 @@ class BeritaController extends Controller
         $title = 'Berita';
         $header = 'Detail Berita';
         $berita = Berita::findOrFail($id);
+
+        // Catat bahwa user telah membaca berita ini
+        if (Auth::check()) {
+            $berita->readers()->syncWithoutDetaching([Auth::id()]);
+        }
+
         return view('sistem_akademik.berita.show', compact('title', 'header', 'berita'));
     }
 
@@ -201,5 +207,29 @@ class BeritaController extends Controller
         return redirect()->route('sistem_akademik.berita.index')
             ->with('status', 'success')
             ->with('message', 'Data berhasil dihapus');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->ids;
+        if (!$ids || !is_array($ids)) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada data yang dipilih']);
+        }
+
+        try {
+            $beritas = Berita::whereIn('id', $ids)->get();
+            foreach ($beritas as $berita) {
+                if ($berita->foto && file_exists(public_path('assets/berita/' . $berita->foto))) {
+                    @unlink(public_path('assets/berita/' . $berita->foto));
+                }
+                if ($berita->file && file_exists(public_path('file/' . $berita->file))) {
+                    @unlink(public_path('file/' . $berita->file));
+                }
+                $berita->delete();
+            }
+            return response()->json(['success' => true, 'message' => count($ids) . ' data berita berhasil dihapus']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus data: ' . $e->getMessage()]);
+        }
     }
 }

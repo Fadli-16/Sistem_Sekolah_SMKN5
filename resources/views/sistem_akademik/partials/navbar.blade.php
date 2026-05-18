@@ -31,7 +31,7 @@
 
                 $avatarUrl = ($avatar && $path && file_exists(public_path($path . $avatar)))
                 ? asset($path . $avatar)
-                : asset('assets/img/default.png');
+                : asset('assets/profile/default.png');
                 @endphp
 
                 <li class="nav-item dropdown">
@@ -61,7 +61,7 @@
                         <li>
                             <a class="dropdown-item"
                                 href="javascript:void(0)"
-                                onclick="document.getElementById('logoutForm').submit();">
+                                onclick="logout(event)">
                                 <i class="bi bi-box-arrow-right me-1"></i> Logout
                             </a>
                         </li>

@@ -1,280 +1,249 @@
 @extends('sistem_akademik.layouts.main')
 
-@section('css')
-<style>
-    /* tombol tambah lebih kecil */
-    .btn-add-siswa {
-        min-width: 0;
-        padding: .35rem .6rem;
-    }
-
-    /* avatar kecil + crop (lebih kecil agar tidak memaksa lebar kolom) */
-    .avatar {
-        width: 48px;
-        height: 48px;
-        object-fit: cover;
-        border-radius: 6px;
-        border: 1px solid #ddd;
-        display: inline-block;
-        vertical-align: middle;
-        flex-shrink: 0;
-    }
-
-    /* wrapper foto + teks */
-    .media {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .name-wrap {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        line-height: 1.1;
-    }
-
-    /* Biarkan nama melakukan wrapping agar tidak memperlebar tabel */
-    .name-wrap .name {
-        font-weight: 600;
-        display: block;
-        white-space: normal;
-        /* allow wrapping */
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
-    }
-
-    /*
-     * Force table to fit container and allow cells to wrap content
-     * - table-layout: fixed membuat kolom dipatok pada lebar yang ditetapkan,
-     *   sehingga total lebar tidak melebihi container.
-     * - menghilangkan min-width yang memaksa overflow.
-     */
-    .table {
-        table-layout: fixed;
-        width: 100% !important;
-    }
-
-    .table th,
-    .table td {
-        white-space: normal;
-        /* allow wrapping inside cells */
-        word-wrap: break-word;
-        /* break long words/strings */
-        vertical-align: middle;
-    }
-
-    /* atur lebar relatif (persentase sehingga tidak overflow) */
-    th.col-no {
-        width: 4%;
-    }
-
-    th.col-nis {
-        width: 7%;
-    }
-
-    th.col-photo {
-        width: 22%;
-    }
-
-    th.col-kelas {
-        width: 6%;
-    }
-
-    th.col-jurusan {
-        width: 12%;
-    }
-
-    th.col-jk {
-        width: 9%;
-    }
-
-    th.col-agama {
-        width: 8%;
-    }
-
-    th.col-alamat {
-        width: 19%;
-    }
-
-    th.col-hp {
-        width: 7%;
-    }
-
-    th.col-aksi {
-        width: 6%;
-    }
-
-    /* aksi & tombol kecil */
-    .btn-aksi {
-        padding: .25rem .45rem;
-        font-size: .85rem;
-    }
-
-    /* header compact */
-    .page-header-left p {
-        margin: 0;
-    }
-
-    /* responsive tweaks: pada layar sangat sempit kita kecilkan avatar & font sedikit */
-    @media (max-width: 768px) {
-        .avatar {
-            width: 40px;
-            height: 40px;
-        }
-
-        th.col-photo {
-            width: 26%;
-        }
-
-        th.col-alamat {
-            width: 18%;
-        }
-
-        th.col-jurusan {
-            width: 14%;
-        }
-
-        .name-wrap .name {
-            font-size: 0.95rem;
-        }
-    }
-</style>
-@endsection
-
 @section('content')
-<div class="container mb-3">
-    {{-- header bar: judul (kiri) + tombol (kanan) --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="page-header-left">
-            <h1 class="page-title mb-3">{{ $header }}</h1>
-            <p class="text-muted mb-0"><i class="bi bi-people me-2"></i>Kelola biodata seluruh siswa</p>
+<div class="container-fluid">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">{{ $header }}</h1>
+            <p class="page-subtitle"><i class="bi bi-people-fill me-1"></i>Kelola biodata seluruh siswa</p>
         </div>
-
-        <div class="page-header-right">
-            <a href="{{ route('sistem_akademik.siswa.create') }}"
-                class="btn btn-primary btn-sm btn-add-siswa mt-5">
-                <i class="bi bi-plus-circle"></i> Tambah Siswa
+        <div class="d-flex gap-2 align-items-center">
+            <button type="button" id="btn-bulk-delete" class="btn btn-sm btn-danger-app d-none" onclick="bulkDelete()">
+                <i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selected-count">0</span>)
+            </button>
+            <a href="{{ route('sistem_akademik.siswa.create') }}" class="btn-primary-app">
+                <i class="bi bi-plus-lg"></i> Tambah Siswa
             </a>
         </div>
     </div>
 
-    <div class="card p-3">
-        {{-- table-responsive dibiarkan, namun CSS di atas memastikan overflow horizontal tidak diperlukan --}}
+    <div class="table-container mb-3 p-3">
+        <form action="{{ route('sistem_akademik.siswa.index') }}" method="GET" class="row g-2">
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-1">Filter Jurusan</label>
+                <select name="jurusan" class="form-select form-select-sm" onchange="document.querySelector('select[name=\'kelas_id\']').value=''; this.form.submit()">
+                    <option value="">Semua Jurusan</option>
+                    @foreach($jurusanList as $j)
+                        <option value="{{ $j->jurusan }}" {{ request('jurusan') == $j->jurusan ? 'selected' : '' }}>{{ $j->jurusan }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-1">Filter Kelas</label>
+                <select name="kelas_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Semua Kelas</option>
+                    @foreach($kelas as $k)
+                        <option value="{{ $k->id }}" {{ request('kelas_id') == $k->id ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <a href="{{ route('sistem_akademik.siswa.index') }}" class="btn btn-sm btn-secondary-app w-100">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-container">
         <div class="table-responsive">
-            <table class="table table-bordered table-hover" id="data-table">
+            <table class="table table-hover" id="data-table">
                 <thead>
                     <tr>
-                        <th class="col-no">No</th>
-                        <th class="col-nis">NIS</th>
-                        <th class="col-photo">Nama</th>
-                        <th class="col-kelas">Kelas</th>
-                        <th class="col-jurusan">Jurusan</th>
-                        <th class="col-jk">Jenis Kelamin</th>
-                        <th class="col-agama">Agama</th>
-                        <th class="col-alamat">Alamat</th>
-                        <th class="col-hp">No HP</th>
-                        <th class="col-aksi">Aksi</th>
+                        <th width="3%">
+                            <input type="checkbox" id="select-all" class="form-check-input">
+                        </th>
+                        <th width="4%">No</th>
+                        <th>Siswa</th>
+                        <th>Kelas</th>
+                        <th>Jurusan</th>
+                        <th>Jenis Kelamin</th>
+                        <th>Agama</th>
+                        <th>No HP</th>
+                        <th width="8%">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($students as $index => $student)
                     @php
-                    $defaultImage = asset('assets/profile/default.png');
-
-                    // prefer full path to stored image (public/assets/profile/)
-                    $avatar = $student->image
-                    ? asset('assets/profile/' . ltrim($student->image, '/'))
-                    : $defaultImage;
-
-                    $name = optional($student->user)->nama ?? '-';
+                        $defaultImage = asset('assets/profile/default.png');
+                        $avatar = $student->image ? asset('assets/profile/' . ltrim($student->image, '/')) : $defaultImage;
+                        $name   = optional($student->user)->nama ?? '-';
                     @endphp
                     <tr>
+                        <td>
+                            <input type="checkbox" class="form-check-input select-item" value="{{ $student->id }}">
+                        </td>
                         <td>{{ $index + 1 }}</td>
-                        <td>{{ $student->nis ?? '-' }}</td>
-
-                        <td class="col-photo">
-                            <div class="media">
-                                <img src="{{ $avatar }}" alt="avatar" class="avatar"
-                                    onerror="this.onerror=null;this.src='{{ $defaultImage }}'">
-                                <div class="name-wrap">
-                                    <span class="name">{{ $name }}</span>
-                                    {{-- jika ingin menampilkan email lalu hilangkan komentar:
-                                    <small class="text-muted">{{ optional($student->user)->email ?? '' }}</small>
-                                    --}}
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <img src="{{ $avatar }}" alt="avatar" class="avatar-circle"
+                                     onerror="this.onerror=null;this.src='{{ $defaultImage }}'">
+                                <div>
+                                    <div style="font-weight:600;font-size:0.875rem;">{{ $name }}</div>
+                                    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">NIS: {{ $student->nis ?? '-' }}</div>
                                 </div>
                             </div>
                         </td>
-
                         <td>{{ $student->kelas ?? '-' }}</td>
-                        <td class="col-jurusan">{{ $student->jurusan ?? '-' }}</td>
-                        <td>{{ $student->jenis_kelamin ?? '-' }}</td>
+                        <td>
+                            @if($student->jurusan)
+                                <span class="badge-modern badge-info">{{ $student->jurusan }}</span>
+                            @else -
+                            @endif
+                        </td>
+                        <td>
+                            @if($student->jenis_kelamin === 'Laki-laki')
+                                <span class="badge-modern badge-info"><i class="bi bi-gender-male"></i> L</span>
+                            @elseif($student->jenis_kelamin === 'Perempuan')
+                                <span class="badge-modern badge-purple"><i class="bi bi-gender-female"></i> P</span>
+                            @else -
+                            @endif
+                        </td>
                         <td>{{ $student->agama ?? '-' }}</td>
-                        <td>{{ $student->alamat ?? '-' }}</td>
                         <td>{{ $student->no_hp ?? '-' }}</td>
                         <td>
-                            <a href="{{ route('sistem_akademik.siswa.edit', $student->id) }}"
-                                class="btn btn-warning btn-sm btn-aksi" title="Edit">
-                                <i class="bi bi-pencil-square"></i>
-                            </a>
-
-                            <form action="{{ route('sistem_akademik.siswa.destroy', $student->id) }}"
-                                method="post" id="deleteForm{{ $student->id }}" style="display:inline">
-                                @csrf @method('DELETE')
-                                <button type="button" onclick="confirmDelete('{{ $student->id }}')"
-                                    class="btn btn-danger btn-sm btn-aksi" title="Hapus">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('sistem_akademik.siswa.edit', $student->id) }}"
+                                   class="btn-icon btn-icon-warning" title="Edit">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </a>
+                                <form action="{{ route('sistem_akademik.siswa.destroy', $student->id) }}"
+                                      method="post" id="deleteForm{{ $student->id }}" style="display:inline">
+                                    @csrf @method('DELETE')
+                                    <button type="button" onclick="confirmDelete('{{ $student->id }}')"
+                                            class="btn-icon btn-icon-danger" title="Hapus">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
+
+        @if($students->isEmpty())
+        <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <p>Belum ada data siswa</p>
+            <a href="{{ route('sistem_akademik.siswa.create') }}" class="btn-primary-app">
+                <i class="bi bi-plus-lg"></i> Tambah Siswa Pertama
+            </a>
+        </div>
+        @endif
     </div>
 </div>
 @endsection
 
 @section('script')
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         if (!$.fn.DataTable.isDataTable('#data-table')) {
             $('#data-table').DataTable({
-                responsive: false, // non-aktifkan responsive agar kolom tetap terlihat (tidak di-collapse)
-                autoWidth: false, // biarkan CSS mengatur lebar kolom
-                columnDefs: [{
-                    orderable: false,
-                    targets: [-1] // aksi (kolom terakhir)
-                }],
+                responsive: false,
+                autoWidth: false,
+                columnDefs: [{ orderable: false, targets: [0, -1] }],
                 language: {
                     search: "Cari:",
                     lengthMenu: "Tampilkan _MENU_ data",
                     info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-                    infoEmpty: "Tidak ada data yang ditampilkan",
-                    infoFiltered: "(difilter dari _MAX_ total data)",
-                    paginate: {
-                        first: "Pertama",
-                        last: "Terakhir",
-                        next: "Selanjutnya",
-                        previous: "Sebelumnya"
-                    }
+                    infoEmpty: "Tidak ada data",
+                    infoFiltered: "(difilter dari _MAX_ total)",
+                    paginate: { first: "«", last: "»", next: "›", previous: "‹" },
+                    zeroRecords: "Data tidak ditemukan"
                 }
             });
         }
+
+        // Select All - Use DataTable API
+        $('#select-all').on('click', function() {
+            const table = $('#data-table').DataTable();
+            const rows = table.rows({ 'search': 'applied' }).nodes();
+            $('input[type="checkbox"]', rows).prop('checked', this.checked);
+            updateBulkDeleteButton();
+        });
+
+        // Event delegation for checkboxes
+        $(document).on('change', '.select-item', function() {
+            updateBulkDeleteButton();
+        });
     });
+
+    function updateBulkDeleteButton() {
+        const table = $('#data-table').DataTable();
+        const selectedCount = table.$('.select-item:checked').length;
+        
+        $('#selected-count').text(selectedCount);
+        if (selectedCount > 0) {
+            $('#btn-bulk-delete').removeClass('d-none');
+        } else {
+            $('#btn-bulk-delete').addClass('d-none');
+            $('#select-all').prop('checked', false);
+        }
+    }
+
+    function bulkDelete() {
+        const table = $('#data-table').DataTable();
+        const selectedIds = [];
+        table.$('.select-item:checked').each(function() {
+            selectedIds.push($(this).val());
+        });
+
+        if (selectedIds.length === 0) {
+            Swal.fire('Info', 'Silakan pilih data yang akan dihapus.', 'info');
+            return;
+        }
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Hapus Data Siswa Terpilih?',
+            text: `Anda akan menghapus ${selectedIds.length} data siswa secara permanen!`,
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Hapus Semua!',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('sistem_akademik.siswa.bulkDestroy') }}",
+                    type: 'DELETE',
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        ids: selectedIds
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire('Berhasil!', response.message, 'success').then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Gagal!', response.message, 'error');
+                        }
+                    },
+                    error: function(err) {
+                        Swal.fire('Error!', 'Terjadi kesalahan pada server.', 'error');
+                    }
+                });
+            }
+        });
+    }
 
     function confirmDelete(id) {
         Swal.fire({
-            title: "Apakah anda yakin?",
-            text: "Data siswa akan dihapus secara permanen!",
-            icon: "warning",
+            icon: 'warning',
+            title: 'Hapus Data Siswa?',
+            text: 'Data siswa ini akan dihapus secara permanen!',
             showCancelButton: true,
-            confirmButtonColor: "#dc3545",
-            cancelButtonColor: "#6c757d",
-            confirmButtonText: "Ya, hapus!",
-            cancelButtonText: "Batal"
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i class="bi bi-trash me-1"></i> Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+            focusCancel: true,
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById('deleteForm' + id).submit();

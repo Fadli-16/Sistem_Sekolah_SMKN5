@@ -115,12 +115,17 @@
         <div class="info-item">
             <span class="info-label">Guru:</span>
             @php
-            // cari nama guru: coba (guru.nama) lalu (guru.name) lalu fallback '-'
-            $guruName = data_get($course, 'mataPelajaran.guru.nama')
-            ?? data_get($course, 'mataPelajaran.guru.name')
-            ?? '-';
+            $teacherUser = optional($course->mataPelajaran)->guru;
+            $guruName = $teacherUser->nama ?? $teacherUser->name ?? '-';
+            $teacherAvatar = asset('assets/profile/default.png');
+            if ($teacherUser && $teacherUser->guru && $teacherUser->guru->image) {
+                $teacherAvatar = asset('assets/profile/' . ltrim($teacherUser->guru->image, '/'));
+            }
             @endphp
-            <span class="info-value">{{ $guruName }}</span>
+            <span class="info-value d-flex align-items-center gap-2" style="display: inline-flex !important; vertical-align: middle;">
+                <img src="{{ $teacherAvatar }}" alt="avatar" class="rounded-circle border" style="width: 32px; height: 32px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('assets/profile/default.png') }}'">
+                <span>{{ $guruName }}</span>
+            </span>
         </div>
 
         <div class="info-item">
@@ -157,12 +162,19 @@
                     @php
                     // fallbacks: siswa->user->nama || siswa->nama || nisn
                     $sNama = data_get($s, 'user.nama') ?? data_get($s, 'user.name') ?? ($s->nama ?? ($s->nisn ?? '-'));
+                    $sAvatar = asset('assets/profile/default.png');
+                    if ($s->image) {
+                        $sAvatar = asset('assets/profile/' . ltrim($s->image, '/'));
+                    }
                     @endphp
-                    <div class="student-list-item">
-                        {{ $sNama }}
-                        @if(!empty($s->nisn))
-                        <span class="student-badge">{{ $s->nisn }}</span>
-                        @endif
+                    <div class="student-list-item d-flex align-items-center gap-2">
+                        <img src="{{ $sAvatar }}" alt="avatar" class="rounded-circle border" style="width: 30px; height: 30px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('assets/profile/default.png') }}'">
+                        <div>
+                            {{ $sNama }}
+                            @if(!empty($s->nisn))
+                            <span class="student-badge">{{ $s->nisn }}</span>
+                            @endif
+                        </div>
                     </div>
                     @endforeach
                 </div>

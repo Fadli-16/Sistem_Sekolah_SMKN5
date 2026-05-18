@@ -25,4 +25,9 @@ class Berita extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function readers()
+    {
+        return $this->belongsToMany(User::class, 'berita_reads')->withTimestamps();
+    }
 }

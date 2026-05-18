@@ -53,65 +53,155 @@
 @endsection
 
 @section('content')
-<div class="container-fluid mt-3 mb-3" id="course-index"
+<div class="container-fluid" id="course-index"
     data-timetable-url="{{ route('sistem_akademik.course.timetable') }}"
     data-download-url="{{ route('sistem_akademik.course.download-timetable') }}">
 
-    <h1 class="page-title">{{ $header }}</h1>
-    <p class="text-muted mb-4">Kelola data course, termasuk siswa yang tergabung di dalamnya</p>
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">{{ $header }}</h1>
+            <p class="page-subtitle"><i class="bi bi-calendar3 me-1"></i>Kelola jadwal dan course pembelajaran</p>
+        </div>
+        @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
+        <a href="{{ route('sistem_akademik.course.create') }}" class="btn-primary-app">
+            <i class="bi bi-plus-lg"></i> Tambah Course
+        </a>
+        @endif
+    </div>
 
     <div class="table-container">
-        <!-- bar 1: judul kiri + add-button kanan -->
-        <div class="table-header-top">
-            <div class="table-title">
-                <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Daftar Course</h5>
-            </div>
-
-            <div class="add-course-wrap">
-                @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
-                <a href="{{ route('sistem_akademik.course.create') }}" class="btn btn-success">
-                    <i class="bi bi-plus-circle"></i> Tambah Course
-                </a>
-                @endif
-            </div>
-        </div>
-
-        <!-- bar 2: controls / filter -->
-        <div class="table-header-controls">
-            @php
-            $kelasList = $kelasList ?? (\App\Models\Kelas::orderBy('nama_kelas')->get());
+        @php
             $user = Auth::user();
-            $isAdmin = in_array($user->role, ['admin','super_admin','admin_sa']);
-            $isGuru = ($user->role === 'guru');
-            $isSiswa = ($user->role === 'siswa');
-            $siswaKelasId = optional(optional($user)->siswa)->kelas_id ?? null;
-            @endphp
+            $isSiswa = $user->role === 'siswa';
+        @endphp
 
-            @if($isAdmin || $isGuru)
-            <label class="mb-0 small text-muted d-inline-block me-1">Pilih Kelas</label>
-            <select id="filter-kelas" class="form-select form-select-sm me-1"
-                data-selected-kelas="{{ $selectedKelasId ?? '' }}"
-                style="min-width:220px;">
-                <option value="">— Semua Kelas —</option>
-                @foreach($kelasList as $k)
-                <option value="{{ $k->id }}" @if(($selectedKelasId ?? '' )==$k->id) selected @endif>
-                    {{ $k->nama_kelas }} — {{ $k->jurusan }} ({{ $k->tahun_ajaran }})
-                </option>
-                @endforeach
-            </select>
+        <div class="table-container-header" style="flex-wrap:wrap; gap:1rem; padding: 1.25rem 1.5rem;">
+            @if(!$isSiswa)
+                <div class="d-flex align-items-center gap-3">
+                    <span style="font-weight:600;font-size:0.875rem;color:#374151;">Filter Jadwal</span>
+                    @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
+                    <button type="button" id="btn-bulk-delete" class="btn btn-sm btn-danger-app d-none" onclick="bulkDelete()">
+                        <i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selected-count">0</span>)
+                    </button>
+                    @endif
+                </div>
+                
+                <form action="{{ route('sistem_akademik.course.index') }}" method="GET" 
+                      class="d-flex align-items-center justify-content-between flex-wrap w-100" style="gap: 1rem;">
+                    
+                    {{-- Area Kiri: Filter Tampilan --}}
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <div class="d-flex align-items-center gap-1 me-2">
+                            <i class="bi bi-funnel text-primary"></i>
+                            <span class="small fw-bold text-muted">Filter:</span>
+                        </div>
 
-            <button id="download-timetable" class="btn btn-primary btn-sm">
-                <i class="bi bi-download"></i> Download PDF
-            </button>
-            @elseif($isSiswa && $siswaKelasId)
-            <div class="me-2">
-                <small class="text-muted">Kelas Anda:</small>
-                <span class="badge bg-info text-dark">{{ optional(\App\Models\Kelas::find($siswaKelasId))->nama_kelas ?? '—' }}</span><small class="text-muted"> {{ optional(\App\Models\Kelas::find($siswaKelasId))->jurusan ?? '—' }} ({{ optional(\App\Models\Kelas::find($siswaKelasId))->tahun_ajaran ?? '—' }})</small>
-            </div>
+                        {{-- Filter Mapel --}}
+                        <select name="nama_mata_pelajaran" class="form-select form-select-sm" style="width:160px;" onchange="this.form.submit()">
+                            <option value="">-- Semua Mapel --</option>
+                            @foreach($mapelList as $m)
+                                <option value="{{ $m->nama_mata_pelajaran }}" {{ $selectedMapelName == $m->nama_mata_pelajaran ? 'selected' : '' }}>
+                                    {{ $m->nama_mata_pelajaran }}
+                                </option>
+                            @endforeach
+                        </select>
 
-            <button id="download-timetable-siswa" class="btn btn-primary btn-sm">
-                <i class="bi bi-download"></i> Download PDF
-            </button>
+                        {{-- Filter Guru --}}
+                        @if(Auth::user()->role !== 'guru')
+                        <select name="guru_id" class="form-select form-select-sm" style="width:160px;" onchange="this.form.submit()">
+                            <option value="">-- Semua Guru --</option>
+                            @foreach($guruList as $g)
+                                <option value="{{ $g->id }}" {{ $selectedGuruId == $g->id ? 'selected' : '' }}>
+                                    {{ $g->nama ?? $g->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @endif
+
+                        {{-- Filter Hari --}}
+                        <select name="hari" class="form-select form-select-sm" style="width:110px;" onchange="this.form.submit()">
+                            <option value="">-- Hari --</option>
+                            @foreach($hariList as $h)
+                                <option value="{{ $h }}" {{ $selectedHari == $h ? 'selected' : '' }}>{{ $h }}</option>
+                            @endforeach
+                        </select>
+
+                        {{-- Filter Ruangan --}}
+                        <select name="ruangan" class="form-select form-select-sm" style="width:110px;" onchange="this.form.submit()">
+                            <option value="">-- Ruangan --</option>
+                            @foreach($ruanganList as $r)
+                                <option value="{{ $r }}" {{ $selectedRuangan == $r ? 'selected' : '' }}>{{ $r }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Area Kanan: Filter Kelas & Aksi Cetak --}}
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-1 me-1">
+                            <i class="bi bi-printer text-success"></i>
+                            <span class="small fw-bold text-muted">Cetak per Kelas:</span>
+                        </div>
+                        
+                        {{-- Filter Jurusan --}}
+                        <select name="jurusan" class="form-select form-select-sm border-success" style="width:140px;" onchange="this.form.submit()">
+                            <option value="">-- Jurusan --</option>
+                            @if(isset($jurusanList))
+                                @foreach($jurusanList as $j)
+                                    <option value="{{ $j->jurusan }}" {{ (isset($selectedJurusan) && $selectedJurusan == $j->jurusan) ? 'selected' : '' }}>
+                                        {{ $j->jurusan }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        
+                        <select name="kelas_id" class="form-select form-select-sm border-success" style="width:140px;" onchange="this.form.submit()">
+                            <option value="">-- Pilih Kelas --</option>
+                            @foreach($kelasList as $k)
+                                <option value="{{ $k->id }}" {{ $selectedKelasId == $k->id ? 'selected' : '' }}>
+                                    {{ $k->nama_kelas }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <button type="button" id="download-timetable" class="btn btn-sm btn-primary-app px-3" {{ !$selectedKelasId ? 'disabled title=Pilih_kelas_terlebih_dahulu' : '' }}>
+                            <i class="bi bi-file-earmark-pdf-fill me-1"></i> Cetak PDF
+                        </button>
+                        
+                        <a href="{{ route('sistem_akademik.course.index') }}" class="btn btn-sm btn-secondary-app" title="Reset Semua Filter">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    </div>
+                </form>
+            @else
+                @php
+                    $siswa = $user->siswa;
+                    // Gunakan fungsi relasi kelas() secara eksplisit untuk menghindari konflik atribut
+                    $kelasRelasi = $siswa->kelas()->first();
+                    
+                    $namaKelas = $kelasRelasi->nama_kelas ?? $siswa->kelas ?? '—';
+                    $jurusan = $kelasRelasi->jurusan ?? $siswa->jurusan ?? '—';
+                    $ta = $kelasRelasi->tahun_ajaran ?? '—';
+                @endphp
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon info" style="width: 45px; height: 45px; font-size: 1.25rem; background-color: #e0f2fe; color: #0284c7; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-calendar3"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: var(--text-dark); font-size: 1.1rem;">
+                                Jadwal Kelas {{ $namaKelas }}
+                            </div>
+                            <div class="text-muted small">
+                                <i class="bi bi-mortarboard me-1"></i> {{ $jurusan }} 
+                                <span class="mx-2 text-gray-300">|</span>
+                                <i class="bi bi-clock-history me-1"></i> Tahun Ajaran {{ $ta }}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" id="download-timetable" class="btn btn-sm btn-primary-app shadow-sm px-3">
+                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Cetak Jadwal PDF
+                    </button>
+                </div>
             @endif
         </div>
     </div>
@@ -120,6 +210,11 @@
         <table class="table table-hover" id="data-table" style="width:100%;">
             <thead>
                 <tr>
+                    @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
+                    <th width="3%">
+                        <input type="checkbox" id="select-all" class="form-check-input">
+                    </th>
+                    @endif
                     <th width="5%">No</th>
                     <th>Kelas</th>
                     <th>Mata Pelajaran</th>
@@ -134,19 +229,37 @@
             <tbody>
                 @foreach ($courses as $index => $course)
                 <tr>
+                    @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
+                    <td>
+                        <input type="checkbox" class="form-check-input select-item" value="{{ $course->id }}">
+                    </td>
+                    @endif
                     <td>{{ $index + 1 }}</td>
 
                     {{-- Kelas (null-safe) --}}
                     <td>
                         @if($course->kelas)
-                        <span class="badge bg-info text-dark">{{ $course->kelas->nama_kelas ?? '-' }}</span><br>
-                        <small>{{ $course->kelas->jurusan ?? '-' }}</small>
+                        <span class="badge-modern badge-info">{{ $course->kelas->nama_kelas ?? '-' }}</span>
+                        <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">{{ $course->kelas->jurusan ?? '-' }}</div>
                         @else
                         <span class="text-muted">-</span>
                         @endif
                     </td>
                     <td>{{ optional($course->mataPelajaran)->nama_mata_pelajaran ?? '-' }}</td>
-                    <td>{{ optional(optional($course->mataPelajaran)->guru)->nama ?? optional(optional($course->mataPelajaran)->guru)->name ?? '-' }}</td>
+                    <td>
+                        @php
+                            $teacherUser = optional($course->mataPelajaran)->guru;
+                            $teacherName = $teacherUser->nama ?? $teacherUser->name ?? '-';
+                            $teacherAvatar = asset('assets/profile/default.png');
+                            if ($teacherUser && $teacherUser->guru && $teacherUser->guru->image) {
+                                $teacherAvatar = asset('assets/profile/' . ltrim($teacherUser->guru->image, '/'));
+                            }
+                        @endphp
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="{{ $teacherAvatar }}" alt="avatar" class="rounded-circle border" style="width: 32px; height: 32px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('assets/profile/default.png') }}'">
+                            <span>{{ $teacherName }}</span>
+                        </div>
+                    </td>
                     <td>{{ $course->hari ?? '-' }}</td>
                     <td>
                         @if(!empty($course->jam_mulai))
@@ -164,23 +277,26 @@
                     </td>
                     <td>{{ $course->ruangan ?? '-' }}</td>
                     <td>
-                        <a href="{{ route('sistem_akademik.course.show', $course->id) }}" class="btn btn-secondary btn-sm" title="Detail">
-                            <i class="bi bi-eye"></i>
-                        </a>
-
-                        @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
-                        <a href="{{ route('sistem_akademik.course.edit', $course->id) }}" class="btn btn-warning btn-sm" title="Edit">
-                            <i class="bi bi-pencil-square"></i>
-                        </a>
-
-                        <form action="{{ route('sistem_akademik.course.destroy', $course->id) }}" method="post" id="deleteForm{{ $course->id }}" class="d-inline">
-                            @csrf
-                            @method('delete')
-                            <button type="button" onclick="confirmDelete('{{ $course->id }}')" class="btn btn-danger btn-sm" title="Hapus">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </form>
-                        @endif
+                        <div class="d-flex gap-1">
+                            <a href="{{ route('sistem_akademik.course.show', $course->id) }}"
+                               class="btn-icon btn-icon-info" title="Detail">
+                                <i class="bi bi-eye-fill"></i>
+                            </a>
+                            @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
+                            <a href="{{ route('sistem_akademik.course.edit', $course->id) }}"
+                               class="btn-icon btn-icon-warning" title="Edit">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <form action="{{ route('sistem_akademik.course.destroy', $course->id) }}"
+                                  method="post" id="deleteForm{{ $course->id }}" class="d-inline">
+                                @csrf @method('delete')
+                                <button type="button" onclick="confirmDelete('{{ $course->id }}')"
+                                        class="btn-icon btn-icon-danger" title="Hapus">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </form>
+                            @endif
+                        </div>
                     </td>
                 </tr>
                 @endforeach
@@ -192,11 +308,6 @@
     <div class="empty-state">
         <i class="bi bi-journal-x"></i>
         <p>Belum ada data course</p>
-        @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
-        <a href="{{ route('sistem_akademik.course.create') }}" class="btn-primary-app">
-            <i class="bi bi-plus-circle"></i> Tambah Course
-        </a>
-        @endif
     </div>
     @endif
 </div>
@@ -205,134 +316,120 @@
 @section('script')
 <script>
     $(document).ready(function() {
-        var dt;
         if (!$.fn.DataTable.isDataTable('#data-table')) {
-            dt = $('#data-table').DataTable({
+            $('#data-table').DataTable({
                 responsive: true,
+                columnDefs: [{ orderable: false, targets: [0, -1] }],
                 language: {
                     search: "Cari:",
                     lengthMenu: "Tampilkan _MENU_ data",
                     info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-                    infoEmpty: "Tidak ada data yang ditampilkan",
-                    infoFiltered: "(difilter dari _MAX_ total data)",
-                    paginate: {
-                        first: "Pertama",
-                        last: "Terakhir",
-                        next: "Selanjutnya",
-                        previous: "Sebelumnya"
-                    }
-                },
-                dom: "<'row'<'col-sm-6'l><'col-sm-6'f>>" +
-                    "rt" +
-                    "<'row'<'col-sm-6'i><'col-sm-6'p>>"
+                    infoEmpty: "Tidak ada data",
+                    paginate: { first: "«", last: "»", next: "›", previous: "‹" }
+                }
             });
-        } else {
-            dt = $('#data-table').DataTable();
         }
 
-        $('#filter-kelas').on('change', function() {
-            var kelasId = $(this).val();
-            var url = new URL(window.location.href);
-
-            if (kelasId) {
-                url.searchParams.set('kelas_id', kelasId);
-            } else {
-                url.searchParams.delete('kelas_id');
-            }
-
-            window.location.href = url.toString();
+        // Select All - Use DataTable API
+        $('#select-all').on('click', function() {
+            const table = $('#data-table').DataTable();
+            const rows = table.rows({ 'search': 'applied' }).nodes();
+            $('input[type="checkbox"]', rows).prop('checked', this.checked);
+            updateBulkDeleteButton();
         });
 
-        // restore selected value
-        var sel = document.getElementById('filter-kelas');
-        if (sel && sel.dataset && sel.dataset.selectedKelas) {
-            sel.value = sel.dataset.selectedKelas;
+        // Use event delegation for checkboxes to handle DataTable redraws
+        $(document).on('change', '.select-item', function() {
+            updateBulkDeleteButton();
+        });
+    });
+
+    function updateBulkDeleteButton() {
+        const table = $('#data-table').DataTable();
+        const selectedCount = table.$('.select-item:checked').length;
+        
+        $('#selected-count').text(selectedCount);
+        if (selectedCount > 0) {
+            $('#btn-bulk-delete').removeClass('d-none');
+        } else {
+            $('#btn-bulk-delete').addClass('d-none');
+            $('#select-all').prop('checked', false);
+        }
+    }
+
+    function bulkDelete() {
+        const table = $('#data-table').DataTable();
+        const selectedIds = [];
+        table.$('.select-item:checked').each(function() {
+            selectedIds.push($(this).val());
+        });
+
+        if (selectedIds.length === 0) {
+            Swal.fire('Info', 'Silakan pilih data yang akan dihapus.', 'info');
+            return;
         }
 
-        function moveDownloadButtonToFilter() {
-            try {
-                var $filter = $('.dataTables_filter');
-                var $download = $('#download-timetable');
-
-                if ($download.length && $filter.length && $filter.find('#download-timetable').length === 0) {
-                    // move and style a bit
-                    $download.detach().addClass('ms-2').appendTo($filter);
-                }
-            } catch (e) {
-                console.warn('moveDownloadButtonToFilter error', e);
+        Swal.fire({
+            icon: 'warning',
+            title: 'Hapus Jadwal Terpilih?',
+            text: `Anda akan menghapus ${selectedIds.length} jadwal secara permanen!`,
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Hapus Semua!',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('sistem_akademik.course.bulkDestroy') }}",
+                    type: 'DELETE',
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        ids: selectedIds
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire('Berhasil!', response.message, 'success').then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Gagal!', response.message, 'error');
+                        }
+                    },
+                    error: function(err) {
+                        Swal.fire('Error!', 'Terjadi kesalahan pada server.', 'error');
+                    }
+                });
             }
-        }
+        });
+    }
 
-        // run after short delay to ensure DataTables rendered filter
-        setTimeout(moveDownloadButtonToFilter, 50);
-        // also try again in case of slow rendering
-        setTimeout(moveDownloadButtonToFilter, 300);
-
-        // ensure selected kelas value restored from data-attribute
-        var sel = document.getElementById('filter-kelas');
-        if (sel && sel.dataset && sel.dataset.selectedKelas) {
-            try {
-                sel.value = sel.dataset.selectedKelas;
-            } catch (e) {
-                /* ignore */
-            }
-        }
-
-        // ---------- URLs ----------
+    // Handle Download PDF
+    $('#download-timetable').on('click', function() {
         var container = document.getElementById('course-index');
-        var timetableBase = container ? container.dataset.timetableUrl : null;
-        var downloadBase = container ? container.dataset.downloadUrl : null;
+        var baseUrl = container ? container.dataset.downloadUrl : null;
+        if (!baseUrl) return;
 
-        function openUrlWithKelas(baseUrl, kelasId) {
-            if (!baseUrl) return;
-            var url = baseUrl;
-            if (kelasId) {
-                url += (url.indexOf('?') === -1 ? '?' : '&') + 'kelas_id=' + encodeURIComponent(kelasId);
-            }
-            window.open(url, '_blank');
-        }
-
-        // ---------- bind download/preview buttons ----------
-        // admin/guru download (moved into filter if DataTable exists)
-        if (document.getElementById('download-timetable')) {
-            $('#download-timetable').off('click').on('click', function() {
-                var kelasId = $('#filter-kelas').val() || '';
-                openUrlWithKelas(downloadBase, kelasId);
-            });
-        }
-
-        // student download
-        var siswaKelasId = @json($siswaKelasId ?? '');
-        if (document.getElementById('download-timetable-siswa')) {
-            $('#download-timetable-siswa').off('click').on('click', function() {
-                openUrlWithKelas(downloadBase, siswaKelasId);
-            });
-        }
-
-        // Optional: preview buttons if present (keberadaan tidak diwajibkan)
-        if (document.getElementById('preview-timetable')) {
-            $('#preview-timetable').off('click').on('click', function() {
-                var kelasId = $('#filter-kelas').val() || '';
-                openUrlWithKelas(timetableBase, kelasId);
-            });
-        }
-        if (document.getElementById('preview-timetable-siswa')) {
-            $('#preview-timetable-siswa').off('click').on('click', function() {
-                openUrlWithKelas(timetableBase, siswaKelasId);
-            });
-        }
+        // Ambil semua parameter filter yang aktif
+        var params = new URLSearchParams(window.location.search);
+        var url = baseUrl + (baseUrl.indexOf('?') === -1 ? '?' : '&') + params.toString();
+        
+        window.open(url, '_blank');
     });
 
     function confirmDelete(id) {
         Swal.fire({
-            title: "Apakah anda yakin?",
-            text: "Data kelas akan dihapus secara permanen!",
-            icon: "warning",
+            icon: 'warning',
+            title: 'Hapus Data Course?',
+            text: 'Data jadwal ini akan dihapus secara permanen!',
             showCancelButton: true,
-            confirmButtonColor: "#dc3545",
-            cancelButtonColor: "#6c757d",
-            confirmButtonText: "Ya, hapus!",
-            cancelButtonText: "Batal"
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i class="bi bi-trash me-1"></i> Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+            focusCancel: true,
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById('deleteForm' + id).submit();

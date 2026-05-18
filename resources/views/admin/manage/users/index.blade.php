@@ -121,39 +121,34 @@
 </div>
 
 <div class="sa-card sa-mb-5">
-    <div class="sa-card-header d-flex justify-content-between align-items-center">
+    <div class="sa-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 class="sa-card-header-title">All Users</h5>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
             <button id="bulkDeleteBtn" class="sa-btn sa-btn-danger" disabled>
                 <i class="bi bi-trash"></i> Delete Selected
             </button>
-            <button type="button" class="sa-btn sa-btn-success dropdown-toggle"
-                data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-file-earmark-arrow-down"></i> Export Users
+
+            {{-- Export Guru --}}
+            <button type="button" class="sa-btn sa-btn-success"
+                data-bs-toggle="modal" data-bs-target="#exportGuruModal">
+                <i class="bi bi-mortarboard"></i> Export Guru
             </button>
-            <ul class="dropdown-menu">
-                <li>
-                    <a class="dropdown-item"
-                        href="{{ route('admin.manage.users.export', ['format' => 'xlsx']) }}">
-                        Excel (.xlsx)
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item"
-                        href="{{ route('admin.manage.users.export', ['format' => 'csv']) }}">
-                        CSV (.csv)
-                    </a>
-                </li>
-            </ul>
+
+            {{-- Export Siswa --}}
+            <button type="button" class="sa-btn sa-btn-success"
+                data-bs-toggle="modal" data-bs-target="#exportSiswaModal">
+                <i class="bi bi-people"></i> Export Siswa
+            </button>
         </div>
 
-        <a href="{{ route('admin.manage.users.import') }}" class="sa-btn sa-btn-secondary">
-            <i class="bi bi-file-earmark-arrow-up"></i> Import Users
-        </a>
-
-        <a href="{{ route('admin.manage.users.create') }}" class="sa-btn sa-btn-primary">
-            <i class="bi bi-plus-circle"></i> Add New User
-        </a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ route('admin.manage.users.import') }}" class="sa-btn sa-btn-secondary">
+                <i class="bi bi-file-earmark-arrow-up"></i> Import Users
+            </a>
+            <a href="{{ route('admin.manage.users.create') }}" class="sa-btn sa-btn-primary">
+                <i class="bi bi-plus-circle"></i> Add New User
+            </a>
+        </div>
     </div>
     <div class="sa-card-body">
         <form id="bulkDeleteForm"
@@ -333,6 +328,127 @@
                 }
             });
         });
+
+        // Dynamic kelas filter berdasarkan jurusan (Export Siswa modal)
+        $('#siswaJurusanFilter').on('change', function() {
+            const jurusan = $(this).val();
+            $('#siswaKelasFilter option').each(function() {
+                if (!$(this).val()) return; // skip placeholder
+                const optJurusan = $(this).data('jurusan');
+                if (!jurusan || optJurusan === jurusan) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+            $('#siswaKelasFilter').val('');
+        });
     });
 </script>
+
+{{-- ===== MODAL: Export Guru ===== --}}
+<div class="modal fade" id="exportGuruModal" tabindex="-1" aria-labelledby="exportGuruModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportGuruModalLabel">
+                    <i class="bi bi-mortarboard me-2 text-success"></i> Export Data Guru
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="exportGuruForm" action="{{ route('admin.manage.users.export.guru') }}" method="GET" target="_blank">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Filter Jurusan</label>
+                        <select name="jurusan" class="form-select">
+                            <option value="">-- Semua Jurusan --</option>
+                            @foreach($jurusanList as $j)
+                                <option value="{{ $j }}">{{ $j }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Kosongkan untuk mengexport semua guru.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Format File</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" value="xlsx" id="guruFormatXlsx" checked>
+                                <label class="form-check-label" for="guruFormatXlsx">Excel (.xlsx)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" value="csv" id="guruFormatCsv">
+                                <label class="form-check-label" for="guruFormatCsv">CSV (.csv)</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="sa-btn sa-btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" form="exportGuruForm" class="sa-btn sa-btn-success">
+                    <i class="bi bi-download me-1"></i> Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ===== MODAL: Export Siswa ===== --}}
+<div class="modal fade" id="exportSiswaModal" tabindex="-1" aria-labelledby="exportSiswaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportSiswaModalLabel">
+                    <i class="bi bi-people me-2 text-success"></i> Export Data Siswa
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="exportSiswaForm" action="{{ route('admin.manage.users.export.siswa') }}" method="GET" target="_blank">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Filter Jurusan</label>
+                        <select name="jurusan" id="siswaJurusanFilter" class="form-select">
+                            <option value="">-- Semua Jurusan --</option>
+                            @foreach($jurusanList as $j)
+                                <option value="{{ $j }}">{{ $j }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Filter Kelas</label>
+                        <select name="kelas_id" id="siswaKelasFilter" class="form-select">
+                            <option value="">-- Semua Kelas --</option>
+                            @foreach($kelasList as $kelas)
+                                <option value="{{ $kelas->id }}" data-jurusan="{{ $kelas->jurusan }}">
+                                    {{ $kelas->nama_kelas }} ({{ $kelas->jurusan }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Pilih jurusan dulu untuk memfilter kelas.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Format File</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" value="xlsx" id="siswaFormatXlsx" checked>
+                                <label class="form-check-label" for="siswaFormatXlsx">Excel (.xlsx)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" value="csv" id="siswaFormatCsv">
+                                <label class="form-check-label" for="siswaFormatCsv">CSV (.csv)</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="sa-btn sa-btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" form="exportSiswaForm" class="sa-btn sa-btn-success">
+                    <i class="bi bi-download me-1"></i> Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection

@@ -25,7 +25,7 @@
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">
+                            <a class="dropdown-item" href="#" onclick="logout(event)">
                                 <i class="bi bi-box-arrow-right me-2"></i> Keluar
                             </a>
                         </li>

@@ -15,7 +15,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Jalankan otomasi pembaruan tahun ajaran setiap hari
+        $schedule->command('app:update-academic-year')->daily();
     }
 
     /**

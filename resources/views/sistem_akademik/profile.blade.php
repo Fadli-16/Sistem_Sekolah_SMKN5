@@ -70,7 +70,9 @@
     $admin = $user->adminProfile ?? null;
 
     $image = $siswa->image ?? $guru->image ?? $admin->image ?? null;
-    $imageUrl = $image ? asset('assets/profile/' . $image) : asset('assets/profile/default.png');
+    $imageUrl = ($image && file_exists(public_path('assets/profile/' . $image)))
+        ? asset('assets/profile/' . $image)
+        : asset('assets/profile/default.png');
 
     // identifier: nis_nip or siswa.nis or guru.nip or admin.identifier or '-'
     $identifier = $user->nis_nip ?? $siswa->nis ?? $guru->nip ?? ($admin->identifier ?? '-');

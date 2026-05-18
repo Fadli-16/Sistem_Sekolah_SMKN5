@@ -196,6 +196,24 @@
                 }
             });
         }
+
+        // Logout confirmation function
+        function logout(e) {
+            Swal.fire({
+                title: "Keluar Akun?",
+                text: "Anda akan keluar dari sesi saat ini.",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonColor: "#4ecdc4",
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: "Ya, Logout!",
+                cancelButtonText: "Batal"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('logoutForm').submit();
+                }
+            });
+        }
     </script>
 
     @yield('script')

@@ -11,13 +11,35 @@ use Illuminate\Validation\Rule;
 
 class KelasController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $title = 'Kelola Kelas';
+        $title  = 'Kelola Kelas';
         $header = 'Data Kelas';
-        $kelas = Kelas::with(['waliKelas', 'guruBK'])->get();
 
-        return view('sistem_akademik.kelas.index', compact('kelas', 'title', 'header'));
+        // Ambil semua nilai unik untuk dropdown filter
+        $jurusanList    = Kelas::select('jurusan')->distinct()->orderBy('jurusan')->pluck('jurusan');
+        $tahunAjaranList = Kelas::select('tahun_ajaran')->distinct()->orderBy('tahun_ajaran')->pluck('tahun_ajaran');
+
+        // Terapkan filter jika ada
+        $query = Kelas::with(['waliKelas', 'guruBK']);
+
+        if ($request->filled('filter_jurusan')) {
+            $query->where('jurusan', $request->filter_jurusan);
+        }
+        if ($request->filled('filter_tahun_ajaran')) {
+            $query->where('tahun_ajaran', $request->filter_tahun_ajaran);
+        }
+
+        $kelas = $query->get();
+
+        $selectedJurusan    = $request->filter_jurusan;
+        $selectedTahunAjaran = $request->filter_tahun_ajaran;
+
+        return view('sistem_akademik.kelas.index', compact(
+            'kelas', 'title', 'header',
+            'jurusanList', 'tahunAjaranList',
+            'selectedJurusan', 'selectedTahunAjaran'
+        ));
     }
 
     public function create()
@@ -32,12 +54,12 @@ class KelasController extends Controller
             ->orderBy('nama')
             ->get();
 
-        // GURU BK: ambil guru dengan jumlah penugasan < 2
+        // GURU BK: ambil guru dengan jumlah penugasan < 6
         $availableGuruBk = User::select('users.*', DB::raw('COUNT(kelas.id) as kelas_count'))
             ->leftJoin('kelas', 'kelas.guru_bk_id', '=', 'users.id')
             ->where('users.role', 'guru')
             ->groupBy('users.id')
-            ->havingRaw('kelas_count < 2')
+            ->havingRaw('kelas_count < 6')
             ->orderBy('users.nama')
             ->get();
 
@@ -66,8 +88,8 @@ class KelasController extends Controller
 
         if ($request->filled('guru_bk_id')) {
             $count = Kelas::where('guru_bk_id', $request->guru_bk_id)->count();
-            if ($count >= 2) {
-                return back()->withInput()->withErrors(['guru_bk_id' => 'Guru BK ini sudah ditugaskan ke 2 kelas (maksimal 2).']);
+            if ($count >= 6) {
+                return back()->withInput()->withErrors(['guru_bk_id' => 'Guru BK ini sudah ditugaskan ke 6 kelas (maksimal 6).']);
             }
         }
 
@@ -113,8 +135,8 @@ class KelasController extends Controller
         $availableGuruBk = $guruList->filter(function ($g) use ($kelas) {
             // jika guru ini adalah guru_bk dari kelas yang sedang diedit -> always include
             if ($kelas->guru_bk_id && $g->id == $kelas->guru_bk_id) return true;
-            // else only include if kelas_count < 2
-            return (int)$g->kelas_count < 2;
+            // else only include if kelas_count < 6
+            return (int)$g->kelas_count < 6;
         })->values();
 
         return view('sistem_akademik.kelas.createOrEdit', compact('kelas', 'title', 'header', 'availableWali', 'availableGuruBk'));
@@ -141,13 +163,13 @@ class KelasController extends Controller
             }
         }
 
-        // 2) guru_bk boleh max 2 kelas (exc current)
+        // 2) guru_bk boleh max 6 kelas (exc current)
         if ($request->filled('guru_bk_id')) {
             $count = Kelas::where('guru_bk_id', $request->guru_bk_id)
                 ->where('id', '!=', $kelas->id)
                 ->count();
-            if ($count >= 2) {
-                return back()->withInput()->withErrors(['guru_bk_id' => 'Guru BK ini sudah ditugaskan ke 2 kelas (maksimal 2).']);
+            if ($count >= 6) {
+                return back()->withInput()->withErrors(['guru_bk_id' => 'Guru BK ini sudah ditugaskan ke 6 kelas (maksimal 6).']);
             }
         }
 
@@ -189,5 +211,20 @@ class KelasController extends Controller
             ->with('status', 'success')
             ->with('title', 'Berhasil')
             ->with('message', 'Data kelas berhasil dihapus');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->ids;
+        if (!$ids || !is_array($ids)) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada data yang dipilih']);
+        }
+
+        try {
+            Kelas::whereIn('id', $ids)->delete();
+            return response()->json(['success' => true, 'message' => count($ids) . ' data kelas berhasil dihapus']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus data: ' . $e->getMessage()]);
+        }
     }
 }

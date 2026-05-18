@@ -20,7 +20,7 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="document.getElementById('logoutForm').submit();">
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="logout(event)">
                                     <i class="bi bi-box-arrow-right me-1"></i> Logout
                                 </a>
                             </li>

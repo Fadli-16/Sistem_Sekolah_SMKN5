@@ -15,55 +15,20 @@
     <!-- Styles -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        referrerpolicy="no-referrer" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" referrerpolicy="no-referrer" />
     <link href="{{ asset('assets/css/sistem-akademik.css') }}" rel="stylesheet">
 
     @yield('css')
-
-    <script>
-        // Configure SweetAlert2 globally
-        window.addEventListener('DOMContentLoaded', (event) => {
-            if (typeof Swal !== 'undefined') {
-                Swal.mixin({
-                    confirmButtonColor: '#4ecdc4',
-                    cancelButtonColor: '#6c757d'
-                });
-            }
-        });
-    </script>
-
-
-    <style>
-        /* Add to your existing styles */
-        .swal2-container {
-            z-index: 99999 !important;
-            /* Much higher than any other element */
-        }
-
-        .swal-custom-popup {
-            z-index: 99999 !important;
-            position: relative;
-        }
-
-        /* Override SweetAlert backdrop styles */
-        .swal2-backdrop-show {
-            z-index: 99990 !important;
-        }
-    </style>
-
-
+</head>
 
 <body class="{{ session('sidebar_collapsed') ? 'sidebar-collapsed' : '' }}">
     @include('sistem_akademik.partials.navbar')
     @include('sistem_akademik.partials.sidebar')
 
-    <div class="content-wrapper">
+    <div class="content-wrapper animate-fade-in">
         @yield('content')
     </div>
 
@@ -77,167 +42,115 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        // Display flash messages
+        // ===== FLASH MESSAGES (SweetAlert Premium) =====
         @if(session('status'))
-        Swal.fire({
-            title: '{{ session('
-            title ') }}',
-            text: '{{ session('
-            message ') }}',
-            icon: '{{ session('
-            status ') }}',
-            confirmButtonColor: '#4ecdc4'
+        @php
+            $status  = session('status');
+            $message = session('message', '');
+            $title   = session('title', $status === 'success' ? 'Berhasil!' : ($status === 'warning' ? 'Perhatian!' : 'Gagal!'));
+            $icon    = in_array($status, ['success','error','warning','info']) ? $status : 'info';
+        @endphp
+
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: '{{ $icon }}',
+                title: '{{ addslashes($title) }}',
+                text: '{{ addslashes($message) }}',
+                confirmButtonText: 'OK',
+                confirmButtonColor: @if($icon === 'success') '#10b981' @elseif($icon === 'warning') '#f59e0b' @elseif($icon === 'error') '#ef4444' @else '#3b82f6' @endif,
+                timer: 3500,
+                timerProgressBar: true,
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp'
+                }
+            });
         });
         @endif
 
-        // Handle sidebar toggle
-        document.addEventListener('DOMContentLoaded', function() {
+        // ===== SIDEBAR TOGGLE =====
+        document.addEventListener('DOMContentLoaded', function () {
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
             const body = document.body;
 
-            // Check if sidebar state is saved in localStorage
             const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
 
-            // Apply initial state without transitions
             if (sidebarCollapsed) {
-                // Add classes immediately without transition on page load
-                document.documentElement.style.setProperty('--suppress-transitions', 'none');
                 sidebar.classList.add('collapsed');
                 body.classList.add('sidebar-collapsed');
-
-                // Re-enable transitions after initial state is applied
-                setTimeout(() => {
-                    document.documentElement.style.setProperty('--suppress-transitions', 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)');
-                }, 50);
             }
 
-            // Toggle sidebar on button click
             if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function(e) {
+                sidebarToggle.addEventListener('click', function (e) {
                     e.preventDefault();
-
-                    // Toggle classes
                     sidebar.classList.toggle('collapsed');
                     body.classList.toggle('sidebar-collapsed');
 
-                    // On mobile, also toggle the active class
                     if (window.innerWidth <= 768) {
                         sidebar.classList.toggle('active');
                     }
 
-                    // Save state to localStorage
                     localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
                 });
             }
 
-            // Add CSS for smoother transitions
-            const style = document.createElement('style');
-            style.textContent = `
-                :root {
-                    --suppress-transitions: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-                
-                .navbar-custom, .sidebar, body, .footer, .toggle-container {
-                    transition: var(--suppress-transitions) !important;
-                }
-            `;
-            document.head.appendChild(style);
-
-            // Handle window resize to adapt layout
-            window.addEventListener('resize', function() {
+            window.addEventListener('resize', function () {
                 if (window.innerWidth <= 768) {
-                    if (sidebar.classList.contains('active')) {
-                        document.body.style.overflow = 'hidden';
-                    } else {
-                        document.body.style.overflow = '';
-                    }
+                    document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
                 } else {
                     document.body.style.overflow = '';
                 }
             });
 
-            // Close sidebar when clicking outside on mobile
-            document.addEventListener('click', function(event) {
+            document.addEventListener('click', function (event) {
                 if (window.innerWidth <= 768 &&
-                    !sidebar.contains(event.target) &&
-                    !sidebarToggle.contains(event.target) &&
+                    sidebar && !sidebar.contains(event.target) &&
+                    sidebarToggle && !sidebarToggle.contains(event.target) &&
                     sidebar.classList.contains('active')) {
                     sidebar.classList.remove('active');
                     document.body.style.overflow = '';
                 }
             });
-
-            // Initialize DataTables with consistent styling
-            if ($.fn.DataTable) {
-                $('table.table').each(function() {
-                    if (!$.fn.DataTable.isDataTable(this)) {
-                        $(this).DataTable({
-                            responsive: true,
-                            language: {
-                                search: "Cari:",
-                                lengthMenu: "Tampilkan _MENU_ data",
-                                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-                                infoEmpty: "Tidak ada data yang ditampilkan",
-                                infoFiltered: "(difilter dari _MAX_ total data)",
-                                paginate: {
-                                    first: "Pertama",
-                                    last: "Terakhir",
-                                    next: "Selanjutnya",
-                                    previous: "Sebelumnya"
-                                },
-                            }
-                        });
-                    }
-                });
-            }
         });
 
-        // Confirm delete function
+        // ===== DELETE CONFIRMATION =====
         function confirmDelete(id) {
             Swal.fire({
-                title: "Apakah anda yakin?",
-                text: "Data yang dihapus tidak dapat dikembalikan!",
-                icon: "warning",
+                icon: 'warning',
+                title: 'Hapus Data?',
+                text: 'Data yang dihapus tidak dapat dikembalikan!',
                 showCancelButton: true,
-                confirmButtonColor: "#4ecdc4",
-                cancelButtonColor: "#6c757d",
-                confirmButtonText: "Ya, hapus!",
-                cancelButtonText: "Batal"
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: '<i class="bi bi-trash me-1"></i> Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                focusCancel: true,
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('deleteForm' + id).submit();
                 }
             });
         }
-    </script>
 
-    <script>
-        // Sticky navbar effect
-        window.addEventListener('scroll', function() {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.style.padding = '0.3rem 1rem';
-                navbar.style.boxShadow = '0 4px 10px rgba(0,0,0,0.1)';
-            } else {
-                navbar.style.padding = '0.5rem 1rem';
-                navbar.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-            }
-        });
-
-        // Logout confirmation
+        // ===== LOGOUT CONFIRMATION =====
         function logout(e) {
             Swal.fire({
-                title: "Apakah anda yakin?",
-                text: "Logout dari akun",
-                icon: "warning",
+                icon: 'question',
+                title: 'Keluar Akun?',
+                text: 'Anda akan logout dari sistem akademik.',
                 showCancelButton: true,
-                confirmButtonColor: '#004080',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Logout!',
-                cancelButtonText: 'Batal'
+                confirmButtonColor: '#1e3a5f',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, Logout',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('logoutForm').submit();
@@ -245,23 +158,15 @@
             });
         }
 
-        // Delete confirmation
-        function confirmDelete(e) {
-            Swal.fire({
-                title: "Apakah anda yakin?",
-                text: "Data yang dihapus tidak dapat dikembalikan!",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: '#004080',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Hapus!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('deleteForm' + e).submit();
-                }
-            });
-        }
+        // ===== STICKY NAVBAR =====
+        window.addEventListener('scroll', function () {
+            const navbar = document.querySelector('.navbar-custom');
+            if (navbar) {
+                navbar.style.boxShadow = window.scrollY > 20
+                    ? '0 4px 20px rgba(0,0,0,0.2)'
+                    : '0 2px 20px rgba(0,0,0,0.15)';
+            }
+        });
     </script>
 
     @yield('script')

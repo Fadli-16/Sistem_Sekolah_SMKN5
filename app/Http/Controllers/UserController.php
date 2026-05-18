@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Kelas;
 use App\Imports\UsersImport;
 use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\UsersExport;
+use App\Exports\GuruExport;
+use App\Exports\SiswaExport;
 use Maatwebsite\Excel\Excel as ExcelWriter;
 
 class UserController extends Controller
@@ -128,6 +131,34 @@ class UserController extends Controller
     }
 
     /**
+     * Download template CSV for import.
+     */
+    public function downloadTemplate(string $type = 'siswa')
+    {
+        $type = in_array($type, ['guru', 'siswa']) ? $type : 'siswa';
+
+        if ($type === 'guru') {
+            $headers = ['nama', 'email', 'role', 'password', 'nis_nip', 'jurusan', 'kelas', 'tanggal_lahir', 'jenis_kelamin', 'alamat', 'no_hp', 'agama'];
+            $example = ['Contoh Nama Guru', 'guru@sekolah.sch.id', 'guru', 'password123', '198501012010011001', 'Teknik Komputer dan Jaringan', 'XII TKJ 1', '1985-01-01', 'Laki-laki', 'Jl. Contoh No.1 Padang', '081234567890', 'Islam'];
+        } else {
+            $headers = ['nama', 'email', 'role', 'password', 'nis_nip', 'jurusan', 'kelas', 'kelas_id', 'tanggal_lahir', 'jenis_kelamin', 'alamat', 'no_hp', 'agama'];
+            $example = ['Contoh Nama Siswa', 'siswa@sekolah.sch.id', 'siswa', 'password123', '12345', 'Teknik Komputer dan Jaringan', 'XII TKJ 1', '1', '2006-01-01', 'Laki-laki', 'Jl. Contoh No.1 Padang', '081234567890', 'Islam'];
+        }
+
+        $filename = "template-import-{$type}.csv";
+        $handle = fopen('php://output', 'w');
+
+        return response()->stream(function () use ($headers, $example, $handle) {
+            fputcsv($handle, $headers);
+            fputcsv($handle, $example);
+            fclose($handle);
+        }, 200, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename={$filename}",
+        ]);
+    }
+
+    /**
      * Handle CSV import.
      */
     public function import(Request $request)
@@ -147,20 +178,44 @@ class UserController extends Controller
     }
 
     /**
-     * Export users ke CSV atau XLSX.
+     * Export all users ke CSV atau XLSX.
      */
     public function export(Request $request)
     {
         $format = $request->query('format', 'xlsx');
         $now    = now()->format('Ymd_His');
         $file   = "users-{$now}.{$format}";
-
-        // Pilih writer type berdasarkan query
-        $writerType = $format === 'csv'
-            ? ExcelWriter::CSV
-            : ExcelWriter::XLSX;
-
+        $writerType = $format === 'csv' ? ExcelWriter::CSV : ExcelWriter::XLSX;
         return Excel::download(new UsersExport, $file, $writerType);
+    }
+
+    /**
+     * Export data Guru dengan filter jurusan.
+     */
+    public function exportGuru(Request $request)
+    {
+        $jurusan = $request->query('jurusan') ?: null;
+        $format  = $request->query('format', 'xlsx');
+        $now     = now()->format('Ymd_His');
+        $suffix  = $jurusan ? '_' . \Illuminate\Support\Str::slug($jurusan) : '';
+        $file    = "guru{$suffix}-{$now}.{$format}";
+        $writerType = $format === 'csv' ? ExcelWriter::CSV : ExcelWriter::XLSX;
+        return Excel::download(new GuruExport($jurusan), $file, $writerType);
+    }
+
+    /**
+     * Export data Siswa dengan filter jurusan dan kelas.
+     */
+    public function exportSiswa(Request $request)
+    {
+        $jurusan = $request->query('jurusan') ?: null;
+        $kelasId = $request->query('kelas_id') ? (int) $request->query('kelas_id') : null;
+        $format  = $request->query('format', 'xlsx');
+        $now     = now()->format('Ymd_His');
+        $suffix  = $jurusan ? '_' . \Illuminate\Support\Str::slug($jurusan) : '';
+        $file    = "siswa{$suffix}-{$now}.{$format}";
+        $writerType = $format === 'csv' ? ExcelWriter::CSV : ExcelWriter::XLSX;
+        return Excel::download(new SiswaExport($jurusan, $kelasId), $file, $writerType);
     }
 
     /**

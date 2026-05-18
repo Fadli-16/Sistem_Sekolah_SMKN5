@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
 {
     public function index()
     {
         $title = 'Login';
-        return view('auth.login', compact('title'));
+        $header = 'SMK Negeri 5 Padang';
+        return view('auth.login', compact('title', 'header'));
     }
 
     public function authenticate(Request $request)
@@ -20,7 +22,26 @@ class AuthController extends Controller
         $request->validate([
             'nis_nip' => 'required|string',
             'password' => 'required',
+            'g-recaptcha-response' => 'required',
+        ], [
+            'g-recaptcha-response.required' => 'Harap centang verifikasi Captcha.'
         ]);
+
+        // Verifikasi reCAPTCHA
+        $recaptchaResponse = $request->input('g-recaptcha-response');
+        $secretKey = config('services.recaptcha.secret_key');
+        
+        $verifyResponse = Http::withoutVerifying()->asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => $secretKey,
+            'response' => $recaptchaResponse,
+            'remoteip' => $request->ip()
+        ]);
+
+        $responseData = $verifyResponse->json();
+        
+        if (!$responseData['success']) {
+            return redirect()->back()->with('loginError', 'Verifikasi Captcha gagal. Silakan coba lagi.');
+        }
 
         // Deteksi apakah input adalah email atau NIS/NIP
         $loginField = filter_var($request->nis_nip, FILTER_VALIDATE_EMAIL) ? 'email' : 'nis_nip';

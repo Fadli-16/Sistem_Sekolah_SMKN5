@@ -17,17 +17,32 @@ class GuruController extends Controller
     // MAX target file size after compression (bytes)
     protected int $maxImageBytes = 500 * 1024; // 500 KB
 
-    public function index()
+    public function index(Request $request)
     {
         $title = 'Data Guru';
         $header = 'Data Guru & Tendik';
-        $gurus = Guru::with('user')
+        
+        $query = Guru::with(['user', 'waliKelasDi'])
             ->leftJoin('users', 'guru.user_id', '=', 'users.id')
-            ->select('guru.*')
-            ->orderByRaw("COALESCE(users.nama, '') asc")
-            ->get();
+            ->select('guru.*');
 
-        return view('sistem_akademik.guru.index', compact('gurus', 'title', 'header'));
+        if ($request->filled('jurusan')) {
+            $query->where('guru.jurusan', $request->jurusan);
+        }
+
+        if ($request->filled('wali_kelas')) {
+            if ($request->wali_kelas == 'ya') {
+                $query->has('waliKelasDi');
+            } elseif ($request->wali_kelas == 'tidak') {
+                $query->doesntHave('waliKelasDi');
+            }
+        }
+
+        $gurus = $query->orderByRaw("COALESCE(users.nama, '') asc")->get();
+        
+        $jurusanList = Guru::select('jurusan')->distinct()->whereNotNull('jurusan')->orderBy('jurusan')->get();
+
+        return view('sistem_akademik.guru.index', compact('gurus', 'title', 'header', 'jurusanList'));
     }
 
     public function create()
@@ -100,7 +115,7 @@ class GuruController extends Controller
 
     public function edit(Guru $guru)
     {
-        $guru->load('user');
+        $guru->load(['user', 'waliKelasDi']);
         $title = 'Guru';
         $header = 'Edit Data Guru';
         return view('sistem_akademik.guru.createOrEdit', compact('guru', 'title', 'header'));
@@ -112,13 +127,13 @@ class GuruController extends Controller
             'nama'          => 'required|string|max:255',
             'email'         => 'nullable|email|unique:users,email,' . $guru->user_id,
             'nip'           => 'required|string|unique:guru,nip,' . $guru->id,
-            'kelas'         => 'required|string',
-            'jurusan'       => 'required|string',
-            'tanggal_lahir' => 'required|date',
-            'alamat'        => 'required',
-            'no_hp'         => 'required',
-            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
-            'agama'         => 'required|string',
+            'kelas'         => 'nullable|string',
+            'jurusan'       => 'nullable|string',
+            'tanggal_lahir' => 'nullable|date',
+            'alamat'        => 'nullable|string',
+            'no_hp'         => 'nullable|string',
+            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
+            'agama'         => 'nullable|string',
             'image'         => 'nullable|image'
         ]);
 
@@ -267,6 +282,34 @@ class GuruController extends Controller
         $img = @imagecreatefromstring($contents);
         if ($img === false) {
             throw new \RuntimeException("Unsupported image format or corrupt image");
+        }
+
+        // Optionally scale down image if it's too large to ensure we hit < 500kb
+        $width = imagesx($img);
+        $height = imagesy($img);
+        if ($width > 1200 || $height > 1200) {
+            $ratio = $width / $height;
+            if ($width > $height) {
+                $newWidth = 1200;
+                $newHeight = 1200 / $ratio;
+            } else {
+                $newHeight = 1200;
+                $newWidth = 1200 * $ratio;
+            }
+            $tmpImg = imagecreatetruecolor((int)$newWidth, (int)$newHeight);
+            
+            // preserve transparency for PNG/WebP
+            $mime = getimagesize($sourcePath)['mime'] ?? null;
+            if ($mime === 'image/png' || $mime === 'image/webp') {
+                imagealphablending($tmpImg, false);
+                imagesavealpha($tmpImg, true);
+                $transparent = imagecolorallocatealpha($tmpImg, 255, 255, 255, 127);
+                imagefilledrectangle($tmpImg, 0, 0, (int)$newWidth, (int)$newHeight, $transparent);
+            }
+            
+            imagecopyresampled($tmpImg, $img, 0, 0, 0, 0, (int)$newWidth, (int)$newHeight, $width, $height);
+            imagedestroy($img);
+            $img = $tmpImg;
         }
 
         // helper to safely destroy

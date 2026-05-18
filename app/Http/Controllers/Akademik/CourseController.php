@@ -255,6 +255,7 @@ class CourseController extends Controller
         // iterate courses and place them
         foreach ($courses as $course) {
             $hari = $course->hari ?? null;
+            // skip courses with unexpected day names
             if (! $hari || ! in_array($hari, $days)) {
                 // skip courses with unexpected day names
                 continue;
@@ -280,28 +281,57 @@ class CourseController extends Controller
                 [$sIndex, $eIndex] = [$eIndex, $sIndex];
             }
 
-            $span = $eIndex - $sIndex + 1;
-            if ($span < 1) $span = 1;
+            // Check for collision first across all selectable slots in the range
+            $hasCollision = false;
+            for ($i = $sIndex; $i <= $eIndex; $i++) {
+                $sid = $slotOrder[$i];
+                $isSelectable = $slotDetails[$sid]['selectable'] ?? true;
+                if ($isSelectable && !empty($matrix[$hari][$sid])) {
+                    $hasCollision = true;
+                    break;
+                }
+            }
 
-            $startSlotId = $slotOrder[$sIndex];
-
-            // if the place is already occupied (collision), skip or optionally push to log
-            if (! empty($matrix[$hari][$startSlotId])) {
-                // collision — skip placing to avoid overrides (could log)
-                Log::warning("Timetable collision placing course id {$course->id} on {$hari} slot {$startSlotId}");
+            if ($hasCollision) {
+                Log::warning("Timetable collision placing course id {$course->id} on {$hari}");
                 continue;
             }
 
-            // assign the course cell at start slot
-            $matrix[$hari][$startSlotId] = [
-                'course' => $course,
-                'span' => $span,
-            ];
+            $currentSpanStart = null;
+            $spanLength = 0;
 
-            // mark subsequent slots as skipped so blade won't render them separately
-            for ($i = $sIndex + 1; $i <= $eIndex; $i++) {
+            for ($i = $sIndex; $i <= $eIndex; $i++) {
                 $sid = $slotOrder[$i];
-                $matrix[$hari][$sid] = ['skipped' => true];
+                $isSelectable = $slotDetails[$sid]['selectable'] ?? true;
+
+                if (!$isSelectable) {
+                    // Save previous chunk
+                    if ($currentSpanStart !== null) {
+                        $matrix[$hari][$currentSpanStart] = [
+                            'course' => $course,
+                            'span' => $spanLength,
+                        ];
+                        $currentSpanStart = null;
+                        $spanLength = 0;
+                    }
+                    continue; // Skip the unselectable slot
+                }
+
+                if ($currentSpanStart === null) {
+                    $currentSpanStart = $sid;
+                    $spanLength = 1;
+                } else {
+                    $spanLength++;
+                    $matrix[$hari][$sid] = ['skipped' => true];
+                }
+            }
+
+            // Save any remaining chunk
+            if ($currentSpanStart !== null) {
+                $matrix[$hari][$currentSpanStart] = [
+                    'course' => $course,
+                    'span' => $spanLength,
+                ];
             }
         }
 
@@ -364,19 +394,36 @@ class CourseController extends Controller
         $title = 'Kelola Course & Mata Pelajaran';
         $header = 'Jadwal Mata Pelajaran';
 
-        $selectedKelasId = $request->query('kelas_id');
         $user = Auth::user();
+        $selectedKelasId = $request->query('kelas_id');
+        $selectedMapelName = $request->query('nama_mata_pelajaran');
+        $selectedGuruId  = $request->query('guru_id');
+        $selectedHari    = $request->query('hari');
+        $selectedRuangan = $request->query('ruangan');
+        $selectedJurusan = $request->query('jurusan');
 
         $query = Course::with(['mataPelajaran.guru', 'kelas', 'siswa'])
             ->orderBy('hari')
             ->orderBy('jam_mulai');
 
-        if (!empty($selectedKelasId)) {
-            $query->where('kelas_id', $selectedKelasId);
+        // Filter berdasarkan Request
+        if ($selectedKelasId) $query->where('kelas_id', $selectedKelasId);
+        if ($selectedMapelName) {
+            $query->whereHas('mataPelajaran', function($q) use ($selectedMapelName) {
+                $q->where('nama_mata_pelajaran', $selectedMapelName);
+            });
+        }
+        if ($selectedHari)    $query->where('hari', $selectedHari);
+        if ($selectedRuangan) $query->where('ruangan', 'like', "%{$selectedRuangan}%");
+        if ($selectedGuruId) {
+            $query->whereHas('mataPelajaran', function($q) use ($selectedGuruId) {
+                $q->where('guru_id', $selectedGuruId);
+            });
         }
 
         $guruKelasIds = [];
 
+        // Role based restriction
         if ($user?->role === 'guru') {
             $guruModel = $user->guru;
             $guruUserId = $guruModel?->user_id ?? $user->id;
@@ -385,24 +432,14 @@ class CourseController extends Controller
             $guruFilter = function ($q) use ($guruUserId, $guruModelId) {
                 $q->where(function ($subQ) use ($guruUserId, $guruModelId) {
                     $subQ->where('guru_id', $guruUserId);
-
-                    if ($guruModelId) {
-                        $subQ->orWhere('guru_id', $guruModelId);
-                    }
+                    if ($guruModelId) $subQ->orWhere('guru_id', $guruModelId);
                 });
             };
 
             $query->whereHas('mataPelajaran', $guruFilter);
-
-            $guruKelasIds = Course::whereHas('mataPelajaran', $guruFilter)
-                ->pluck('kelas_id')
-                ->unique()
-                ->filter()
-                ->values()
-                ->toArray();
+            $guruKelasIds = Course::whereHas('mataPelajaran', $guruFilter)->pluck('kelas_id')->unique()->filter()->values()->toArray();
         } elseif ($user?->role === 'siswa' && $user->siswa) {
             $kelasId = $user->siswa->kelas_id;
-
             if ($kelasId) {
                 $query->where('kelas_id', $kelasId);
             } else {
@@ -412,31 +449,78 @@ class CourseController extends Controller
 
         $courses = $query->get();
 
-        $kelasList = $user?->role === 'guru'
-            ? Kelas::whereIn('id', $guruKelasIds)->orderBy('nama_kelas')->get()
-            : Kelas::orderBy('nama_kelas')->get();
+        // Data pendukung filter
+        $kelasQuery = Kelas::query();
+        if ($user?->role === 'guru') {
+            $kelasQuery->whereIn('id', $guruKelasIds);
+        }
+        if ($selectedJurusan) {
+            $kelasQuery->where('jurusan', $selectedJurusan);
+        }
+        $kelasList = $kelasQuery->orderBy('nama_kelas')->get();
+        
+        $mapelQuery = MataPelajaran::select('nama_mata_pelajaran')->distinct();
+        if ($user?->role === 'guru') {
+            $mapelQuery->where(function ($subQ) use ($guruUserId, $guruModelId) {
+                $subQ->where('guru_id', $guruUserId);
+                if ($guruModelId) $subQ->orWhere('guru_id', $guruModelId);
+            });
+        }
+        $mapelList = $mapelQuery->orderBy('nama_mata_pelajaran')->get();
+        
+        $guruQuery = User::where('role', 'guru');
+        if ($selectedMapelName) {
+            $guruIds = MataPelajaran::where('nama_mata_pelajaran', $selectedMapelName)->pluck('guru_id')->unique()->filter()->toArray();
+            $guruQuery->whereIn('id', $guruIds);
+        }
+        $guruList = $guruQuery->orderBy('nama')->get();
+        
+        $hariList  = $this->allowedDays();
+        
+        $ruanganQuery = Course::whereNotNull('ruangan')->distinct();
+        if ($user?->role === 'guru') {
+            $ruanganQuery->whereHas('mataPelajaran', function ($q) use ($guruUserId, $guruModelId) {
+                $q->where('guru_id', $guruUserId);
+                if ($guruModelId) $q->orWhere('guru_id', $guruModelId);
+            });
+        }
+        $ruanganList = $ruanganQuery->pluck('ruangan');
+
+        $jurusanQuery = Kelas::select('jurusan')->whereNotNull('jurusan')->distinct();
+        if ($user?->role === 'guru') {
+            $jurusanQuery->whereIn('id', $guruKelasIds);
+        }
+        $jurusanList = $jurusanQuery->orderBy('jurusan')->get();
 
         return view('sistem_akademik.course.index', compact(
-            'courses',
-            'title',
-            'header',
-            'kelasList',
-            'selectedKelasId'
+            'courses', 'title', 'header', 'kelasList', 'mapelList', 'guruList', 'hariList', 'ruanganList', 'jurusanList',
+            'selectedKelasId', 'selectedMapelName', 'selectedGuruId', 'selectedHari', 'selectedRuangan', 'selectedJurusan'
         ));
     }
 
     public function create()
     {
-        $title = 'Tambah Jadwal';
+        $title  = 'Tambah Jadwal';
         $header = 'Tambah Jadwal Mapel';
 
-        $kelas = Kelas::all();
+        $kelas  = Kelas::all();
         $mapels = MataPelajaran::with('guru')->get();
-        $slots = $this->selectableSlots();
-        $siswa = Siswa::with('user')->orderBy('id')->get();
+        $slots  = $this->selectableSlots();
+        $siswa  = Siswa::with('user')->orderBy('id')->get();
 
-        return view('sistem_akademik.course.createOrEdit', 
-        compact('kelas', 'mapels', 'slots', 'siswa', 'title', 'header'));
+        // Ruangan yang sudah pernah digunakan (untuk autocomplete)
+        $ruanganList = Course::whereNotNull('ruangan')
+            ->distinct()
+            ->orderBy('ruangan')
+            ->pluck('ruangan');
+
+        // Map kelas_id -> ruangan dari tabel kelas (sebagai fallback)
+        $kelasRuanganMap = Kelas::whereNotNull('ruangan')
+            ->pluck('ruangan', 'id');
+
+        return view('sistem_akademik.course.createOrEdit',
+            compact('kelas', 'mapels', 'slots', 'siswa', 'title', 'header',
+                    'ruanganList', 'kelasRuanganMap'));
     }
 
     public function store(Request $request)
@@ -540,28 +624,38 @@ class CourseController extends Controller
 
     public function edit(Course $course)
     {
-        $title = 'Edit Jadwal';
+        $title  = 'Edit Jadwal';
         $header = 'Edit Jadwal Mapel';
 
-        $kelas = Kelas::all();
+        $kelas  = Kelas::all();
         $mapels = MataPelajaran::with('guru')->get();
-        $slots = $this->selectableSlots();
+        $slots  = $this->selectableSlots();
 
         $selected = ['slot_start' => null, 'slot_end' => null];
         foreach ($this->slotDetails() as $id => $d) {
             if ($d['selectable']) {
                 if (substr($course->jam_mulai, 0, 5) == $d['start']) $selected['slot_start'] = $id;
-                if (substr($course->jam_selesai, 0, 5) == $d['end']) $selected['slot_end'] = $id;
+                if (substr($course->jam_selesai, 0, 5) == $d['end'])  $selected['slot_end']   = $id;
             }
         }
 
-        // include siswa list as fallback (harmless) so view can show options if needed
-        $siswa = Siswa::with('user')->orderBy('id')->get();
-
+        $siswa          = Siswa::with('user')->orderBy('id')->get();
         $selectedSiswaIds = method_exists($course, 'siswa') ? $course->siswa->pluck('id')->toArray() : [];
 
-        return view('sistem_akademik.course.createOrEdit', compact('course','kelas','mapels',
-            'slots','siswa','selected','selectedSiswaIds', 'title','header'
+        // Ruangan yang sudah pernah digunakan (untuk autocomplete)
+        $ruanganList = Course::whereNotNull('ruangan')
+            ->distinct()
+            ->orderBy('ruangan')
+            ->pluck('ruangan');
+
+        // Map kelas_id -> ruangan dari tabel kelas (sebagai fallback)
+        $kelasRuanganMap = Kelas::whereNotNull('ruangan')
+            ->pluck('ruangan', 'id');
+
+        return view('sistem_akademik.course.createOrEdit', compact(
+            'course', 'kelas', 'mapels', 'slots', 'siswa',
+            'selected', 'selectedSiswaIds', 'title', 'header',
+            'ruanganList', 'kelasRuanganMap'
         ));
     }
 
@@ -716,6 +810,27 @@ class CourseController extends Controller
             ->with('message', 'Jadwal berhasil dihapus.');
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->ids;
+        if (!$ids || !is_array($ids)) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada data yang dipilih']);
+        }
+
+        try {
+            $courses = Course::whereIn('id', $ids)->get();
+            foreach ($courses as $course) {
+                if (method_exists($course, 'siswa')) {
+                    $course->siswa()->detach();
+                }
+                $course->delete();
+            }
+            return response()->json(['success' => true, 'message' => count($ids) . ' data jadwal berhasil dihapus']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus data: ' . $e->getMessage()]);
+        }
+    }
+
     public function getRecommendations(Request $request)
     {
         $request->validate([
@@ -801,9 +916,9 @@ class CourseController extends Controller
         ];
 
         $conflictDetails = [
-            'guru' => $conflicts['guru']->map($format)->values(),
-            'ruangan' => $conflicts['ruangan']->map($format)->values(),
-            'kelas' => $conflicts['kelas']->map($format)->values(),
+            'guru' => $conflicts['guru']->map($format)->values()->all(),
+            'ruangan' => $conflicts['ruangan']->map($format)->values()->all(),
+            'kelas' => $conflicts['kelas']->map($format)->values()->all(),
         ];
 
         return response()->json([
@@ -890,6 +1005,14 @@ class CourseController extends Controller
 
         $user = Auth::user();
         $guruIds = $this->resolveGuruIds($user);
+        
+        if ($user && $user->role === 'siswa') {
+            if ($user->siswa && $user->siswa->kelas_id) {
+                $selectedKelasId = $user->siswa->kelas_id;
+            } else {
+                abort(403, 'Anda belum terdaftar di kelas manapun.');
+            }
+        }
 
         $pages = [];
 

@@ -45,7 +45,9 @@ class SistemAkademikController extends Controller
             ]);
         }
 
-        $berita = $query->latest()->paginate(4)->appends($request->query());
+        $berita = $query->withExists(['readers as has_read' => function($q) {
+            $q->where('user_id', auth()->id());
+        }])->paginate(4)->appends($request->query());
 
         return view('sistem_akademik.dashboard', compact('berita'));
     }

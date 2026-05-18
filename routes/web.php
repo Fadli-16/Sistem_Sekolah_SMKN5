@@ -72,15 +72,21 @@ Route::get('/logout', [AuthController::class, 'logout']);
 Route::prefix('admin/manage')->name('admin.manage.')->middleware(['auth', 'role:super_admin'])->group(function () {
     Route::get('/', [SuperAdminController::class, 'index'])->name('index');
 
-    // Export users to CSV
+    // Export users to CSV/XLSX
     Route::get('users/export', [UserController::class, 'export'])
         ->name('users.export');
+    Route::get('users/export/guru', [UserController::class, 'exportGuru'])
+        ->name('users.export.guru');
+    Route::get('users/export/siswa', [UserController::class, 'exportSiswa'])
+        ->name('users.export.siswa');
 
     // import CSV
     Route::get('users/import', [UserController::class, 'showImportForm'])
         ->name('users.import');
     Route::post('users/import', [UserController::class, 'import'])
         ->name('users.import.post');
+    Route::get('users/import/template/{type}', [UserController::class, 'downloadTemplate'])
+        ->name('users.import.template');
 
     // User management routes
     Route::get('/users', [SuperAdminController::class, 'users'])->name('users');
@@ -132,16 +138,12 @@ Route::prefix('sistem-akademik')
 
         /*
     |--------------------------------------------------------------------------
-    | BERITA - AKSES UMUM (SEMUA USER LOGIN)
-    |--------------------------------------------------------------------------
-    */
-        Route::get('berita', [BeritaController::class, 'index'])->name('berita.index');
-        /*
-    |--------------------------------------------------------------------------
     | BERITA - KHUSUS ADMIN
     |--------------------------------------------------------------------------
     */
         Route::middleware(['role:super_admin,admin_sa'])->group(function () {
+            Route::get('berita', [BeritaController::class, 'index'])->name('berita.index');
+            Route::delete('berita/bulk-delete', [BeritaController::class, 'bulkDestroy'])->name('berita.bulkDestroy');
             Route::get('berita/create', [BeritaController::class, 'create'])->name('berita.create');
             Route::post('berita', [BeritaController::class, 'store'])->name('berita.store');
             Route::get('berita/{berita}/edit', [BeritaController::class, 'edit'])->name('berita.edit');
@@ -156,6 +158,9 @@ Route::prefix('sistem-akademik')
     |--------------------------------------------------------------------------
     */
         Route::middleware(['role:super_admin,admin_sa'])->group(function () {
+            Route::delete('kelas/bulk-delete', [KelasController::class, 'bulkDestroy'])->name('kelas.bulkDestroy');
+            Route::delete('guru/bulk-delete', [GuruController::class, 'bulkDestroy'])->name('guru.bulkDestroy');
+            Route::delete('siswa/bulk-delete', [SiswaController::class, 'bulkDestroy'])->name('siswa.bulkDestroy');
             Route::resource('kelas', KelasController::class)->parameters(['kelas' => 'kelas']);
             Route::resource('guru', GuruController::class);
             Route::resource('siswa', SiswaController::class);
@@ -174,13 +179,16 @@ Route::prefix('sistem-akademik')
         Route::patch('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('updatePhoto'); 
         Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('updatePassword');
 
+        Route::delete('mata_pelajaran/bulk-delete', [MataPelajaranController::class, 'bulkDestroy'])->name('mata_pelajaran.bulkDestroy');
         Route::resource('mata_pelajaran', MataPelajaranController::class);
+        Route::delete('peminatan/bulk-delete', [PeminatanController::class, 'bulkDestroy'])->name('peminatan.bulkDestroy');
         Route::resource('peminatan', PeminatanController::class);
 
         // Course Routes with additional AJAX endpoints
         Route::get('course/get-recommendations', [CourseController::class, 'getRecommendations'])->name('sistem_akademik.get-recommendations');
         Route::get('course/get-students-by-jurusan', [CourseController::class, 'getStudentsByJurusan'])->name('sistem_akademik.get-students-by-jurusan');
         Route::post('/course/check-conflicts', [CourseController::class, 'ajaxCheckConflicts'])->name('course.check-conflicts');
+        Route::delete('course/bulk-delete', [CourseController::class, 'bulkDestroy'])->name('course.bulkDestroy');
         Route::resource('course', CourseController::class);
         Route::get('course/timetable', [CourseController::class, 'timetable'])
         ->name('course.timetable');

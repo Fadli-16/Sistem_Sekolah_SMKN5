@@ -228,6 +228,17 @@ class PeminatanController extends Controller
 
         $query = Peminatan::with(['user.siswa.kelas']);
 
+        // Filter Pencarian (Nama atau NIS)
+        $query->when($request->filled('search'), function ($q) use ($request) {
+            $q->whereHas('user', function ($sq) use ($request) {
+                $search = $request->search;
+                $sq->where('nama', 'like', "%{$search}%")
+                   ->orWhereHas('siswa', function($ssq) use ($search) {
+                       $ssq->where('nis', 'like', "%{$search}%");
+                   });
+            });
+        });
+
         $query->when($request->filled('kelas'), function ($q) use ($request) {
             $q->whereHas('user.siswa', function ($sq) use ($request) {
                 $sq->where('kelas_id', $request->kelas);
@@ -257,7 +268,12 @@ class PeminatanController extends Controller
         });
 
         $filteredCollection = (clone $query)->get();
-        $peminatans = $query->latest()->paginate(15)->appends($request->query());
+        
+        if ($user && $user->role === 'siswa') {
+            $query->orderByRaw("CASE WHEN user_id = ? THEN 0 ELSE 1 END", [$user->id]);
+        }
+        
+        $peminatans = $query->latest()->paginate(25)->appends($request->query());
 
         $hasOwnPeminatan = false;
         if ($user && $user->role === 'siswa') {
@@ -265,8 +281,11 @@ class PeminatanController extends Controller
         }
 
         $totalStudents = User::where('role', 'siswa')->count();
-        $analytics = $this->buildPeminatanAnalytics
-        ($filteredCollection, $options, $request, $kelasList);
+        $analytics = $this->buildPeminatanAnalytics($filteredCollection, $options, $request, $kelasList);
+        
+        // Tambahkan alias 'counts' agar sinkron dengan View
+        $analytics['counts'] = $analytics['statsPerOption'];
+        
         $kelas = $kelasList;
 
         return view('sistem_akademik.peminatan.index', array_merge(
@@ -458,5 +477,20 @@ class PeminatanController extends Controller
             ->route('sistem_akademik.peminatan.index')
             ->with('status', 'success')
             ->with('message', 'Data peminatan berhasil dihapus.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->ids;
+        if (!$ids || !is_array($ids)) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada data yang dipilih']);
+        }
+
+        try {
+            Peminatan::whereIn('id', $ids)->delete();
+            return response()->json(['success' => true, 'message' => count($ids) . ' data peminatan berhasil dihapus']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus data: ' . $e->getMessage()]);
+        }
     }
 }

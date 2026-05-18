@@ -153,7 +153,13 @@
             </div>
 
             <div class="actions">
-                <a href="{{ route('sistem_akademik.berita.index') }}" class="btn btn-back">
+                @php
+                    $role = Auth::user()->role;
+                    $backRoute = in_array($role, ['admin', 'super_admin', 'admin_sa']) 
+                        ? route('sistem_akademik.berita.index') 
+                        : route('sistem_akademik.dashboard');
+                @endphp
+                <a href="{{ $backRoute }}" class="btn btn-back">
                     <i class="fas fa-arrow-left me-1"></i> Kembali
                 </a>
 

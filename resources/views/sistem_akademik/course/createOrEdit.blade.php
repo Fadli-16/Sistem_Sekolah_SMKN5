@@ -56,6 +56,7 @@ $conflictDetails = session('conflict_details', null);
     data-initial-hari="{{ old('hari', $course->hari ?? '') }}"
     data-slot-ids='@json(array_keys($slots))'
     data-slot-details='@json($slots)'
+    data-kelas-ruangan-map='@json($kelasRuanganMap ?? [])'
     class="container mt-4 mb-4">
 
     <h1 class="page-title">{{ $header }}</h1>
@@ -178,11 +179,45 @@ $conflictDetails = session('conflict_details', null);
                 </div>
             </div>
 
-            {{-- RUANGAN --}}
-            <div class="mb-3">
+            {{-- RUANGAN (text input + autocomplete dari riwayat, fallback dari kelas) --}}
+            <div class="mb-3 position-relative">
                 <label for="ruangan" class="form-label">Ruangan</label>
-                <input type="text" class="form-control" id="ruangan" name="ruangan" value="{{ old('ruangan', $course->ruangan ?? '') }}" placeholder="Contoh: R101, Lab Komputer, dsb.">
-                {{-- juga tampilkan ringkasan konflik ruangan di bawah input ruangan (opsional) --}}
+
+                {{-- Input text yang bisa diketik --}}
+                <input type="text"
+                       id="ruangan"
+                       name="ruangan"
+                       class="form-control"
+                       value="{{ old('ruangan', $course->ruangan ?? '') }}"
+                       placeholder="Ketik kode ruangan, mis. R-103…"
+                       autocomplete="off">
+
+                {{-- Dropdown autocomplete --}}
+                <ul id="ruangan-ac-list" style="
+                    display:none;
+                    position:absolute;
+                    top:calc(100% + 2px);
+                    left:0; right:0;
+                    background:#fff;
+                    border:1px solid #d1d5db;
+                    border-radius:8px;
+                    box-shadow:0 8px 20px rgba(0,0,0,.12);
+                    z-index:1060;
+                    max-height:200px;
+                    overflow-y:auto;
+                    padding:0;
+                    margin:0;
+                    list-style:none;
+                "></ul>
+
+                <small class="form-text text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Kosongkan untuk otomatis menggunakan ruangan kelas yang dipilih.
+                </small>
+                <small id="ruangan-fallback-hint" class="text-success d-none mt-1"
+                       style="display:none; font-size:0.8rem;"></small>
+
+                {{-- conflict warning tetap di sini --}}
                 @if($conflictDetails && isset($conflictDetails['ruangan']) && count($conflictDetails['ruangan']))
                 <small class="text-danger d-block mt-1">
                     Ruangan ini bentrok dengan jadwal lain. Lihat detail di atas dan pilih ruangan berbeda.
@@ -218,7 +253,9 @@ $conflictDetails = session('conflict_details', null);
             preselectSiswa: el.dataset ? JSON.parse(el.dataset.preselectSiswa || '[]') : [],
             initialHari: el.dataset ? el.dataset.initialHari : '',
             slotIds: el.dataset ? JSON.parse(el.dataset.slotIds || '[]') : @json(array_keys($slots)),
-            slotDetails: el.dataset ? JSON.parse(el.dataset.slotDetails || '{}') : @json($slots)
+            slotDetails: el.dataset ? JSON.parse(el.dataset.slotDetails || '{}') : @json($slots),
+            kelasRuanganMap: el.dataset ? JSON.parse(el.dataset.kelasRuanganMap || '{}') : @json($kelasRuanganMap ?? []),
+            ruanganFromJadwal: @json($ruanganList ?? [])
         };
     })();
 </script>

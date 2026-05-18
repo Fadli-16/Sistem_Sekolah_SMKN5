@@ -184,6 +184,25 @@
                 }
             });
         }
+
+        // Logout confirmation function
+        function logout(e) {
+            if (e) e.preventDefault();
+            Swal.fire({
+                title: "Keluar Akun?",
+                text: "Apakah Anda yakin ingin keluar?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonColor: "#4ecdc4",
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: "Ya, Keluar!",
+                cancelButtonText: "Batal"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('logoutForm').submit();
+                }
+            });
+        }
     </script>
 
     @yield('script')

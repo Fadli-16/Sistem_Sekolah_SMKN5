@@ -19,10 +19,20 @@ class SuperAdminController extends Controller
 
     public function users()
     {
-        $title = 'Manajemen Pengguna';
+        $title  = 'Manajemen Pengguna';
         $header = 'Kelola Pengguna Sistem';
-        $users = User::all();
-        return view('admin.manage.users.index', compact('users', 'title', 'header'));
+        $users  = User::all();
+
+        // Untuk filter export
+        $jurusanList = \App\Models\Kelas::select('jurusan')
+            ->whereNotNull('jurusan')
+            ->distinct()
+            ->orderBy('jurusan')
+            ->pluck('jurusan');
+
+        $kelasList = \App\Models\Kelas::orderBy('jurusan')->orderBy('nama_kelas')->get();
+
+        return view('admin.manage.users.index', compact('users', 'title', 'header', 'jurusanList', 'kelasList'));
     }
 
     public function createUser()

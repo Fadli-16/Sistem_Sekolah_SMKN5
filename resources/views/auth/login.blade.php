@@ -47,8 +47,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: calc(100vh - 250px);
-        padding: var(--spacing-xl) var(--spacing);
+        min-height: auto;
+        padding: var(--spacing) var(--spacing);
     }
 
     .login-form {
@@ -62,6 +62,9 @@
         position: relative;
         overflow: hidden;
         transition: var(--transition);
+        animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        backdrop-filter: blur(10px);
+        background-color: rgba(255, 255, 255, 0.98);
     }
 
     .login-form:hover {
@@ -216,9 +219,10 @@
         height: 150px;
         top: -75px;
         right: -75px;
-        background-color: rgba(78, 205, 196, 0.03);
+        background-color: rgba(78, 205, 196, 0.05);
         border-radius: 50%;
         z-index: -1;
+        animation: floatShape 6s ease-in-out infinite;
     }
 
     .login-form::after {
@@ -228,9 +232,54 @@
         height: 100px;
         bottom: -50px;
         left: -50px;
-        background-color: rgba(78, 205, 196, 0.03);
+        background-color: rgba(78, 205, 196, 0.05);
         border-radius: 50%;
         z-index: -1;
+        animation: floatShape 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatShape {
+        0% { transform: translateY(0px) scale(1); }
+        50% { transform: translateY(-20px) scale(1.05); }
+        100% { transform: translateY(0px) scale(1); }
+    }
+
+    @keyframes slideUpFade {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Input Icon Interaction */
+    .form-group .input-icon {
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s ease;
+    }
+
+    .form-control:focus + .input-icon {
+        transform: translateY(-50%) scale(1.15);
+        color: var(--secondary);
+    }
+
+    /* Button Ripple Effect Alternative */
+    .btn-login {
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+    
+    .btn-login::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+        z-index: -1;
+    }
+
+    .btn-login:hover::before {
+        left: 100%;
     }
 
     /* Back button styling */
@@ -276,12 +325,21 @@
             padding: 0.4rem 0.8rem;
         }
     }
+
+    /* Sembunyikan teks "for testing purposes only" pada reCAPTCHA test key */
+    .g-recaptcha {
+        overflow: hidden;
+        height: 78px; /* tinggi standar widget tanpa notice */
+    }
 </style>
 @endsection
 
 @section('content')
 
 <div class="login-container">
+    <a href="{{ route('dashboard') }}" class="back-to-home">
+        <i class="bi bi-arrow-left"></i> Kembali ke Beranda
+    </a>
     <div class="login-form">
         <h2>Login Pengguna</h2>
         
@@ -299,28 +357,26 @@
                 <i class="bi bi-lock input-icon"></i>
             </div>
         
+            <div class="form-group mb-4">
+                <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
+            </div>
+
             <button type="submit" class="btn-login">
                 <i class="bi bi-box-arrow-in-right"></i> Login
             </button>
         </form>
-        
-
-        <div class="login-footer">
-            <p>Sistem Informasi SMK 5 Padang</p>
-            <p><a href="{{ route('dashboard') }}"><i class="bi bi-house-door"></i> Kembali ke Beranda</a></p>
-        </div>
     </div>
 </div>
 @endsection
 
 @section('script')
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         @if(session('loginError'))
         swal({
             title: 'Login Gagal',
-            text: '{{ session('
-            loginError ') }}',
+            text: '{{ session('loginError') }}',
             icon: 'error',
             button: {
                 text: "OK",
