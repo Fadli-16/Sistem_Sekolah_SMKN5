@@ -325,11 +325,9 @@
             padding: 0.4rem 0.8rem;
         }
     }
-
-    /* Sembunyikan teks "for testing purposes only" pada reCAPTCHA test key */
     .g-recaptcha {
         overflow: hidden;
-        height: 78px; /* tinggi standar widget tanpa notice */
+        height: 78px; 
     }
 </style>
 @endsection

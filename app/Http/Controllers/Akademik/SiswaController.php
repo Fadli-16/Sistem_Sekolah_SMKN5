@@ -273,29 +273,31 @@ class SiswaController extends Controller
         $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
         $base = pathinfo($orig, PATHINFO_FILENAME);
         $base = Str::slug(substr($base, 0, 50), '_');
-        $name = time() . '_' . $base . '.' . $ext;
+        $filename = time() . '_' . $base . '.' . $ext;
         $tmpPath = $file->getRealPath();
-        $destPath = $destDir . DIRECTORY_SEPARATOR . $name;
+        $destPath = public_path('assets/profile/' . $filename);
 
         // if already small -> move
         if ($file->getSize() !== null && $file->getSize() <= $this->maxImageBytes) {
-            $file->move($destDir, $name);
-            return $name;
+            $file->move(public_path('assets/profile'), $filename);
+            return $filename;
         }
 
         // try compressing
         try {
             $ok = $this->compressImageIfNeeded($tmpPath, $destPath, $ext, $this->maxImageBytes);
-            if ($ok && File::exists($destPath)) return $name;
+            if ($ok && File::exists($destPath)) {
+                return $filename;
+            }
         } catch (\Throwable $e) {
             Log::warning("compressImageIfNeeded failed for siswa upload: " . $e->getMessage());
         }
 
         // fallback: move original
         try {
-            $file->move($destDir, $name);
-            Log::warning("Image compression fallback used for siswa upload: {$name}");
-            return $name;
+            $file->move(public_path('assets/profile'), $filename);
+            Log::warning("Image compression fallback used for siswa upload: {$filename}");
+            return $filename;
         } catch (\Throwable $e) {
             Log::error("Failed moving uploaded image after compression fallback: " . $e->getMessage());
             throw $e;
