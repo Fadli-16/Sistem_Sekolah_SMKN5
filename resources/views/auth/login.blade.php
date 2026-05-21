@@ -341,7 +341,7 @@
         <i class="bi bi-arrow-left"></i> Kembali ke Beranda
     </a>
     <div class="login-form">
-        <h2>Login Pengguna Wok!!</h2>
+        <h2>Login Pengguna</h2>
         
         <form action="{{ route('authenticate') }}" method="POST">
             @csrf
