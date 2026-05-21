@@ -14,7 +14,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        if (file_exists(base_path('../public_html'))) {
+            $this->app->bind('path.public', function() {
+                return base_path('../public_html');
+            });
+        } elseif (file_exists(base_path('public_html'))) {
+            $this->app->bind('path.public', function() {
+                return base_path('public_html');
+            });
+        }
     }
 
     /**
