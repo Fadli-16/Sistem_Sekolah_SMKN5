@@ -105,4 +105,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Berita::class, 'berita_reads')->withTimestamps();
     }
+
+    public function kelasBk()
+    {
+        return $this->hasMany(Kelas::class, 'guru_bk_id');
+    }
 }

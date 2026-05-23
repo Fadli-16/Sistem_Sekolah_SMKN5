@@ -239,6 +239,19 @@
                     <td class="day-col">{{ \Illuminate\Support\Str::substr($day,0,2) }}</td>
 
                     @foreach($slotOrder as $sid)
+                    @php
+                    $isBreak = in_array($sid, ['istirahat', 'ISHOMA', 'ISHO']);
+                    @endphp
+
+                    @if($isBreak)
+                        @if($loop->parent->first)
+                            <td rowspan="{{ count($days) }}" class="cell-course" style="font-weight: bold; background-color: #fafafa; font-size: 10px; line-height: 1.2; vertical-align: middle;">
+                                {!! implode('<br>', str_split(strtoupper($slotDetails[$sid]['label'] ?? $sid))) !!}
+                            </td>
+                        @endif
+                        @continue
+                    @endif
+
                     @php $cell = $matrix[$day][$sid] ?? null; @endphp
 
                     @if(isset($cell['skipped']) && $cell['skipped'] === true)

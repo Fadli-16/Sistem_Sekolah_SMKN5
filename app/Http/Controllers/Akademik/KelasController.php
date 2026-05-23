@@ -55,13 +55,14 @@ class KelasController extends Controller
             ->get();
 
         // GURU BK: ambil guru dengan jumlah penugasan < 6
-        $availableGuruBk = User::select('users.*', DB::raw('COUNT(kelas.id) as kelas_count'))
-            ->leftJoin('kelas', 'kelas.guru_bk_id', '=', 'users.id')
-            ->where('users.role', 'guru')
-            ->groupBy('users.id')
-            ->havingRaw('kelas_count < 6')
-            ->orderBy('users.nama')
-            ->get();
+        $availableGuruBk = User::where('role', 'guru')
+            ->withCount('kelasBk as kelas_count')
+            ->orderBy('nama')
+            ->get()
+            ->filter(function ($user) {
+                return $user->kelas_count < 6;
+            })
+            ->values();
 
         $kelas = null;
 
@@ -124,13 +125,11 @@ class KelasController extends Controller
             ->orderBy('nama')
             ->get();
 
-        // Available guru_bk: guru dengan <2 kelas OR guru yang saat ini guru_bk untuk kelas ini
-        $guruCounts = User::select('users.id', 'users.nama', DB::raw('COUNT(kelas.id) as kelas_count'))
-            ->leftJoin('kelas', 'kelas.guru_bk_id', '=', 'users.id')
-            ->where('users.role', 'guru')
-            ->groupBy('users.id');
-
-        $guruList = $guruCounts->get();
+        // Available guru_bk: guru dengan <6 kelas OR guru yang saat ini guru_bk untuk kelas ini
+        $guruList = User::where('role', 'guru')
+            ->withCount('kelasBk as kelas_count')
+            ->orderBy('nama')
+            ->get();
 
         $availableGuruBk = $guruList->filter(function ($g) use ($kelas) {
             // jika guru ini adalah guru_bk dari kelas yang sedang diedit -> always include
