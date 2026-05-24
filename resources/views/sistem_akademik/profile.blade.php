@@ -14,7 +14,7 @@
     $admin = $user->adminProfile ?? null;
 
     $image = $siswa->image ?? $guru->image ?? $admin->image ?? null;
-    $imageUrl = ($image && file_exists(public_path('assets/profile/' . $image)))
+    $imageUrl = $image 
         ? asset('assets/profile/' . $image)
         : asset('assets/profile/default.png');
 
@@ -68,7 +68,7 @@
                     Administrator
                     @endif
                 </div>
-                @if($image && file_exists(public_path('assets/profile/' . $image)))
+                @if($image)
                 <div class="mt-2">
                     <form action="{{ route('sistem_akademik.deletePhoto') }}" method="POST" id="deletePhotoForm" style="display:inline;">
                         @csrf
