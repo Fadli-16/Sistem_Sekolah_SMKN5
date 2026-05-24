@@ -138,10 +138,10 @@ class UserController extends Controller
         $type = in_array($type, ['guru', 'siswa']) ? $type : 'siswa';
 
         if ($type === 'guru') {
-            $headers = ['nip', 'nama', 'email', 'jurusan', 'jenis_kelamin', 'agama', 'tanggal_lahir', 'alamat', 'no_hp'];
+            $headers = ['NIP', 'Nama', 'Email', 'Jurusan', 'Jenis kelamin', 'agama', 'Tanggal lahir', 'Alamat', 'No.hp'];
             $example = ['198501012010011001', 'Contoh Nama Guru', 'guru@sekolah.sch.id', 'Teknik Komputer dan Jaringan', 'Laki-laki', 'Islam', '1985-01-01', 'Jl. Contoh No.1 Padang', '081234567890'];
         } else {
-            $headers = ['nis', 'nama', 'email', 'jurusan', 'kelas', 'jenis_kelamin', 'agama', 'tanggal_lahir', 'alamat', 'no_hp'];
+            $headers = ['NIS', 'Nama', 'Email', 'Jurusan', 'kelas', 'Jenis kelamin', 'agama', 'Tanggal lahir', 'Alamat', 'No.hp'];
             $example = ['12345', 'Contoh Nama Siswa', 'siswa@sekolah.sch.id', 'Teknik Komputer dan Jaringan', 'XII TKJ 1', 'Laki-laki', 'Islam', '2006-01-01', 'Jl. Contoh No.1 Padang', '081234567890'];
         }
 

@@ -22,18 +22,15 @@ class GuruExport implements FromCollection, WithHeadings, WithStyles
         $query = DB::table('users')
             ->join('guru', 'users.id', '=', 'guru.user_id')
             ->select([
+                'guru.nip',
                 'users.nama',
                 'users.email',
-                DB::raw("'guru' as role"),
-                DB::raw("'' as password"),
-                'guru.nip as nis_nip',
                 'guru.jurusan',
-                'guru.kelas',
-                'guru.tanggal_lahir',
                 'guru.jenis_kelamin',
+                'guru.agama',
+                'guru.tanggal_lahir',
                 'guru.alamat',
                 'guru.no_hp',
-                'guru.agama',
             ])
             ->orderBy('users.nama');
 
@@ -47,18 +44,15 @@ class GuruExport implements FromCollection, WithHeadings, WithStyles
     public function headings(): array
     {
         return [
-            'nama',
-            'email',
-            'role',
-            'password',
-            'nis_nip',
-            'jurusan',
-            'kelas',
-            'tanggal_lahir',
-            'jenis_kelamin',
-            'alamat',
-            'no_hp',
+            'NIP',
+            'Nama',
+            'Email',
+            'Jurusan',
+            'Jenis kelamin',
             'agama',
+            'Tanggal lahir',
+            'Alamat',
+            'No.hp',
         ];
     }
 

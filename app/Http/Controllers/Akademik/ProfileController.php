@@ -163,6 +163,45 @@ class ProfileController extends Controller
     }
 
     /**
+     * Delete profile photo.
+     */
+    public function deletePhoto(Request $request)
+    {
+        $user = $request->user();
+        
+        $model = null;
+        if ($user->relationLoaded('siswa') || $user->siswa) {
+            $model = $user->siswa;
+            $field = 'image';
+        } elseif ($user->relationLoaded('guru') || $user->guru) {
+            $model = $user->guru;
+            $field = 'image';
+        } elseif ($user->relationLoaded('adminProfile') || $user->adminProfile) {
+            $model = $user->adminProfile;
+            $field = 'image';
+        } else {
+            return $request->wantsJson() 
+                ? response()->json(['success' => false, 'message' => 'Tidak ada profil terkait.'], 422)
+                : redirect()->back()->with('status', 'error')->with('message', 'Tidak ada profil terkait.');
+        }
+
+        if (!empty($model->{$field})) {
+            $old = public_path('assets/profile/' . $model->{$field});
+            if (File::exists($old)) {
+                @unlink($old);
+            }
+            $model->{$field} = null;
+            $model->save();
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Foto profil berhasil dihapus.']);
+        }
+
+        return redirect()->back()->with('status', 'success')->with('message', 'Foto profil berhasil dihapus.');
+    }
+
+    /**
      * Update password.
      */
     public function updatePassword(Request $request)

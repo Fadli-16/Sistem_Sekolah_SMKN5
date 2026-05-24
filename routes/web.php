@@ -177,6 +177,7 @@ Route::prefix('sistem-akademik')
         Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
         Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('updateProfile'); 
         Route::patch('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('updatePhoto'); 
+        Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('deletePhoto'); 
         Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('updatePassword');
 
         Route::delete('mata_pelajaran/bulk-delete', [MataPelajaranController::class, 'bulkDestroy'])->name('mata_pelajaran.bulkDestroy');

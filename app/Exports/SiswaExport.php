@@ -25,19 +25,16 @@ class SiswaExport implements FromCollection, WithHeadings, WithStyles
             ->join('siswa', 'users.id', '=', 'siswa.user_id')
             ->leftJoin('kelas', 'siswa.kelas_id', '=', 'kelas.id')
             ->select([
+                'siswa.nis',
                 'users.nama',
                 'users.email',
-                DB::raw("'siswa' as role"),
-                DB::raw("'' as password"),
-                'siswa.nis as nis_nip',
                 'siswa.jurusan',
                 'kelas.nama_kelas as kelas',
-                'siswa.kelas_id',
-                'siswa.tanggal_lahir',
                 'siswa.jenis_kelamin',
+                'siswa.agama',
+                'siswa.tanggal_lahir',
                 'siswa.alamat',
                 'siswa.no_hp',
-                'siswa.agama',
             ])
             ->orderBy('users.nama');
 
@@ -55,19 +52,16 @@ class SiswaExport implements FromCollection, WithHeadings, WithStyles
     public function headings(): array
     {
         return [
-            'nama',
-            'email',
-            'role',
-            'password',
-            'nis_nip',
-            'jurusan',
+            'NIS',
+            'Nama',
+            'Email',
+            'Jurusan',
             'kelas',
-            'kelas_id',
-            'tanggal_lahir',
-            'jenis_kelamin',
-            'alamat',
-            'no_hp',
+            'Jenis kelamin',
             'agama',
+            'Tanggal lahir',
+            'Alamat',
+            'No.hp',
         ];
     }
 

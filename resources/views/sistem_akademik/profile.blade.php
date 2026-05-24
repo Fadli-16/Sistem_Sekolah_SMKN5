@@ -68,6 +68,17 @@
                     Administrator
                     @endif
                 </div>
+                @if($image && file_exists(public_path('assets/profile/' . $image)))
+                <div class="mt-2">
+                    <form action="{{ route('sistem_akademik.deletePhoto') }}" method="POST" id="deletePhotoForm" style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeletePhoto()" style="border-radius: 8px; font-size: 0.8rem; padding: 0.25rem 0.6rem;">
+                            <i class="fas fa-trash-alt me-1"></i> Hapus Foto
+                        </button>
+                    </form>
+                </div>
+                @endif
             </div>
         </div>
 
@@ -307,5 +318,22 @@
             icon.classList.add('fa-eye');
         }
     });
+
+    function confirmDeletePhoto() {
+        Swal.fire({
+            title: 'Hapus Foto?',
+            text: "Foto profil Anda akan dihapus permanen.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deletePhotoForm').submit();
+            }
+        });
+    }
 </script>
 @endsection

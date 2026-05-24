@@ -167,15 +167,15 @@
                                         <tr><th>Kolom</th><th>Keterangan</th><th>Status</th></tr>
                                     </thead>
                                     <tbody>
-                                        <tr><td>nip</td><td>NIP Guru</td><td><span class="required-badge">Wajib</span></td></tr>
-                                        <tr><td>nama</td><td>Nama lengkap</td><td><span class="required-badge">Wajib</span></td></tr>
-                                        <tr><td>email</td><td>Alamat email</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>jurusan</td><td>Nama jurusan</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>jenis_kelamin</td><td>Laki-laki / Perempuan</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>NIP</td><td>NIP Guru</td><td><span class="required-badge">Wajib</span></td></tr>
+                                        <tr><td>Nama</td><td>Nama lengkap</td><td><span class="required-badge">Wajib</span></td></tr>
+                                        <tr><td>Email</td><td>Alamat email</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Jurusan</td><td>Nama jurusan</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Jenis kelamin</td><td>Laki-laki / Perempuan</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>agama</td><td>Agama</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>tanggal_lahir</td><td>Format: YYYY-MM-DD</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>alamat</td><td>Alamat lengkap</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>no_hp</td><td>Nomor HP</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Tanggal lahir</td><td>Format: YYYY-MM-DD</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Alamat</td><td>Alamat lengkap</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>No.hp</td><td>Nomor HP</td><td><span class="optional-badge">Opsional</span></td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -196,16 +196,16 @@
                                         <tr><th>Kolom</th><th>Keterangan</th><th>Status</th></tr>
                                     </thead>
                                     <tbody>
-                                        <tr><td>nis</td><td>NIS Siswa</td><td><span class="required-badge">Wajib</span></td></tr>
-                                        <tr><td>nama</td><td>Nama lengkap</td><td><span class="required-badge">Wajib</span></td></tr>
-                                        <tr><td>email</td><td>Alamat email</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>jurusan</td><td>Nama jurusan</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>NIS</td><td>NIS Siswa</td><td><span class="required-badge">Wajib</span></td></tr>
+                                        <tr><td>Nama</td><td>Nama lengkap</td><td><span class="required-badge">Wajib</span></td></tr>
+                                        <tr><td>Email</td><td>Alamat email</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Jurusan</td><td>Nama jurusan</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>kelas</td><td>Nama kelas (teks)</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>jenis_kelamin</td><td>Laki-laki / Perempuan</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Jenis kelamin</td><td>Laki-laki / Perempuan</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>agama</td><td>Agama</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>tanggal_lahir</td><td>Format: YYYY-MM-DD</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>alamat</td><td>Alamat lengkap</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>no_hp</td><td>Nomor HP</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Tanggal lahir</td><td>Format: YYYY-MM-DD</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Alamat</td><td>Alamat lengkap</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>No.hp</td><td>Nomor HP</td><td><span class="optional-badge">Opsional</span></td></tr>
                                     </tbody>
                                 </table>
                             </div>

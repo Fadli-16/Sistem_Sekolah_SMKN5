@@ -31,23 +31,34 @@ class UsersImport implements ToCollection, WithHeadingRow
             
             $nis_nip = $role === 'guru' ? ($row['nip'] ?? '') : ($row['nis'] ?? '');
 
-            // Kondisi email valid?
-            if (filter_var($emailRaw, FILTER_VALIDATE_EMAIL)) {
-                // Import berdasarkan email: update jika sudah ada
+            // Kondisi update berdasarkan nis_nip
+            if (!empty($nis_nip)) {
+                // Import berdasarkan nis_nip: update jika sudah ada
+                $user = User::updateOrCreate(
+                    ['nis_nip' => $nis_nip],
+                    [
+                        'nama'     => $row['nama'] ?? '',
+                        'email'    => filter_var($emailRaw, FILTER_VALIDATE_EMAIL) ? $emailRaw : null,
+                        'password' => Hash::make($password),
+                        'role'     => $role,
+                    ]
+                );
+            } elseif (filter_var($emailRaw, FILTER_VALIDATE_EMAIL)) {
+                // Fallback jika nis_nip kosong tapi ada email
                 $user = User::updateOrCreate(
                     ['email' => $emailRaw],
                     [
                         'nama'     => $row['nama'] ?? '',
-                        'nis_nip'  => $nis_nip,
+                        'nis_nip'  => null,
                         'password' => Hash::make($password),
                         'role'     => $role,
                     ]
                 );
             } else {
-                // Email null/invalid → buat record baru
+                // Keduanya kosong/invalid → lewati atau buat record baru (disini kita buat baru dgn email null)
                 $user = User::create([
                     'nama'     => $row['nama'] ?? '',
-                    'nis_nip'  => $nis_nip,
+                    'nis_nip'  => null,
                     'email'    => null,
                     'password' => Hash::make($password),
                     'role'     => $role,
@@ -55,33 +66,31 @@ class UsersImport implements ToCollection, WithHeadingRow
             }
 
             if ($role === 'siswa') {
+                $siswaData = ['nis' => $nis_nip];
+                if (isset($row['kelas'])) $siswaData['kelas'] = $row['kelas'];
+                if (isset($row['jurusan'])) $siswaData['jurusan'] = $row['jurusan'];
+                if (isset($row['tanggal_lahir'])) $siswaData['tanggal_lahir'] = $row['tanggal_lahir'];
+                if (isset($row['jenis_kelamin'])) $siswaData['jenis_kelamin'] = $row['jenis_kelamin'];
+                if (isset($row['agama'])) $siswaData['agama'] = $row['agama'];
+                if (isset($row['alamat'])) $siswaData['alamat'] = $row['alamat'];
+                if (isset($row['no_hp'])) $siswaData['no_hp'] = $row['no_hp'];
+
                 Siswa::updateOrCreate(
                     ['user_id' => $user->id],
-                    [
-                        'nis'           => $nis_nip,
-                        'kelas_id'      => $row['kelas_id'] ?? null,
-                        'kelas'         => $row['kelas'] ?? null,
-                        'jurusan'       => $row['jurusan'] ?? null,
-                        'tanggal_lahir' => $row['tanggal_lahir'] ?? null,
-                        'jenis_kelamin' => $row['jenis_kelamin'] ?? 'Laki-laki',
-                        'agama'         => $row['agama'] ?? null,
-                        'alamat'        => $row['alamat'] ?? null,
-                        'no_hp'         => $row['no_hp'] ?? null,
-                    ]
+                    $siswaData
                 );
             } elseif ($role === 'guru') {
+                $guruData = ['nip' => $nis_nip];
+                if (isset($row['jurusan'])) $guruData['jurusan'] = $row['jurusan'];
+                if (isset($row['tanggal_lahir'])) $guruData['tanggal_lahir'] = $row['tanggal_lahir'];
+                if (isset($row['jenis_kelamin'])) $guruData['jenis_kelamin'] = $row['jenis_kelamin'];
+                if (isset($row['agama'])) $guruData['agama'] = $row['agama'];
+                if (isset($row['alamat'])) $guruData['alamat'] = $row['alamat'];
+                if (isset($row['no_hp'])) $guruData['no_hp'] = $row['no_hp'];
+
                 Guru::updateOrCreate(
                     ['user_id' => $user->id],
-                    [
-                        'nip'           => $nis_nip,
-                        'kelas'         => $row['kelas'] ?? null,
-                        'jurusan'       => $row['jurusan'] ?? null,
-                        'tanggal_lahir' => $row['tanggal_lahir'] ?? null,
-                        'jenis_kelamin' => $row['jenis_kelamin'] ?? 'Laki-laki',
-                        'agama'         => $row['agama'] ?? null,
-                        'alamat'        => $row['alamat'] ?? null,
-                        'no_hp'         => $row['no_hp'] ?? null,
-                    ]
+                    $guruData
                 );
             }
         }
