@@ -1,7 +1,7 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
-    <link href="{{ asset('assets/css/course.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/course.css') }}" rel="stylesheet">
 @endsection
 
 @section('content')
