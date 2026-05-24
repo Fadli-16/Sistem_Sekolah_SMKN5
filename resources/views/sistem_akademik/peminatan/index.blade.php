@@ -1,7 +1,128 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
-    <link href="{{ asset('css/peminatan.css') }}?v={{ time() }}" rel="stylesheet">
+<style>
+    .select2-container--default .select2-selection--single {
+        border: 1px solid #dee2e6;
+        height: 38px;
+        border-radius: 8px;
+        padding-top: 4px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+    .select2-dropdown {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+
+    input.minat-radio:checked + .minat-card {
+        border-color: #f97316 !important;
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+    /* Premium Stats Cards */
+    .stat-card-premium {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #f1f5f9;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card-premium:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px -4px rgba(0,0,0,0.08);
+    }
+    .stat-icon-wrap {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+    }
+    .stat-card-premium.purple .stat-icon-wrap { background: #f5f3ff; color: #8b5cf6; }
+    .stat-card-premium.blue .stat-icon-wrap { background: #f0f9ff; color: #0ea5e9; }
+    .stat-card-premium.green .stat-icon-wrap { background: #f0fdf4; color: #10b981; }
+    .stat-card-premium.gray .stat-icon-wrap { background: #f8fafc; color: #64748b; }
+
+    .stat-value-large {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 0.15rem;
+    }
+    .stat-label-modern {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    /* Chart Containers */
+    .chart-container-modern {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid #f1f5f9;
+        box-shadow: 0 2px 4px -1px rgba(0,0,0,0.05);
+    }
+    .chart-header-modern {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    .chart-title-modern {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    /* Progress bar refined */
+    .progress-modern {
+        height: 10px;
+        background-color: #f1f5f9;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .progress-bar-modern {
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        border-radius: 10px;
+    }
+
+    /* Pagination Modern */
+    .pagination-modern .pagination {
+        margin-bottom: 0;
+        gap: 5px;
+    }
+    .pagination-modern .page-link {
+        border-radius: 8px !important;
+        border: none;
+        padding: 0.5rem 0.8rem;
+        color: #64748b;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .pagination-modern .page-item.active .page-link {
+        background-color: #3b82f6;
+        color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    .pagination-modern .page-link:hover:not(.active) {
+        background-color: #f1f5f9;
+        color: #3b82f6;
+    }
+</style>
 @endsection
 
 @section('content')

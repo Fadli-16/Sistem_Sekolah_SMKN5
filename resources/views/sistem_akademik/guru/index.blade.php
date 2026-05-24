@@ -1,7 +1,13 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
-    <link href="{{ asset('css/guru.css') }}?v={{ time() }}" rel="stylesheet">
+<style>
+    .avatar-circle { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #e2e8f0; flex-shrink: 0; }
+    .cell-name-wrap { display: flex; align-items: center; gap: 10px; }
+    .name-info .name { font-weight: 600; font-size: 0.875rem; color: #0f172a; }
+    .name-info .sub  { font-size: 0.75rem; color: #64748b; }
+    table#data-table td, table#data-table th { vertical-align: middle; }
+</style>
 @endsection
 
 @section('content')
