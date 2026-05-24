@@ -1,106 +1,7 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
-<style>
-    /* Premium Stats Cards */
-    .stat-card-premium {
-        background: white;
-        border-radius: 12px;
-        padding: 1rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid #f1f5f9;
-        height: 100%;
-        position: relative;
-        overflow: hidden;
-    }
-    .stat-card-premium:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 16px -4px rgba(0,0,0,0.08);
-    }
-    .stat-icon-wrap {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 0.75rem;
-        font-size: 1.1rem;
-    }
-    .stat-card-premium.purple .stat-icon-wrap { background: #f5f3ff; color: #8b5cf6; }
-    .stat-card-premium.blue .stat-icon-wrap { background: #f0f9ff; color: #0ea5e9; }
-    .stat-card-premium.green .stat-icon-wrap { background: #f0fdf4; color: #10b981; }
-    .stat-card-premium.gray .stat-icon-wrap { background: #f8fafc; color: #64748b; }
-
-    .stat-value-large {
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: #1e293b;
-        margin-bottom: 0.15rem;
-    }
-    .stat-label-modern {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-    }
-
-    /* Chart Containers */
-    .chart-container-modern {
-        background: white;
-        border-radius: 12px;
-        padding: 1rem;
-        border: 1px solid #f1f5f9;
-        box-shadow: 0 2px 4px -1px rgba(0,0,0,0.05);
-    }
-    .chart-header-modern {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-    .chart-title-modern {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1e293b;
-    }
-
-    /* Progress bar refined */
-    .progress-modern {
-        height: 10px;
-        background-color: #f1f5f9;
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .progress-bar-modern {
-        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
-        border-radius: 10px;
-    }
-
-    /* Pagination Modern */
-    .pagination-modern .pagination {
-        margin-bottom: 0;
-        gap: 5px;
-    }
-    .pagination-modern .page-link {
-        border-radius: 8px !important;
-        border: none;
-        padding: 0.5rem 0.8rem;
-        color: #64748b;
-        font-weight: 500;
-        transition: all 0.2s;
-    }
-    .pagination-modern .page-item.active .page-link {
-        background-color: #3b82f6;
-        color: white;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-    .pagination-modern .page-link:hover:not(.active) {
-        background-color: #f1f5f9;
-        color: #3b82f6;
-    }
-</style>
+    <link href="{{ asset('css/peminatan.css') }}" rel="stylesheet">
 @endsection
 
 @section('content')
@@ -114,22 +15,40 @@
 
         @php
         $userRole = Auth::user()->role;
-        $canCreate = $userRole === 'admin_sa' || ($userRole === 'siswa' && ! ($hasOwnPeminatan ?? false));
+        $isAdminRole = in_array($userRole, ['super_admin', 'admin_sa']);
+        $canCreate = $userRole === 'admin_sa' || ($userRole === 'siswa' && ! ($hasOwnPeminatan ?? false) && $isWithinTimeframe);
         @endphp
 
-        @if($canCreate)
         <div class="d-flex gap-2 align-items-center">
-            @if(in_array(Auth::user()->role, ['admin', 'super_admin', 'admin_sa']))
-            <button type="button" id="btn-bulk-delete" class="btn btn-sm btn-danger-app d-none" onclick="bulkDelete()">
-                <i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selected-count">0</span>)
+            @if($isAdminRole)
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                <i class="bi bi-gear-fill me-1"></i> Pengaturan Waktu
             </button>
             @endif
-            <a href="{{ route('sistem_akademik.peminatan.create') }}" class="btn-primary-app">
-                <i class="bi bi-plus-lg"></i> Tambah Peminatan
-            </a>
+
+            @if($canCreate)
+                @if($isAdminRole)
+                <button type="button" id="btn-bulk-delete" class="btn btn-sm btn-danger-app d-none" onclick="bulkDelete()">
+                    <i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selected-count">0</span>)
+                </button>
+                @endif
+                <a href="{{ route('sistem_akademik.peminatan.create') }}" class="btn-primary-app">
+                    <i class="bi bi-plus-lg"></i> Tambah Peminatan
+                </a>
+            @endif
         </div>
-        @endif
     </div>
+
+
+    @if($userRole === 'siswa' && !$isWithinTimeframe && !($hasOwnPeminatan ?? false))
+    <div class="alert alert-warning mb-4 d-flex align-items-center gap-2" role="alert">
+        <i class="bi bi-info-circle-fill fs-5"></i>
+        <div>
+            <strong>Perhatian:</strong> Saat ini di luar waktu pengisian data peminatan. Silakan hubungi admin jika ada pertanyaan.
+        </div>
+    </div>
+    @endif
+
 
     {{-- Stats Cards (Premium - Compact) --}}
     <div class="row g-3 mb-4">
@@ -513,6 +432,48 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('modals')
+{{-- Modal Pengaturan Waktu --}}
+@if($isAdminRole)
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 12px;">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="settingsModalLabel">Pengaturan Waktu Peminatan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-4">Atur rentang waktu untuk siswa dapat mengisi data peminatan</p>
+                <form action="{{ route('sistem_akademik.peminatan.updateSettings') }}" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="mb-3">
+                        <label for="start_date" class="form-label fw-bold">Waktu Mulai</label>
+                        <input type="datetime-local" name="start_date" id="start_date" class="form-control" 
+                               value="{{ $peminatanSetting && $peminatanSetting->start_date ? \Carbon\Carbon::parse($peminatanSetting->start_date)->format('Y-m-d\TH:i') : '' }}">
+                        <div class="form-text">Kosongkan jika tidak ada batas awal.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="end_date" class="form-label fw-bold">Waktu Selesai</label>
+                        <input type="datetime-local" name="end_date" id="end_date" class="form-control" 
+                               value="{{ $peminatanSetting && $peminatanSetting->end_date ? \Carbon\Carbon::parse($peminatanSetting->end_date)->format('Y-m-d\TH:i') : '' }}">
+                        <div class="form-text">Kosongkan jika tidak ada batas akhir.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 @endsection
 
 @section('script')

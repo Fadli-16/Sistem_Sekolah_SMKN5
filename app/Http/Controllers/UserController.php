@@ -138,11 +138,11 @@ class UserController extends Controller
         $type = in_array($type, ['guru', 'siswa']) ? $type : 'siswa';
 
         if ($type === 'guru') {
-            $headers = ['nama', 'email', 'role', 'password', 'nis_nip', 'jurusan', 'kelas', 'tanggal_lahir', 'jenis_kelamin', 'alamat', 'no_hp', 'agama'];
-            $example = ['Contoh Nama Guru', 'guru@sekolah.sch.id', 'guru', 'password123', '198501012010011001', 'Teknik Komputer dan Jaringan', 'XII TKJ 1', '1985-01-01', 'Laki-laki', 'Jl. Contoh No.1 Padang', '081234567890', 'Islam'];
+            $headers = ['nip', 'nama', 'email', 'jurusan', 'jenis_kelamin', 'agama', 'tanggal_lahir', 'alamat', 'no_hp'];
+            $example = ['198501012010011001', 'Contoh Nama Guru', 'guru@sekolah.sch.id', 'Teknik Komputer dan Jaringan', 'Laki-laki', 'Islam', '1985-01-01', 'Jl. Contoh No.1 Padang', '081234567890'];
         } else {
-            $headers = ['nama', 'email', 'role', 'password', 'nis_nip', 'jurusan', 'kelas', 'kelas_id', 'tanggal_lahir', 'jenis_kelamin', 'alamat', 'no_hp', 'agama'];
-            $example = ['Contoh Nama Siswa', 'siswa@sekolah.sch.id', 'siswa', 'password123', '12345', 'Teknik Komputer dan Jaringan', 'XII TKJ 1', '1', '2006-01-01', 'Laki-laki', 'Jl. Contoh No.1 Padang', '081234567890', 'Islam'];
+            $headers = ['nis', 'nama', 'email', 'jurusan', 'kelas', 'jenis_kelamin', 'agama', 'tanggal_lahir', 'alamat', 'no_hp'];
+            $example = ['12345', 'Contoh Nama Siswa', 'siswa@sekolah.sch.id', 'Teknik Komputer dan Jaringan', 'XII TKJ 1', 'Laki-laki', 'Islam', '2006-01-01', 'Jl. Contoh No.1 Padang', '081234567890'];
         }
 
         $filename = "template-import-{$type}.csv";
@@ -167,10 +167,11 @@ class UserController extends Controller
         ini_set('memory_limit', '512M');
 
         $request->validate([
+            'role'     => 'required|in:guru,siswa',
             'csv_file' => 'required|file|mimes:csv,txt',
         ]);
 
-        Excel::import(new UsersImport, $request->file('csv_file'));
+        Excel::import(new UsersImport($request->role), $request->file('csv_file'));
 
         return redirect()
             ->route('admin.manage.users')

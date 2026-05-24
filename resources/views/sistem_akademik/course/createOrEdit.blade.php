@@ -1,26 +1,8 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
+    <link href="{{ asset('css/course.css') }}" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style>
-    .loading-spinner {
-        display: inline-block;
-        width: 1rem;
-        height: 1rem;
-        vertical-align: middle;
-        border: .12em solid currentColor;
-        border-right-color: transparent;
-        border-radius: 50%;
-        animation: spinner-border .75s linear infinite;
-        margin-right: .5rem;
-    }
-
-    @keyframes spinner-border {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-</style>
 @endsection
 
 @section('content')

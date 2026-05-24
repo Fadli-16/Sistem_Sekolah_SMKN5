@@ -181,6 +181,7 @@ Route::prefix('sistem-akademik')
 
         Route::delete('mata_pelajaran/bulk-delete', [MataPelajaranController::class, 'bulkDestroy'])->name('mata_pelajaran.bulkDestroy');
         Route::resource('mata_pelajaran', MataPelajaranController::class);
+        Route::put('peminatan/settings', [PeminatanController::class, 'updateSettings'])->name('peminatan.updateSettings');
         Route::delete('peminatan/bulk-delete', [PeminatanController::class, 'bulkDestroy'])->name('peminatan.bulkDestroy');
         Route::resource('peminatan', PeminatanController::class);
 

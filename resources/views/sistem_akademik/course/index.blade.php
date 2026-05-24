@@ -1,55 +1,7 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
-<style>
-    /* header utama: judul + add button di satu bar */
-    .table-header-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 0.6rem;
-    }
-
-    /* bar kedua: controls filter (full width under header) */
-    .table-header-controls {
-        display: flex;
-        align-items: center;
-        gap: .5rem;
-        flex-wrap: wrap;
-        margin-bottom: 1rem;
-    }
-
-    /* title kecil di kiri */
-    .table-title {
-        display: flex;
-        align-items: center;
-        gap: .5rem;
-    }
-
-    /* tombol tambah di kanan */
-    .add-course-wrap {
-        flex: 0 0 auto;
-    }
-
-    /* style select kecil */
-    .form-select-sm {
-        height: calc(1.5em + .5rem + 2px);
-        padding: .25rem .5rem;
-    }
-
-    /* small adjustments for DataTables filter area when download button moved */
-    .dataTables_filter .btn {
-        vertical-align: middle;
-    }
-
-    /* responsive */
-    @media (max-width:767.98px) {
-        .table-header-controls {
-            width: 100%;
-        }
-    }
-</style>
+    <link href="{{ asset('css/course.css') }}" rel="stylesheet">
 @endsection
 
 @section('content')

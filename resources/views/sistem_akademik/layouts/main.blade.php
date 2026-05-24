@@ -32,6 +32,8 @@
         @yield('content')
     </div>
 
+    @yield('modals')
+
     @include('sistem_akademik.partials.footer')
 
     <!-- Scripts -->

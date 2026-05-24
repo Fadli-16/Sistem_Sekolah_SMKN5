@@ -1,0 +1,131 @@
+.note-editor.note-frame {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .note-toolbar {
+        background-color: #f9fafb !important;
+        border-bottom: 1px solid #e5e7eb !important;
+    }
+    .note-btn {
+        background-color: white !important;
+        border: 1px solid #e5e7eb !important;
+        color: #374151 !important;
+    }
+    .note-btn:hover {
+        background-color: #f3f4f6 !important;
+    }
+
+/* Container utama */
+    .news-show .meta {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+    }
+
+    /* Judul berita - proporsional, tidak terlalu besar */
+    .news-show .news-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+        line-height: 1.2;
+    }
+
+    /* Media area: by default stack (image above text) */
+    .news-show .news-media {
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    /* Side layout (portrait image) */
+    .news-show .news-media.side {
+        flex-direction: row;
+    }
+
+    /* Stack layout (landscape image / default mobile) */
+    .news-show .news-media.stack {
+        flex-direction: column;
+    }
+
+    /* Image wrapper when side-by-side */
+    .news-show .img-wrap {
+        flex: 0 0 35%;
+        max-width: 35%;
+        display: block;
+    }
+
+    /* Image wrapper when stacked (full width) */
+    .news-show .news-media.stack .img-wrap {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Image rules: keep aspect ratio, no cropping (use auto height) */
+    .news-show .img-wrap img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 8px;
+        box-shadow: 0 6px 16px rgba(20, 20, 30, 0.04);
+        background: #f6f7f9;
+        /* visible area when using contain */
+    }
+
+    /* Content column */
+    .news-show .content {
+        flex: 1 1 60%;
+        min-width: 240px;
+    }
+
+    /* Artikel text */
+    .news-show .article {
+        font-size: 1rem;
+        color: var(--text-dark);
+        line-height: 1.7;
+    }
+
+    /* Buttons */
+    .news-show .actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-download {
+        background: #6c757d;
+        color: #fff;
+        border: none;
+        padding: 0.45rem 0.75rem;
+        border-radius: 6px;
+    }
+
+    .btn-back {
+        background: #6f8ea6;
+        color: #fff;
+        border: none;
+        padding: 0.45rem 0.75rem;
+        border-radius: 6px;
+    }
+
+    /* Responsive: on small screens always stack */
+    @media (max-width: 767.98px) {
+        .news-show .img-wrap {
+            max-width: 100%;
+            flex-basis: 100%;
+        }
+
+        .news-show .content {
+            flex-basis: 100%;
+        }
+
+        .news-show .news-title {
+            font-size: 1.25rem;
+        }
+    }
+

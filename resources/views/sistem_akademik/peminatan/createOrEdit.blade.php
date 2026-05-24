@@ -1,24 +1,8 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
+    <link href="{{ asset('css/peminatan.css') }}" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style>
-    .select2-container--default .select2-selection--single {
-        border: 1px solid #dee2e6;
-        height: 38px;
-        border-radius: 8px;
-        padding-top: 4px;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 36px;
-    }
-    .select2-dropdown {
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        overflow: hidden;
-    }
-</style>
 @endsection
 
 @section('content')
@@ -92,23 +76,41 @@
                 {{-- Conditional fields --}}
                 <div id="group-pemilihan-jurusan" class="conditional-field mb-3" data-for="kuliah" style="display:none;">
                     <label class="form-label">Jurusan yang Dipilih</label>
-                    <input type="text" name="pemilihan_jurusan" class="form-control"
-                           value="{{ old('pemilihan_jurusan', $peminatan->pemilihan_jurusan ?? '') }}"
-                           placeholder="Contoh: Teknik Informatika, Akuntansi...">
+                    <select name="pemilihan_jurusan" class="form-select">
+                        <option value="">-- Pilih Jurusan --</option>
+                        @php
+                            $jurusanKuliah = ['Teknik Informatika / Ilmu Komputer', 'Teknik Mesin / Otomotif', 'Teknik Elektro', 'Teknik Sipil / Arsitektur', 'Sistem Informasi', 'Pendidikan Teknik', 'Manajemen Bisnis', 'Lainnya'];
+                        @endphp
+                        @foreach($jurusanKuliah as $jk)
+                        <option value="{{ $jk }}" {{ old('pemilihan_jurusan', $peminatan->pemilihan_jurusan ?? '') == $jk ? 'selected' : '' }}>{{ $jk }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div id="group-jenis-pekerjaan" class="conditional-field mb-3" data-for="bekerja" style="display:none;">
                     <label class="form-label">Jenis Pekerjaan</label>
-                    <input type="text" name="jenis_pekerjaan" class="form-control"
-                           value="{{ old('jenis_pekerjaan', $peminatan->jenis_pekerjaan ?? '') }}"
-                           placeholder="Contoh: Teknisi, Programmer, Mekanik...">
+                    <select name="jenis_pekerjaan" class="form-select">
+                        <option value="">-- Pilih Jenis Pekerjaan --</option>
+                        @php
+                            $pekerjaanList = ['Teknisi Jaringan / IT Support', 'Mekanik / Montir Otomotif', 'Teknisi Elektronika / Listrik', 'Operator Mesin Industri', 'Drafter / Estimator Bangunan', 'Administrasi / Pemasaran', 'Lainnya'];
+                        @endphp
+                        @foreach($pekerjaanList as $pk)
+                        <option value="{{ $pk }}" {{ old('jenis_pekerjaan', $peminatan->jenis_pekerjaan ?? '') == $pk ? 'selected' : '' }}>{{ $pk }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div id="group-ide-bisnis" class="conditional-field mb-3" data-for="wirausaha" style="display:none;">
                     <label class="form-label">Ide Bisnis</label>
-                    <input type="text" name="ide_bisnis" class="form-control"
-                           value="{{ old('ide_bisnis', $peminatan->ide_bisnis ?? '') }}"
-                           placeholder="Contoh: Bengkel, Toko Online, Katering...">
+                    <select name="ide_bisnis" class="form-select">
+                        <option value="">-- Pilih Ide Bisnis --</option>
+                        @php
+                            $bisnisList = ['Bengkel Motor / Mobil', 'Jasa Servis Elektronik', 'Jasa Instalasi Jaringan / Listrik', 'Biro Bangunan / Desain', 'Toko Komputer / Elektronik', 'Lainnya'];
+                        @endphp
+                        @foreach($bisnisList as $bl)
+                        <option value="{{ $bl }}" {{ old('ide_bisnis', $peminatan->ide_bisnis ?? '') == $bl ? 'selected' : '' }}>{{ $bl }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div class="mb-3">
@@ -177,13 +179,6 @@
 @endsection
 
 @section('script')
-<style>
-    input.minat-radio:checked + .minat-card {
-        border-color: #f97316 !important;
-        background: #fff7ed;
-        color: #c2410c;
-    }
-</style>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {

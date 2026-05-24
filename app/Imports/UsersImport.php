@@ -15,11 +15,21 @@ class UsersImport implements ToCollection, WithHeadingRow
 {
     use Importable;
 
+    protected $role;
+
+    public function __construct($role)
+    {
+        $this->role = $role;
+    }
+
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) {
-            $role     = strtolower(trim($row['role']));
-            $emailRaw = trim((string) $row['email']);
+            $role     = $this->role;
+            $emailRaw = trim((string) ($row['email'] ?? ''));
+            $password = isset($row['password']) && !empty($row['password']) ? $row['password'] : 'password123';
+            
+            $nis_nip = $role === 'guru' ? ($row['nip'] ?? '') : ($row['nis'] ?? '');
 
             // Kondisi email valid?
             if (filter_var($emailRaw, FILTER_VALIDATE_EMAIL)) {
@@ -27,34 +37,34 @@ class UsersImport implements ToCollection, WithHeadingRow
                 $user = User::updateOrCreate(
                     ['email' => $emailRaw],
                     [
-                        'nama'     => $row['nama'],
-                        'nis_nip'  => $row['nis_nip'],
-                        'password' => Hash::make($row['password']),
+                        'nama'     => $row['nama'] ?? '',
+                        'nis_nip'  => $nis_nip,
+                        'password' => Hash::make($password),
                         'role'     => $role,
                     ]
                 );
             } else {
                 // Email null/invalid → buat record baru
                 $user = User::create([
-                    'nama'     => $row['nama'],
-                    'nis_nip'  => $row['nis_nip'],
+                    'nama'     => $row['nama'] ?? '',
+                    'nis_nip'  => $nis_nip,
                     'email'    => null,
-                    'password' => Hash::make($row['password']),
+                    'password' => Hash::make($password),
                     'role'     => $role,
                 ]);
             }
-
-            $role = strtolower(trim($row['role']));
 
             if ($role === 'siswa') {
                 Siswa::updateOrCreate(
                     ['user_id' => $user->id],
                     [
-                        'nis'           => $row['nis_nip'],
+                        'nis'           => $nis_nip,
                         'kelas_id'      => $row['kelas_id'] ?? null,
                         'kelas'         => $row['kelas'] ?? null,
                         'jurusan'       => $row['jurusan'] ?? null,
                         'tanggal_lahir' => $row['tanggal_lahir'] ?? null,
+                        'jenis_kelamin' => $row['jenis_kelamin'] ?? 'Laki-laki',
+                        'agama'         => $row['agama'] ?? null,
                         'alamat'        => $row['alamat'] ?? null,
                         'no_hp'         => $row['no_hp'] ?? null,
                     ]
@@ -63,10 +73,12 @@ class UsersImport implements ToCollection, WithHeadingRow
                 Guru::updateOrCreate(
                     ['user_id' => $user->id],
                     [
-                        'nip'           => $row['nis_nip'],
+                        'nip'           => $nis_nip,
                         'kelas'         => $row['kelas'] ?? null,
                         'jurusan'       => $row['jurusan'] ?? null,
                         'tanggal_lahir' => $row['tanggal_lahir'] ?? null,
+                        'jenis_kelamin' => $row['jenis_kelamin'] ?? 'Laki-laki',
+                        'agama'         => $row['agama'] ?? null,
                         'alamat'        => $row['alamat'] ?? null,
                         'no_hp'         => $row['no_hp'] ?? null,
                     ]

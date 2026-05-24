@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use App\Models\PeminatanSetting;
 
 class PeminatanController extends Controller
 {
@@ -287,11 +288,24 @@ class PeminatanController extends Controller
         $analytics['counts'] = $analytics['statsPerOption'];
         
         $kelas = $kelasList;
+        
+        $peminatanSetting = PeminatanSetting::first();
+        $isWithinTimeframe = true;
+        if ($peminatanSetting && ($peminatanSetting->start_date || $peminatanSetting->end_date)) {
+            $now = Carbon::now();
+            if ($peminatanSetting->start_date && $now->lt(Carbon::parse($peminatanSetting->start_date))) {
+                $isWithinTimeframe = false;
+            }
+            if ($peminatanSetting->end_date && $now->gt(Carbon::parse($peminatanSetting->end_date))) {
+                $isWithinTimeframe = false;
+            }
+        }
 
         return view('sistem_akademik.peminatan.index', array_merge(
             compact('peminatans','header','hasOwnPeminatan',
                 'totalStudents','kelasList','kelas',
-                'jurusanList','tahunAjaranList','guruBKList'
+                'jurusanList','tahunAjaranList','guruBKList',
+                'peminatanSetting', 'isWithinTimeframe'
             ), $analytics
         ));
     }
@@ -316,6 +330,23 @@ class PeminatanController extends Controller
 
         $kelasList = Kelas::select('id', 'nama_kelas')
         ->orderBy('nama_kelas')->get();
+
+        $peminatanSetting = PeminatanSetting::first();
+        if (Auth::user()->role === 'siswa' && $peminatanSetting && ($peminatanSetting->start_date || $peminatanSetting->end_date)) {
+            $now = Carbon::now();
+            $isWithinTimeframe = true;
+            if ($peminatanSetting->start_date && $now->lt(Carbon::parse($peminatanSetting->start_date))) {
+                $isWithinTimeframe = false;
+            }
+            if ($peminatanSetting->end_date && $now->gt(Carbon::parse($peminatanSetting->end_date))) {
+                $isWithinTimeframe = false;
+            }
+            if (!$isWithinTimeframe) {
+                return redirect()->route('sistem_akademik.peminatan.index')
+                    ->with('status', 'error')
+                    ->with('message', 'Saat ini di luar waktu pengisian data peminatan.');
+            }
+        }
 
         return view('sistem_akademik.peminatan.createOrEdit', 
         compact('users', 'header', 'kelasList'));
@@ -343,6 +374,23 @@ class PeminatanController extends Controller
             $rules['user_id'] = ['required', 'integer', Rule::exists('users', 'id')->where(function ($q) {
                 $q->where('role', 'siswa');
             })];
+        } else if (Auth::user()->role === 'siswa') {
+            $peminatanSetting = PeminatanSetting::first();
+            if ($peminatanSetting && ($peminatanSetting->start_date || $peminatanSetting->end_date)) {
+                $now = Carbon::now();
+                $isWithinTimeframe = true;
+                if ($peminatanSetting->start_date && $now->lt(Carbon::parse($peminatanSetting->start_date))) {
+                    $isWithinTimeframe = false;
+                }
+                if ($peminatanSetting->end_date && $now->gt(Carbon::parse($peminatanSetting->end_date))) {
+                    $isWithinTimeframe = false;
+                }
+                if (!$isWithinTimeframe) {
+                    return back()
+                        ->withInput()
+                        ->withErrors(['minat' => 'Saat ini di luar waktu pengisian data peminatan.']);
+                }
+            }
         }
 
         $validated = $request->validate($rules);
@@ -492,5 +540,27 @@ class PeminatanController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Gagal menghapus data: ' . $e->getMessage()]);
         }
+    }
+
+    public function updateSettings(Request $request)
+    {
+        if (!in_array(Auth::user()->role, ['admin', 'super_admin', 'admin_sa'])) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        $setting = PeminatanSetting::firstOrCreate(['id' => 1]);
+        $setting->update([
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+        ]);
+
+        return redirect()->route('sistem_akademik.peminatan.index')
+            ->with('status', 'success')
+            ->with('message', 'Pengaturan waktu pengisian data peminatan berhasil diperbarui.');
     }
 }

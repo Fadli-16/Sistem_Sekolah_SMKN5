@@ -1,14 +1,8 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
+    <link href="{{ asset('css/dashboard.css') }}" rel="stylesheet">
 @include('sistem_akademik.layouts.css')
-<style>
-    @keyframes pulse {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-        70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-    }
-</style>
 @endsection
 
 @section('content')

@@ -77,6 +77,17 @@
 
                 <form action="{{ route('admin.manage.users.import.post') }}" method="POST" enctype="multipart/form-data">
                     @csrf
+                    <div class="mb-3">
+                        <label for="role" class="form-label fw-semibold">Tipe Import</label>
+                        <select name="role" id="role" class="form-select @error('role') is-invalid @enderror" required>
+                            <option value="">-- Pilih Tipe --</option>
+                            <option value="guru">Guru</option>
+                            <option value="siswa">Siswa</option>
+                        </select>
+                        @error('role')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
                     <div class="mb-4">
                         <label for="csv_file" class="form-label fw-semibold">Pilih File CSV</label>
                         <input type="file" name="csv_file" id="csv_file"
@@ -156,18 +167,15 @@
                                         <tr><th>Kolom</th><th>Keterangan</th><th>Status</th></tr>
                                     </thead>
                                     <tbody>
+                                        <tr><td>nip</td><td>NIP Guru</td><td><span class="required-badge">Wajib</span></td></tr>
                                         <tr><td>nama</td><td>Nama lengkap</td><td><span class="required-badge">Wajib</span></td></tr>
                                         <tr><td>email</td><td>Alamat email</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>role</td><td>Isi dengan: <code>guru</code></td><td><span class="required-badge">Wajib</span></td></tr>
-                                        <tr><td>password</td><td>Password awal</td><td><span class="required-badge">Wajib</span></td></tr>
-                                        <tr><td>nis_nip</td><td>NIP guru</td><td><span class="required-badge">Wajib</span></td></tr>
                                         <tr><td>jurusan</td><td>Nama jurusan</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>kelas</td><td>Nama kelas</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>tanggal_lahir</td><td>Format: YYYY-MM-DD</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>jenis_kelamin</td><td>Laki-laki / Perempuan</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>agama</td><td>Agama</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>tanggal_lahir</td><td>Format: YYYY-MM-DD</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>alamat</td><td>Alamat lengkap</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>no_hp</td><td>Nomor HP</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>agama</td><td>Agama</td><td><span class="optional-badge">Opsional</span></td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -188,19 +196,16 @@
                                         <tr><th>Kolom</th><th>Keterangan</th><th>Status</th></tr>
                                     </thead>
                                     <tbody>
+                                        <tr><td>nis</td><td>NIS Siswa</td><td><span class="required-badge">Wajib</span></td></tr>
                                         <tr><td>nama</td><td>Nama lengkap</td><td><span class="required-badge">Wajib</span></td></tr>
                                         <tr><td>email</td><td>Alamat email</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>role</td><td>Isi dengan: <code>siswa</code></td><td><span class="required-badge">Wajib</span></td></tr>
-                                        <tr><td>password</td><td>Password awal</td><td><span class="required-badge">Wajib</span></td></tr>
-                                        <tr><td>nis_nip</td><td>NIS siswa</td><td><span class="required-badge">Wajib</span></td></tr>
                                         <tr><td>jurusan</td><td>Nama jurusan</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>kelas</td><td>Nama kelas (teks)</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>kelas_id</td><td>ID kelas di database</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>tanggal_lahir</td><td>Format: YYYY-MM-DD</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>jenis_kelamin</td><td>Laki-laki / Perempuan</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>agama</td><td>Agama</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>tanggal_lahir</td><td>Format: YYYY-MM-DD</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>alamat</td><td>Alamat lengkap</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>no_hp</td><td>Nomor HP</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>agama</td><td>Agama</td><td><span class="optional-badge">Opsional</span></td></tr>
                                     </tbody>
                                 </table>
                             </div>

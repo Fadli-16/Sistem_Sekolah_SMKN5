@@ -1,26 +1,8 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
+    <link href="{{ asset('css/berita.css') }}" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
-<style>
-    .note-editor.note-frame {
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .note-toolbar {
-        background-color: #f9fafb !important;
-        border-bottom: 1px solid #e5e7eb !important;
-    }
-    .note-btn {
-        background-color: white !important;
-        border: 1px solid #e5e7eb !important;
-        color: #374151 !important;
-    }
-    .note-btn:hover {
-        background-color: #f3f4f6 !important;
-    }
-</style>
 @endsection
 
 @section('content')

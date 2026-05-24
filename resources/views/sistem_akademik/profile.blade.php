@@ -1,64 +1,8 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
+    <link href="{{ asset('css/profile.css') }}" rel="stylesheet">
 @include('sistem_akademik.layouts.css')
-<style>
-    /* locked look for readonly fields (abu-abu) */
-    .locked-field {
-        background-color: #e9ecef !important;
-        color: #495057 !important;
-        cursor: not-allowed;
-    }
-
-    /* ensure disabled select looks same */
-    select.locked-field:disabled {
-        background-color: #e9ecef !important;
-        color: #495057 !important;
-        cursor: not-allowed;
-    }
-
-    .profile-photo-container {
-        display: inline-block;
-        margin-right: 16px;
-        cursor: pointer;
-        position: relative;
-    }
-
-    .profile-photo-container .overlay {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: opacity .15s;
-        background: rgba(0, 0, 0, 0.25);
-        color: #fff;
-        font-size: 14px;
-    }
-
-    .profile-photo-container:hover .overlay {
-        opacity: 1;
-    }
-
-    .avatar {
-        width: 96px;
-        height: 96px;
-        object-fit: cover;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-    }
-
-    .profile-info h2 {
-        margin: 0 0 .25rem 0;
-    }
-
-    .identifier {
-        color: #666;
-        font-size: .95rem;
-        margin-bottom: .25rem;
-    }
-</style>
 @endsection
 
 @section('content')
