@@ -19,7 +19,7 @@
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" referrerpolicy="no-referrer" />
-    <link href="{{ asset('assets/css/sistem-akademik.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/sistem-akademik.css') }}?v={{ time() }}" rel="stylesheet">
 
     @yield('css')
 </head>
