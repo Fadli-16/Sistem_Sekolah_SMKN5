@@ -1,7 +1,7 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
-    <link href="{{ asset('css/peminatan.css') }}?v={{ time() }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/peminatan.css') }}?v={{ time() }}" rel="stylesheet">
 @endsection
 
 @section('content')
