@@ -136,8 +136,8 @@
 
         @php
         $userRole = Auth::user()->role;
-        $isAdminRole = in_array($userRole, ['super_admin', 'admin_sa']);
-        $canCreate = $userRole === 'admin_sa' || ($userRole === 'siswa' && ! ($hasOwnPeminatan ?? false) && $isWithinTimeframe);
+        $isAdminRole = in_array($userRole, ['superadmin', 'super_admin', 'admin_sa', 'admin']);
+        $canCreate = $isAdminRole || ($userRole === 'siswa' && ! ($hasOwnPeminatan ?? false) && $isWithinTimeframe);
         @endphp
 
         <div class="d-flex gap-2 align-items-center">
