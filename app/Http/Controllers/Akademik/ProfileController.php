@@ -50,6 +50,7 @@ class ProfileController extends Controller
             'nama' => 'required|string|max:255',
             'email' => 'nullable|email|unique:users,email,' . $user->id,
             'tanggal_lahir' => 'nullable|date',
+            'tempat_lahir'  => 'nullable|string|max:255',
             'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
             'alamat' => 'nullable|string|max:2000',
             'no_hp' => 'nullable|string|max:50',
@@ -73,7 +74,7 @@ class ProfileController extends Controller
         } else {
         }
 
-        $allowedProfileFields = ['tanggal_lahir', 'jenis_kelamin', 'alamat', 'no_hp', 'agama', 'jurusan'];
+        $allowedProfileFields = ['tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'alamat', 'no_hp', 'agama', 'jurusan'];
         if ($isRestricted) {
             $allowedProfileFields = array_diff($allowedProfileFields, ['jurusan']);
         }

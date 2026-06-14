@@ -1,7 +1,7 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
-    <link href="{{ asset('css/course.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/course.css') }}?v={{ filemtime(public_path('css/course.css')) }}" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 @endsection
 
@@ -9,16 +9,13 @@
 @php
 // fallback variable names supported
 $mpList = $mataPelajaran ?? $mapels ?? collect();
-$siswaList = $siswa ?? collect();
-$selectedSiswaIds = old('siswa_ids', $selectedSiswaIds ?? []);
 $selectedMataPelajaran = old('mata_pelajaran_id', $course->mata_pelajaran_id ?? '');
 $selectedKelasId = old('kelas_id', $course->kelas_id ?? '');
 $selectedSlotStart = old('slot_start', $selected['slot_start'] ?? null);
 $selectedSlotEnd = old('slot_end', $selected['slot_end'] ?? null);
 $slots = $slots ?? []; // controller should send $slots = $this->selectableSlots()
 
-// safe URLs: students route must exist; recommendations fallback to URL if route missing
-$studentsUrl = route('sistem_akademik.get-students-by-jurusan');
+// safe URLs: recommendations fallback to URL if route missing
 // if your named route for recommendations exists, use it; otherwise fallback path
 $recommendationsUrl = (Route::has('sistem_akademik.get-recommendations'))
 ? route('sistem_akademik.get-recommendations')
@@ -29,12 +26,10 @@ $conflictDetails = session('conflict_details', null);
 @endphp
 
 <div id="course-form"
-    data-students-url="{{ $studentsUrl }}"
     data-recommendations-url="{{ $recommendationsUrl }}"
     data-conflict-url="{{ route('sistem_akademik.course.check-conflicts') }}"
     data-current-course-id="{{ isset($course) ? $course->id : '' }}"
     data-initial-kelas="{{ $selectedKelasId }}"
-    data-preselect-siswa='@json($selectedSiswaIds)'
     data-initial-hari="{{ old('hari', $course->hari ?? '') }}"
     data-slot-ids='@json(array_keys($slots))'
     data-slot-details='@json($slots)'
@@ -44,6 +39,17 @@ $conflictDetails = session('conflict_details', null);
     <h1 class="page-title">{{ $header }}</h1>
 
     <div class="card p-4">
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <strong>Gagal menyimpan data!</strong>
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form action="{{ isset($course) ? route('sistem_akademik.course.update', $course->id) : route('sistem_akademik.course.store') }}" method="POST">
             @csrf
             @if(isset($course)) @method('PUT') @endif
@@ -83,37 +89,38 @@ $conflictDetails = session('conflict_details', null);
             </div>
 
             {{-- MATA PELAJARAN --}}
-            <div class="mb-3">
-                <label for="mata_pelajaran_id" class="form-label">Mata Pelajaran</label>
-                <select class="form-control" id="mata_pelajaran_id" name="mata_pelajaran_id" required>
-                    <option value="" disabled {{ $selectedMataPelajaran == '' ? 'selected' : '' }}>-- Pilih Mata Pelajaran --</option>
-                    @foreach($mpList as $mp)
-                    @php $mpGuruName = data_get($mp, 'guru.nama', data_get($mp, 'guru.name', '')); @endphp
-                    <option value="{{ $mp->id }}" {{ (string)$selectedMataPelajaran === (string)$mp->id ? 'selected' : '' }}>
-                        {{ $mp->nama_mata_pelajaran }} @if($mpGuruName) - {{ $mpGuruName }} @endif
-                    </option>
-                    @endforeach
-                </select>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="mata_pelajaran_umum" class="form-label">Mata Pelajaran (Umum)</label>
+                    <select class="form-control select2-mp" id="mata_pelajaran_umum">
+                        <option value="" {{ $selectedMataPelajaran == '' ? 'selected' : '' }}>-- Pilih Mapel Umum --</option>
+                        @foreach($mpList as $mp)
+                            @if(strtolower(trim($mp->jurusan)) == 'umum' || empty(trim($mp->jurusan)))
+                                @php $mpGuruName = data_get($mp, 'guru.nama', data_get($mp, 'guru.name', '')); @endphp
+                                <option value="{{ $mp->id }}" data-jurusan="{{ $mp->jurusan }}" {{ (string)$selectedMataPelajaran === (string)$mp->id ? 'selected' : '' }}>
+                                    {{ $mp->nama_mata_pelajaran }} @if($mpGuruName) - {{ $mpGuruName }} @endif
+                                </option>
+                            @endif
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="mata_pelajaran_jurusan" class="form-label">Mata Pelajaran (Jurusan)</label>
+                    <select class="form-control select2-mp" id="mata_pelajaran_jurusan">
+                        <option value="" {{ $selectedMataPelajaran == '' ? 'selected' : '' }}>-- Pilih Mapel Jurusan --</option>
+                        @foreach($mpList as $mp)
+                            @if(strtolower(trim($mp->jurusan)) != 'umum' && !empty(trim($mp->jurusan)))
+                                @php $mpGuruName = data_get($mp, 'guru.nama', data_get($mp, 'guru.name', '')); @endphp
+                                <option value="{{ $mp->id }}" data-jurusan="{{ $mp->jurusan }}" {{ (string)$selectedMataPelajaran === (string)$mp->id ? 'selected' : '' }}>
+                                    {{ $mp->nama_mata_pelajaran }} @if($mpGuruName) - {{ $mpGuruName }} @endif
+                                </option>
+                            @endif
+                        @endforeach
+                    </select>
+                </div>
+                <input type="hidden" name="mata_pelajaran_id" id="mata_pelajaran_id" value="{{ $selectedMataPelajaran }}" required>
             </div>
 
-            {{-- SISWA (AJAX populated) --}}
-            <div class="mb-3">
-                <label for="siswa_ids" class="form-label">
-                    Siswa
-                    <span id="students-loading" class="d-none"><span class="loading-spinner"></span>Memuat data siswa...</span>
-                </label>
-                <select class="form-control select2-multiple" id="siswa_ids" name="siswa_ids[]" multiple>
-                    {{-- fallback: if controller passed a siswa list without kelas context --}}
-                    @if($siswaList->isNotEmpty() && empty($selectedKelasId))
-                    @foreach($siswaList as $s)
-                    <option value="{{ $s->id }}" {{ in_array($s->id, (array)$selectedSiswaIds) ? 'selected' : '' }}>
-                        {{ optional($s->user)->nama ?? ($s->nisn ?? '-') }}
-                    </option>
-                    @endforeach
-                    @endif
-                </select>
-                <small class="form-text text-muted"><i class="bi bi-info-circle"></i> Pilih siswa dari kelas yang dipilih.</small>
-            </div>
 
             {{-- HARI --}}
             <div class="mb-3">
@@ -229,10 +236,10 @@ $conflictDetails = session('conflict_details', null);
     (function() {
         var el = document.getElementById('course-form');
         window.CourseFormConfig = {
-            studentsUrl: el.dataset ? el.dataset.studentsUrl : '{{ route("sistem_akademik.get-students-by-jurusan") }}',
             recommendationsUrl: el.dataset ? el.dataset.recommendationsUrl : '{{ url("/sistem-akademik/course/get-recommendations") }}',
+            conflictUrl: el.dataset ? el.dataset.conflictUrl : '{{ route("sistem_akademik.course.check-conflicts") }}',
+            currentCourseId: el.dataset && el.dataset.currentCourseId ? el.dataset.currentCourseId : null,
             initialKelas: el.dataset ? el.dataset.initialKelas : null,
-            preselectSiswa: el.dataset ? JSON.parse(el.dataset.preselectSiswa || '[]') : [],
             initialHari: el.dataset ? el.dataset.initialHari : '',
             slotIds: el.dataset ? JSON.parse(el.dataset.slotIds || '[]') : @json(array_keys($slots)),
             slotDetails: el.dataset ? JSON.parse(el.dataset.slotDetails || '{}') : @json($slots),
@@ -240,6 +247,15 @@ $conflictDetails = session('conflict_details', null);
             ruanganFromJadwal: @json($ruanganList ?? [])
         };
     })();
+
+    $(document).ready(function() {
+        if ($.fn.select2) {
+            $('.select2-mp').select2({
+                width: '100%',
+                allowClear: true
+            });
+        }
+    });
 </script>
 
 <script src="{{ asset('assets/js/course.js') }}"></script>

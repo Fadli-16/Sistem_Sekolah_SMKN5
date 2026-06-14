@@ -48,8 +48,23 @@
                     <option value="tidak" {{ request('wali_kelas') == 'tidak' ? 'selected' : '' }}>Bukan Wali Kelas</option>
                 </select>
             </div>
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-1">Filter Status</label>
+                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Semua Status</option>
+                    <option value="guru" {{ request('status') == 'guru' ? 'selected' : '' }}>Guru</option>
+                    <option value="guru tidak tetap" {{ request('status') == 'guru tidak tetap' ? 'selected' : '' }}>Guru Tidak Tetap</option>
+                    <option value="pegawai" {{ request('status') == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
+                    <option value="pegawai tidak tetap" {{ request('status') == 'pegawai tidak tetap' ? 'selected' : '' }}>Pegawai Tidak Tetap</option>
+                    <option value="kepala sekolah" {{ request('status') == 'kepala sekolah' ? 'selected' : '' }}>Kepala Sekolah</option>
+                    <option value="wakil kepala" {{ request('status') == 'wakil kepala' ? 'selected' : '' }}>Wakil Kepala</option>
+                    <option value="bendahara" {{ request('status') == 'bendahara' ? 'selected' : '' }}>Bendahara</option>
+                    <option value="kepala jurusan" {{ request('status') == 'kepala jurusan' ? 'selected' : '' }}>Kepala Jurusan</option>
+                    <option value="kepala bengkel" {{ request('status') == 'kepala bengkel' ? 'selected' : '' }}>Kepala Bengkel</option>
+                </select>
+            </div>
             <div class="col-md-2 d-flex align-items-end">
-                <a href="{{ route('sistem_akademik.guru.index') }}" class="btn btn-sm btn-secondary-app w-100">
+                <a href="{{ route('sistem_akademik.guru.index', ['reset' => 1]) }}" class="btn btn-sm btn-secondary-app w-100">
                     <i class="bi bi-arrow-clockwise me-1"></i> Reset
                 </a>
             </div>
@@ -68,10 +83,12 @@
                         <th width="5%">No</th>
                         <th>Guru</th>
                         <th>Jurusan</th>
+                        @if(request('wali_kelas') == 'ya')
+                        <th>Kelas</th>
+                        @endif
+                        <th>Status</th>
                         <th>Jenis Kelamin</th>
-                        <th>Tgl Lahir</th>
-                        <th>Agama</th>
-                        <th>No. HP</th>
+                        <th>Tempat, Tgl Lahir</th>
                         <th>Alamat</th>
                         <th width="10%">Aksi</th>
                     </tr>
@@ -105,22 +122,63 @@
                             @else -
                             @endif
                         </td>
+                        @if(request('wali_kelas') == 'ya')
+                        <td>
+                            @if($guru->waliKelasDi)
+                                <span class="badge-modern badge-success">{{ $guru->waliKelasDi->nama_kelas }}</span>
+                            @else
+                                -
+                            @endif
+                        </td>
+                        @endif
+                        <td>
+                            @if($guru->status === 'guru')
+                                Guru
+                            @elseif($guru->status === 'guru tidak tetap')
+                                Guru Tidak Tetap
+                            @elseif($guru->status === 'pegawai')
+                                Pegawai
+                            @elseif($guru->status === 'pegawai tidak tetap')
+                                Pegawai Tidak Tetap
+                            @elseif($guru->status === 'kepala sekolah')
+                                Kepala Sekolah
+                            @elseif($guru->status === 'wakil kepala kurikulum')
+                                Wakil Kepala Kurikulum
+                            @elseif($guru->status === 'wakil kepala humas')
+                                Wakil Kepala Humas
+                            @elseif($guru->status === 'wakil kepala sarana prasarana')
+                                Wakil Kepala Sarana Prasarana
+                            @elseif($guru->status === 'wakil kepala kesiswaan')
+                                Wakil Kepala Kesiswaan
+                            @elseif($guru->status === 'bendahara gaji')
+                                Bendahara Gaji
+                            @elseif($guru->status === 'bendahara BOS')
+                                Bendahara BOS
+                            @elseif($guru->status === 'bendahara pembimbing komite')
+                                Bendahara Pembimbing Komite
+                            @elseif($guru->status === 'kepala jurusan')
+                                Kepala Jurusan {{ $guru->jabatan_jurusan ? '- ' . $guru->jabatan_jurusan : '' }}
+                            @elseif($guru->status === 'kepala bengkel')
+                                Kepala Bengkel {{ $guru->jabatan_jurusan ? '- ' . $guru->jabatan_jurusan : '' }}
+                            @else
+                                Guru
+                            @endif
+                        </td>
                         <td>
                             @if($guru->jenis_kelamin === 'Laki-laki')
-                                <span class="badge-modern badge-info"><i class="bi bi-gender-male"></i> Laki-laki</span>
+                                <span class="badge-modern badge-info"><i class="bi bi-gender-male"></i> L</span>
                             @elseif($guru->jenis_kelamin === 'Perempuan')
-                                <span class="badge-modern badge-purple"><i class="bi bi-gender-female"></i> Perempuan</span>
+                                <span class="badge-modern badge-purple"><i class="bi bi-gender-female"></i> P</span>
                             @else -
                             @endif
                         </td>
                         <td>
-                            @if(!empty($guru->tanggal_lahir))
-                                {{ \Carbon\Carbon::parse($guru->tanggal_lahir)->format('d M Y') }}
-                            @else -
-                            @endif
+                            @php
+                                $tempat = $guru->tempat_lahir ? $guru->tempat_lahir . ', ' : '';
+                                $tanggal = !empty($guru->tanggal_lahir) ? \Carbon\Carbon::parse($guru->tanggal_lahir)->format('d M Y') : '';
+                            @endphp
+                            {{ $tempat . $tanggal ?: '-' }}
                         </td>
-                        <td>{{ $guru->agama ?? '-' }}</td>
-                        <td>{{ $guru->no_hp ?? '-' }}</td>
                         <td>{{ \Illuminate\Support\Str::limit($guru->alamat ?? '-', 30) }}</td>
                         <td>
                             <div class="d-flex gap-1">
@@ -162,6 +220,7 @@
     $(document).ready(function () {
         if (!$.fn.DataTable.isDataTable('#data-table')) {
             $('#data-table').DataTable({
+                stateSave: true,
                 responsive: true,
                 columnDefs: [{ orderable: false, targets: [0, -1] }],
                 language: {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Akademik;
 use App\Http\Controllers\Controller;
 use App\Models\Kelas;
 use App\Models\User;
+use App\Models\Siswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -54,8 +55,12 @@ class KelasController extends Controller
             ->orderBy('nama')
             ->get();
 
-        // GURU BK: ambil guru dengan jumlah penugasan < 6
+        // GURU BK: ambil guru dengan jumlah penugasan < 6, jurusan Bimbingan Konseling
         $availableGuruBk = User::where('role', 'guru')
+            ->whereHas('guru', function($q) {
+                $q->where('jurusan', 'like', '%Bimbingan Konseling%')
+                  ->orWhere('jurusan', 'BK');
+            })
             ->withCount('kelasBk as kelas_count')
             ->orderBy('nama')
             ->get()
@@ -65,8 +70,10 @@ class KelasController extends Controller
             ->values();
 
         $kelas = null;
+        $siswaList = Siswa::with('user')->whereNull('kelas_id')->orderBy('nis')->get();
+        $selectedSiswaIds = [];
 
-        return view('sistem_akademik.kelas.createOrEdit', compact('kelas', 'title', 'header', 'availableWali', 'availableGuruBk'));
+        return view('sistem_akademik.kelas.createOrEdit', compact('kelas', 'title', 'header', 'availableWali', 'availableGuruBk', 'siswaList', 'selectedSiswaIds'));
     }
 
     public function store(Request $request)
@@ -78,6 +85,8 @@ class KelasController extends Controller
             'wali_kelas_id' => 'nullable|exists:users,id',
             'guru_bk_id' => 'nullable|exists:users,id',
             'ruangan' => ['nullable', 'string', 'max:255', 'unique:kelas,ruangan'],
+            'siswa_ids' => 'nullable|array',
+            'siswa_ids.*' => 'exists:siswa,id',
         ]);
 
         if ($request->filled('wali_kelas_id')) {
@@ -98,7 +107,7 @@ class KelasController extends Controller
             return back()->withInput()->withErrors(['guru_bk_id' => 'Wali kelas dan Guru BK tidak boleh sama orang.']);
         }
 
-        Kelas::create([
+        $kelas = Kelas::create([
             'nama_kelas' => $request->nama_kelas,
             'jurusan' => $request->jurusan,
             'tahun_ajaran' => $request->tahun_ajaran,
@@ -106,6 +115,10 @@ class KelasController extends Controller
             'guru_bk_id' => $request->guru_bk_id ?: null,
             'ruangan' => $request->ruangan ?: null,
         ]);
+
+        if ($request->filled('siswa_ids')) {
+            Siswa::whereIn('id', $request->siswa_ids)->update(['kelas_id' => $kelas->id]);
+        }
 
         return redirect()->route('sistem_akademik.kelas.index')
             ->with('status', 'success')
@@ -125,8 +138,12 @@ class KelasController extends Controller
             ->orderBy('nama')
             ->get();
 
-        // Available guru_bk: guru dengan <6 kelas OR guru yang saat ini guru_bk untuk kelas ini
+        // Available guru_bk: guru dengan <6 kelas OR guru yang saat ini guru_bk untuk kelas ini, jurusan BK
         $guruList = User::where('role', 'guru')
+            ->whereHas('guru', function($q) {
+                $q->where('jurusan', 'like', '%Bimbingan Konseling%')
+                  ->orWhere('jurusan', 'BK');
+            })
             ->withCount('kelasBk as kelas_count')
             ->orderBy('nama')
             ->get();
@@ -138,7 +155,14 @@ class KelasController extends Controller
             return (int)$g->kelas_count < 6;
         })->values();
 
-        return view('sistem_akademik.kelas.createOrEdit', compact('kelas', 'title', 'header', 'availableWali', 'availableGuruBk'));
+        $siswaList = Siswa::with('user')
+            ->whereNull('kelas_id')
+            ->orWhere('kelas_id', $kelas->id)
+            ->orderBy('nis')
+            ->get();
+        $selectedSiswaIds = $kelas->siswa->pluck('id')->toArray();
+
+        return view('sistem_akademik.kelas.createOrEdit', compact('kelas', 'title', 'header', 'availableWali', 'availableGuruBk', 'siswaList', 'selectedSiswaIds'));
     }
 
     public function update(Request $request, Kelas $kelas)
@@ -150,6 +174,8 @@ class KelasController extends Controller
             'wali_kelas_id' => 'nullable|exists:users,id',
             'guru_bk_id' => 'nullable|exists:users,id',
             'ruangan' => ['nullable', 'string', 'max:255', Rule::unique('kelas', 'ruangan')->ignore($kelas->id)],
+            'siswa_ids' => 'nullable|array',
+            'siswa_ids.*' => 'exists:siswa,id',
         ]);
 
         // 1) wali_kelas tidak boleh sudah terpilih pada kelas lain
@@ -195,6 +221,14 @@ class KelasController extends Controller
             'guru_bk_id' => $request->guru_bk_id ?: null,
             'ruangan' => $request->ruangan ?: null,
         ]);
+
+        // Hapus relasi siswa saat ini
+        Siswa::where('kelas_id', $kelas->id)->update(['kelas_id' => null]);
+        
+        // Simpan relasi siswa yang baru
+        if ($request->filled('siswa_ids')) {
+            Siswa::whereIn('id', $request->siswa_ids)->update(['kelas_id' => $kelas->id]);
+        }
 
         return redirect()->route('sistem_akademik.kelas.index')
             ->with('status', 'success')

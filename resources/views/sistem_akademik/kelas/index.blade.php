@@ -151,6 +151,7 @@
     $(document).ready(function () {
         if (!$.fn.DataTable.isDataTable('#data-table')) {
             $('#data-table').DataTable({
+                stateSave: true,
                 responsive: true,
                 columnDefs: [{ orderable: false, targets: [0, -1] }],
                 language: {

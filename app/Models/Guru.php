@@ -17,11 +17,14 @@ class Guru extends Model
         'nip',
         'kelas',
         'jurusan',
+        'tempat_lahir',
         'tanggal_lahir',
         'jenis_kelamin',
         'agama',
         'alamat',
         'no_hp',
+        'status',
+        'jabatan_jurusan',
     ];
 
     public function user()

@@ -22,12 +22,34 @@ class GuruController extends Controller
         $title = 'Data Guru';
         $header = 'Data Guru & Tendik';
         
+        if ($request->has('reset')) {
+            session()->forget('guru_filters');
+            return redirect()->route('sistem_akademik.guru.index');
+        }
+
+        if ($request->hasAny(['jurusan', 'wali_kelas', 'status'])) {
+            session()->put('guru_filters', $request->only(['jurusan', 'wali_kelas', 'status']));
+        } elseif (session()->has('guru_filters')) {
+            session()->reflash();
+            return redirect()->route('sistem_akademik.guru.index', session('guru_filters'));
+        }
+
         $query = Guru::with(['user', 'waliKelasDi'])
             ->leftJoin('users', 'guru.user_id', '=', 'users.id')
             ->select('guru.*');
 
         if ($request->filled('jurusan')) {
             $query->where('guru.jurusan', $request->jurusan);
+        }
+
+        if ($request->filled('status')) {
+            if ($request->status === 'wakil kepala') {
+                $query->where('guru.status', 'like', 'wakil kepala%');
+            } elseif ($request->status === 'bendahara') {
+                $query->where('guru.status', 'like', 'bendahara%');
+            } else {
+                $query->where('guru.status', $request->status);
+            }
         }
 
         if ($request->filled('wali_kelas')) {
@@ -49,23 +71,29 @@ class GuruController extends Controller
     {
         $title = 'Guru';
         $header = 'Tambah Data Guru';
-        return view('sistem_akademik.guru.createOrEdit', compact('title', 'header'));
+        $jurusanList = Guru::select('jurusan')->distinct()->whereNotNull('jurusan')->where('jurusan', '!=', '')->orderBy('jurusan')->pluck('jurusan')->toArray();
+        return view('sistem_akademik.guru.createOrEdit', compact('title', 'header', 'jurusanList'));
     }
 
     public function store(Request $request)
     {
+        $isOptionalNip = auth()->check() && in_array(auth()->user()->role, ['admin_sa', 'super_admin']);
+
         $request->validate([
             'nama'          => 'required|string|max:255',
             'email'         => 'nullable|email|unique:users',
             'password'      => 'required|min:6',
-            'nip'           => 'required|string|unique:guru',
-            'kelas'         => 'required|string',
-            'jurusan'       => 'required|string',
+            'nip'           => $isOptionalNip ? 'nullable|string|max:20|unique:guru' : 'required|string|max:20|unique:guru',
+            'kelas'         => 'nullable|string',
+            'jurusan'       => 'nullable|string',
             'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
             'agama'         => 'required|string',
+            'tempat_lahir'  => 'nullable|string',
             'tanggal_lahir' => 'required|date',
             'alamat'        => 'required',
-            'no_hp'         => 'required',
+            'no_hp'         => 'nullable|string',
+            'status'        => 'required|in:guru,guru tidak tetap,pegawai,pegawai tidak tetap,kepala sekolah,wakil kepala kurikulum,wakil kepala humas,wakil kepala sarana prasarana,wakil kepala kesiswaan,bendahara gaji,bendahara BOS,bendahara pembimbing komite,kepala jurusan,kepala bengkel',
+            'jabatan_jurusan' => 'nullable|string',
             'image'         => 'nullable|image'
         ]);
 
@@ -84,9 +112,12 @@ class GuruController extends Controller
             'nip'           => $request->nip,
             'kelas'         => $request->kelas,
             'jurusan'       => $request->jurusan,
+            'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
             'alamat'        => $request->alamat,
             'no_hp'         => $request->no_hp,
+            'status'        => $request->status,
+            'jabatan_jurusan' => in_array($request->status, ['kepala jurusan', 'kepala bengkel']) ? $request->jabatan_jurusan : null,
             'jenis_kelamin' => $request->jenis_kelamin,
             'agama'         => $request->agama,
         ]);
@@ -118,20 +149,26 @@ class GuruController extends Controller
         $guru->load(['user', 'waliKelasDi']);
         $title = 'Guru';
         $header = 'Edit Data Guru';
-        return view('sistem_akademik.guru.createOrEdit', compact('guru', 'title', 'header'));
+        $jurusanList = Guru::select('jurusan')->distinct()->whereNotNull('jurusan')->where('jurusan', '!=', '')->orderBy('jurusan')->pluck('jurusan')->toArray();
+        return view('sistem_akademik.guru.createOrEdit', compact('guru', 'title', 'header', 'jurusanList'));
     }
 
     public function update(Request $request, Guru $guru)
     {
+        $isOptionalNip = auth()->check() && in_array(auth()->user()->role, ['admin_sa', 'super_admin']);
+
         $request->validate([
             'nama'          => 'required|string|max:255',
             'email'         => 'nullable|email|unique:users,email,' . $guru->user_id,
-            'nip'           => 'required|string|unique:guru,nip,' . $guru->id,
+            'nip'           => $isOptionalNip ? 'nullable|string|max:20|unique:guru,nip,' . $guru->id : 'required|string|max:20|unique:guru,nip,' . $guru->id,
             'kelas'         => 'nullable|string',
             'jurusan'       => 'nullable|string',
+            'tempat_lahir'  => 'nullable|string',
             'tanggal_lahir' => 'nullable|date',
             'alamat'        => 'nullable|string',
             'no_hp'         => 'nullable|string',
+            'status'        => 'required|in:guru,guru tidak tetap,pegawai,pegawai tidak tetap,kepala sekolah,wakil kepala kurikulum,wakil kepala humas,wakil kepala sarana prasarana,wakil kepala kesiswaan,bendahara gaji,bendahara BOS,bendahara pembimbing komite,kepala jurusan,kepala bengkel',
+            'jabatan_jurusan' => 'nullable|string',
             'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
             'agama'         => 'nullable|string',
             'image'         => 'nullable|image'
@@ -150,9 +187,12 @@ class GuruController extends Controller
             'nip'           => $request->nip,
             'kelas'         => $request->kelas,
             'jurusan'       => $request->jurusan,
+            'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
             'alamat'        => $request->alamat,
             'no_hp'         => $request->no_hp,
+            'status'        => $request->status,
+            'jabatan_jurusan' => in_array($request->status, ['kepala jurusan', 'kepala bengkel']) ? $request->jabatan_jurusan : null,
             'jenis_kelamin' => $request->jenis_kelamin,
             'agama'         => $request->agama,
         ]);

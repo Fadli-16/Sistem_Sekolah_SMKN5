@@ -23,8 +23,20 @@ class SiswaController extends Controller
         $title  = 'Siswa';
         $header = 'Kelola Data Siswa';
 
+        if ($request->has('reset')) {
+            session()->forget('siswa_filters');
+            return redirect()->route('sistem_akademik.siswa.index');
+        }
+
+        if ($request->hasAny(['jurusan', 'kelas_id', 'tahun_masuk'])) {
+            session()->put('siswa_filters', $request->only(['jurusan', 'kelas_id', 'tahun_masuk']));
+        } elseif (session()->has('siswa_filters')) {
+            session()->reflash();
+            return redirect()->route('sistem_akademik.siswa.index', session('siswa_filters'));
+        }
+
         // Base Query
-        $query = Siswa::with(['user', 'kelas'])
+        $query = Siswa::with(['user', 'kelas', 'kelasData'])
             ->leftJoin('users', 'siswa.user_id', '=', 'users.id')
             ->select('siswa.*');
 
@@ -38,6 +50,11 @@ class SiswaController extends Controller
             $query->where('siswa.kelas_id', $request->kelas_id);
         }
 
+        // Filter Tahun Masuk
+        if ($request->filled('tahun_masuk')) {
+            $query->where('siswa.tahun_masuk', $request->tahun_masuk);
+        }
+
         $students = $query->orderByRaw("COALESCE(users.nama, '') asc")->get();
         
         // Data pendukung filter
@@ -47,8 +64,9 @@ class SiswaController extends Controller
         }
         $kelas = $kelasQuery->get();
         $jurusanList = Kelas::select('jurusan')->distinct()->whereNotNull('jurusan')->orderBy('jurusan')->get();
+        $tahunMasukList = Siswa::select('tahun_masuk')->distinct()->whereNotNull('tahun_masuk')->orderBy('tahun_masuk', 'desc')->get();
 
-        return view('sistem_akademik.siswa.index', compact('students', 'title', 'header', 'kelas', 'jurusanList'));
+        return view('sistem_akademik.siswa.index', compact('students', 'title', 'header', 'kelas', 'jurusanList', 'tahunMasukList'));
     }
 
     public function create()
@@ -65,10 +83,12 @@ class SiswaController extends Controller
             'nama' => 'required|string|max:255',
             'email' => 'nullable|email|unique:users',
             'password' => 'nullable|min:6',
-            'nis' => 'required|string|unique:siswa',
+            'nis' => 'required|string|max:20|unique:siswa',
             'kelas_id' => 'required|exists:kelas,id',
+            'tempat_lahir'  => 'nullable|string|max:255',
             'tanggal_lahir' => 'nullable|date',
             'alamat' => 'nullable|string',
+            'tahun_masuk' => 'nullable|string|max:4',
             'no_hp' => 'nullable|string',
             'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
             'agama' => 'nullable|string',
@@ -99,8 +119,10 @@ class SiswaController extends Controller
             'kelas_id' => $kelas->id,
             'kelas' => $kelas->nama_kelas ?? null,
             'jurusan' => $kelas->jurusan ?? null,
+            'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
             'alamat' => $request->alamat,
+            'tahun_masuk' => $request->tahun_masuk,
             'no_hp' => $request->no_hp,
             'jenis_kelamin' => $request->jenis_kelamin ?? null,
             'agama' => $request->agama ?? null,
@@ -141,8 +163,9 @@ class SiswaController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
-            'nis' => 'required|string|unique:siswa,nis,' . $siswa->id,
+            'nis' => 'required|string|max:20|unique:siswa,nis,' . $siswa->id,
             'kelas_id' => 'required|exists:kelas,id',
+            'tempat_lahir'  => 'nullable|string|max:255',
             'tanggal_lahir' => 'nullable|date',
             'alamat' => 'nullable|string',
             'no_hp' => 'nullable|string',
@@ -174,6 +197,7 @@ class SiswaController extends Controller
             'kelas_id' => $kelas->id,
             'kelas' => $kelas->nama_kelas ?? null,
             'jurusan' => $kelas->jurusan ?? null,
+            'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
             'alamat' => $request->alamat,
             'no_hp' => $request->no_hp,

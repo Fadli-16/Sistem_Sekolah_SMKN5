@@ -7,9 +7,15 @@ use App\Models\Berita;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 
 class BeritaController extends Controller
 {
+    // MAX target file size after compression (bytes)
+    protected int $maxImageBytes = 500 * 1024; // 500 KB
+
     /**
      * Display a listing of the resource with search, filter and pagination.
      */
@@ -77,9 +83,11 @@ class BeritaController extends Controller
         $fileName = null;
 
         if ($request->hasFile('foto')) {
-            $f = $request->file('foto');
-            $foto = time() . '_' . Str::slug(pathinfo($f->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $f->getClientOriginalExtension();
-            $f->move(public_path('assets/berita'), $foto);
+            try {
+                $foto = $this->saveUploadedImage($request->file('foto'));
+            } catch (\Throwable $e) {
+                Log::warning('Berita image upload/store failed: ' . $e->getMessage());
+            }
         }
 
         if ($request->hasFile('file')) {
@@ -148,15 +156,18 @@ class BeritaController extends Controller
 
         // Handle new foto upload
         if ($request->hasFile('foto')) {
-            $f = $request->file('foto');
-            $filename = time() . '_' . Str::slug(pathinfo($f->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $f->getClientOriginalExtension();
-            $f->move(public_path('assets/berita'), $filename);
+            try {
+                $filename = $this->saveUploadedImage($request->file('foto'));
 
-            if ($berita->foto && file_exists(public_path('assets/berita/' . $berita->foto))) {
-                @unlink(public_path('assets/berita/' . $berita->foto));
+                if ($filename) {
+                    if ($berita->foto && file_exists(public_path('assets/berita/' . $berita->foto))) {
+                        @unlink(public_path('assets/berita/' . $berita->foto));
+                    }
+                    $berita->foto = $filename;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Berita image upload/update failed: ' . $e->getMessage());
             }
-
-            $berita->foto = $filename;
         }
 
         // Handle file upload / removal
@@ -231,5 +242,155 @@ class BeritaController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Gagal menghapus data: ' . $e->getMessage()]);
         }
+    }
+
+    protected function saveUploadedImage(UploadedFile $file): ?string
+    {
+        $destDir = public_path('assets/berita');
+        if (! File::exists($destDir)) {
+            File::makeDirectory($destDir, 0755, true);
+        }
+
+        $orig = $file->getClientOriginalName();
+        $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+        $base = pathinfo($orig, PATHINFO_FILENAME);
+        $base = Str::slug(substr($base, 0, 50), '_');
+        $filename = time() . '_' . $base . '.' . $ext;
+        $tmpPath = $file->getRealPath();
+        $destPath = public_path('assets/berita/' . $filename);
+
+        if ($file->getSize() !== null && $file->getSize() <= $this->maxImageBytes) {
+            $file->move(public_path('assets/berita'), $filename);
+            return $filename;
+        }
+
+        try {
+            $ok = $this->compressImageIfNeeded($tmpPath, $destPath, $ext, $this->maxImageBytes);
+            if ($ok && File::exists($destPath)) {
+                return $filename;
+            }
+        } catch (\Throwable $e) {
+            Log::warning("compressImageIfNeeded failed: " . $e->getMessage());
+        }
+
+        try {
+            $file->move(public_path('assets/berita'), $filename);
+            Log::warning("Image compression fallback used for uploaded file: {$filename}");
+            return $filename;
+        } catch (\Throwable $e) {
+            Log::error("Failed moving uploaded image after compression fallback: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    protected function compressImageIfNeeded(string $sourcePath, string $destinationPath, string $ext, int $maxBytes): bool
+    {
+        if (! file_exists($sourcePath)) {
+            throw new \InvalidArgumentException("Source file not found: {$sourcePath}");
+        }
+
+        $contents = @file_get_contents($sourcePath);
+        if ($contents === false) {
+            throw new \RuntimeException("Unable to read uploaded file");
+        }
+
+        $img = @imagecreatefromstring($contents);
+        if ($img === false) {
+            throw new \RuntimeException("Unsupported image format or corrupt image");
+        }
+
+        $width = imagesx($img);
+        $height = imagesy($img);
+        if ($width > 1200 || $height > 1200) {
+            $ratio = $width / $height;
+            if ($width > $height) {
+                $newWidth = 1200;
+                $newHeight = 1200 / $ratio;
+            } else {
+                $newHeight = 1200;
+                $newWidth = 1200 * $ratio;
+            }
+            $tmpImg = imagecreatetruecolor((int)$newWidth, (int)$newHeight);
+            
+            $mime = getimagesize($sourcePath)['mime'] ?? null;
+            if ($mime === 'image/png' || $mime === 'image/webp') {
+                imagealphablending($tmpImg, false);
+                imagesavealpha($tmpImg, true);
+                $transparent = imagecolorallocatealpha($tmpImg, 255, 255, 255, 127);
+                imagefilledrectangle($tmpImg, 0, 0, (int)$newWidth, (int)$newHeight, $transparent);
+            }
+            
+            imagecopyresampled($tmpImg, $img, 0, 0, 0, 0, (int)$newWidth, (int)$newHeight, $width, $height);
+            imagedestroy($img);
+            $img = $tmpImg;
+        }
+
+        $destroyImage = function ($im) {
+            if (! $im) return;
+            if (is_resource($im) || (class_exists('GdImage') && $im instanceof \GdImage)) {
+                @imagedestroy($im);
+            }
+        };
+
+        $success = false;
+        $mime = getimagesize($sourcePath)['mime'] ?? null;
+
+        if ($mime === 'image/jpeg' || $mime === 'image/jpg' || $mime === 'image/webp') {
+            $quality = 90;
+            while ($quality >= 40) {
+                if ($mime === 'image/webp' && function_exists('imagewebp')) {
+                    @imagewebp($img, $destinationPath, $quality);
+                } else {
+                    @imagejpeg($img, $destinationPath, $quality);
+                }
+
+                clearstatcache(true, $destinationPath);
+                if (file_exists($destinationPath) && filesize($destinationPath) <= $maxBytes) {
+                    $success = true;
+                    break;
+                }
+                $quality -= 10;
+            }
+        }
+
+        if (! $success && $mime === 'image/png') {
+            for ($level = 6; $level <= 9; $level++) {
+                @imagepng($img, $destinationPath, $level);
+                clearstatcache(true, $destinationPath);
+                if (file_exists($destinationPath) && filesize($destinationPath) <= $maxBytes) {
+                    $success = true;
+                    break;
+                }
+            }
+
+            if (! $success) {
+                $quality = 90;
+                while ($quality >= 40) {
+                    @imagejpeg($img, $destinationPath, $quality);
+                    clearstatcache(true, $destinationPath);
+                    if (file_exists($destinationPath) && filesize($destinationPath) <= $maxBytes) {
+                        $success = true;
+                        break;
+                    }
+                    $quality -= 10;
+                }
+            }
+        }
+
+        if (! $success && ! in_array($mime, ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'])) {
+            $quality = 85;
+            while ($quality >= 40) {
+                @imagejpeg($img, $destinationPath, $quality);
+                clearstatcache(true, $destinationPath);
+                if (file_exists($destinationPath) && filesize($destinationPath) <= $maxBytes) {
+                    $success = true;
+                    break;
+                }
+                $quality -= 10;
+            }
+        }
+        $destroyImage($img);
+
+        return $success;
     }
 }

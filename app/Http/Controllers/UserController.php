@@ -130,27 +130,19 @@ class UserController extends Controller
         return view('admin.manage.users.import');
     }
 
-    /**
-     * Download template CSV for import.
-     */
-    public function downloadTemplate(string $type = 'siswa')
+    public function downloadTemplate(string $type = 'all')
     {
-        $type = in_array($type, ['guru', 'siswa']) ? $type : 'siswa';
+        $headers = ['Role', 'NIS/NIP', 'Nama', 'Email', 'Password', 'Jurusan', 'ID Kelas', 'Jenis kelamin', 'Agama', 'Tempat lahir', 'Tanggal lahir', 'Alamat', 'Tahun Masuk', 'No.hp'];
+        $exampleGuru = ['guru', '198501012010011001', 'Contoh Nama Guru', 'guru@sekolah.sch.id', 'user123', 'Teknik Komputer dan Jaringan', '', 'Laki-laki', 'Islam', 'Padang', '1985-01-01', 'Jl. Contoh No.1 Padang', '', '081234567890'];
+        $exampleSiswa = ['siswa', '12345', 'Contoh Nama Siswa', 'siswa@sekolah.sch.id', 'user123', '', '1', 'Laki-laki', 'Islam', 'Padang', '2006-01-01', 'Jl. Contoh No.1 Padang', '2023', '081234567890'];
 
-        if ($type === 'guru') {
-            $headers = ['NIP', 'Nama', 'Email', 'Jurusan', 'Jenis kelamin', 'agama', 'Tanggal lahir', 'Alamat', 'No.hp'];
-            $example = ['198501012010011001', 'Contoh Nama Guru', 'guru@sekolah.sch.id', 'Teknik Komputer dan Jaringan', 'Laki-laki', 'Islam', '1985-01-01', 'Jl. Contoh No.1 Padang', '081234567890'];
-        } else {
-            $headers = ['NIS', 'Nama', 'Email', 'Jurusan', 'kelas', 'Jenis kelamin', 'agama', 'Tanggal lahir', 'Alamat', 'No.hp'];
-            $example = ['12345', 'Contoh Nama Siswa', 'siswa@sekolah.sch.id', 'Teknik Komputer dan Jaringan', 'XII TKJ 1', 'Laki-laki', 'Islam', '2006-01-01', 'Jl. Contoh No.1 Padang', '081234567890'];
-        }
-
-        $filename = "template-import-{$type}.csv";
+        $filename = "template-import-users.csv";
         $handle = fopen('php://output', 'w');
 
-        return response()->stream(function () use ($headers, $example, $handle) {
+        return response()->stream(function () use ($headers, $exampleGuru, $exampleSiswa, $handle) {
             fputcsv($handle, $headers);
-            fputcsv($handle, $example);
+            fputcsv($handle, $exampleGuru);
+            fputcsv($handle, $exampleSiswa);
             fclose($handle);
         }, 200, [
             'Content-Type'        => 'text/csv',
@@ -167,11 +159,10 @@ class UserController extends Controller
         ini_set('memory_limit', '512M');
 
         $request->validate([
-            'role'     => 'required|in:guru,siswa',
             'csv_file' => 'required|file|mimes:csv,txt',
         ]);
 
-        Excel::import(new UsersImport($request->role), $request->file('csv_file'));
+        Excel::import(new UsersImport(), $request->file('csv_file'));
 
         return redirect()
             ->route('admin.manage.users')

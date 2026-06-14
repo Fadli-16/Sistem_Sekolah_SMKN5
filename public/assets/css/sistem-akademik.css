@@ -848,3 +848,16 @@ body {
     font-weight: 600 !important;
     padding: 0.55rem 1.5rem !important;
 }
+/* Fix Select2 Placeholder Alignment */
+.select2-container .select2-selection--single {
+    height: 38px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 38px !important;
+    padding-left: 0.875rem !important;
+    padding-right: 2rem !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px !important;
+    top: 0 !important;
+}

@@ -80,9 +80,14 @@
                             Password
                             <small class="text-muted fw-normal">(opsional, otomatis jika kosong)</small>
                         </label>
-                        <input type="password" class="form-control @error('password') is-invalid @enderror"
-                               id="password" name="password">
-                        @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="input-group has-validation">
+                            <input type="password" class="form-control @error('password') is-invalid @enderror"
+                                   id="password" name="password">
+                            <span class="input-group-text toggle-password" style="cursor: pointer;">
+                                <i class="bi bi-eye"></i>
+                            </span>
+                            @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                     </div>
                 </div>
 
@@ -113,7 +118,14 @@
 
                 <p class="form-section-title mt-4">Informasi Personal</p>
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
+                        <label for="tempat_lahir" class="form-label">Tempat Lahir</label>
+                        <input type="text" id="tempat_lahir" name="tempat_lahir" class="form-control @error('tempat_lahir') is-invalid @enderror"
+                               value="{{ old('tempat_lahir', $siswa->tempat_lahir ?? '') }}">
+                        @error('tempat_lahir')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-6 mb-3">
                         <label for="tanggal_lahir" class="form-label">Tanggal Lahir</label>
                         <input type="date" id="tanggal_lahir" name="tanggal_lahir" class="form-control @error('tanggal_lahir') is-invalid @enderror"
                                value="{{ old('tanggal_lahir', $siswa->tanggal_lahir ?? '') }}">
@@ -131,11 +143,16 @@
                                value="{{ old('no_hp', $siswa->no_hp ?? '') }}">
                         @error('no_hp')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-12 mb-3">
                         <label for="alamat" class="form-label">Alamat</label>
-                        <input type="text" id="alamat" name="alamat" class="form-control @error('alamat') is-invalid @enderror"
-                               value="{{ old('alamat', $siswa->alamat ?? '') }}">
+                        <textarea id="alamat" name="alamat" class="form-control @error('alamat') is-invalid @enderror" rows="3">{{ old('alamat', $siswa->alamat ?? '') }}</textarea>
                         @error('alamat')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tahun_masuk" class="form-label">Tahun Masuk</label>
+                        <input type="number" id="tahun_masuk" name="tahun_masuk" class="form-control @error('tahun_masuk') is-invalid @enderror"
+                               value="{{ old('tahun_masuk', $siswa->tahun_masuk ?? '') }}" placeholder="Contoh: 2023">
+                        @error('tahun_masuk')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
 
@@ -169,6 +186,18 @@
                 reader.readAsDataURL(file);
             });
             avatarPreview.addEventListener('error', function () { this.onerror = null; this.src = defaultAvatar; });
+        }
+
+        const togglePassword = document.querySelector('.toggle-password');
+        const password = document.querySelector('#password');
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function (e) {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                const icon = this.querySelector('i');
+                icon.classList.toggle('bi-eye');
+                icon.classList.toggle('bi-eye-slash');
+            });
         }
     });
 </script>

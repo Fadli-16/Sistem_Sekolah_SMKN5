@@ -57,11 +57,16 @@
             </div>
 
             <div class="profile-info">
-                <h2>{{ $user->nama }}</h2>
+                <h2>
+                    {{ $user->nama }}
+                    @if($role === 'guru' && $guru)
+                    <span class="badge ms-2 align-middle" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; font-size: 0.75rem; padding: 0.5em 0.85em; font-weight: 600; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); text-transform: uppercase; letter-spacing: 0.5px;">{{ ucwords(str_replace(' tidak tetap', ' Tidak Tetap', $guru->status ?? 'Guru')) }}</span>
+                    @endif
+                </h2>
                 <div class="identifier">{{ $identifier }}</div>
                 <div class="role">
                     @if($role === 'siswa')
-                    {{ $siswa ? ($siswa->kelas . ' - ' . $siswa->jurusan) : 'Siswa' }}
+                    {{ $siswa ? ((optional($siswa->kelasData)->nama_kelas ?? $siswa->kelas) . ' - ' . (optional($siswa->kelasData)->jurusan ?? $siswa->jurusan)) : 'Siswa' }}
                     @elseif($role === 'guru')
                     {{ $guru ? ($guru->kelas . ' - ' . $guru->jurusan) : 'Guru' }}
                     @else
@@ -105,7 +110,7 @@
                         <input name="jurusan"
                             type="text"
                             class="form-control {{ $isStudentOrTeacher ? 'locked-field' : '' }}"
-                            value="{{ old('jurusan', $siswa->jurusan ?? $guru->jurusan ?? $admin->jurusan ?? '') }}"
+                            value="{{ old('jurusan', (isset($siswa) ? (optional($siswa->kelasData)->jurusan ?? $siswa->jurusan) : null) ?? $guru->jurusan ?? $admin->jurusan ?? '') }}"
                             {{ $isStudentOrTeacher ? 'readonly' : '' }}>
                     </div>
 
@@ -135,6 +140,13 @@
                         <input name="email" type="email" class="form-control" value="{{ old('email', $user->email) }}" required>
                     </div>
 
+                    {{-- Tempat Lahir --}}
+                    <div class="col-md-6">
+                        <label class="form-label">Tempat Lahir</label>
+                        <input name="tempat_lahir" type="text" class="form-control"
+                            value="{{ old('tempat_lahir', $siswa->tempat_lahir ?? $guru->tempat_lahir ?? $admin->tempat_lahir ?? '') }}">
+                    </div>
+
                     {{-- Tanggal Lahir --}}
                     <div class="col-md-6">
                         <label class="form-label">Tanggal Lahir</label>
@@ -154,10 +166,18 @@
                         <input name="no_hp" type="text" class="form-control" value="{{ old('no_hp', $siswa->no_hp ?? $guru->no_hp ?? $admin->no_hp ?? '') }}">
                     </div>
 
+                    @if($user->role === 'siswa')
+                    {{-- Tahun Masuk --}}
+                    <div class="col-md-6">
+                        <label class="form-label">Tahun Masuk</label>
+                        <input name="tahun_masuk" type="text" class="form-control locked-field" value="{{ old('tahun_masuk', $siswa->tahun_masuk ?? '') }}" readonly>
+                    </div>
+                    @endif
+
                     {{-- Alamat --}}
-                    <div class="col-6">
+                    <div class="col-md-12">
                         <label class="form-label">Alamat</label>
-                        <input name="alamat" type="text" class="form-control" value="{{ old('alamat', $siswa->alamat ?? $guru->alamat ?? $admin->alamat ?? '') }}">
+                        <textarea name="alamat" class="form-control" rows="3">{{ old('alamat', $siswa->alamat ?? $guru->alamat ?? $admin->alamat ?? '') }}</textarea>
                     </div>
                 </div>
 

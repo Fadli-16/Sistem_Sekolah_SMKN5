@@ -349,10 +349,11 @@
                 <i class="bi bi-person-badge input-icon"></i>
             </div>
         
-            <div class="form-group">
+            <div class="form-group" style="position: relative;">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" class="form-control" required placeholder="Masukkan Password">
+                <input type="password" id="password" name="password" class="form-control" required placeholder="Masukkan Password" style="padding-right: 40px;">
                 <i class="bi bi-lock input-icon"></i>
+                <i class="bi bi-eye toggle-password" style="position: absolute; right: var(--spacing, 15px); top: 50%; transform: translateY(-50%); margin-top: calc(var(--font-size, 16px) * 0.6); cursor: pointer; color: var(--text-muted); z-index: 10;"></i>
             </div>
         
             <div class="form-group mb-4">
@@ -371,6 +372,17 @@
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const togglePassword = document.querySelector('.toggle-password');
+        const password = document.querySelector('#password');
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function (e) {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                this.classList.toggle('bi-eye');
+                this.classList.toggle('bi-eye-slash');
+            });
+        }
+
         @if(session('loginError'))
         swal({
             title: 'Login Gagal',

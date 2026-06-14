@@ -91,16 +91,83 @@
             var kelasId = $(this).val();
             loadStudentsByKelas(kelasId, []);
             applyRuanganFallback(kelasId);
+            filterMapelByKelasJurusan();
             if ($("#hari").val()) fetchRecommendations();
         });
+
+        function filterMapelByKelasJurusan() {
+            var selectedKelasOpt = $("#kelas_id").find("option:selected");
+            var kelasJurusan = selectedKelasOpt.data("jurusan") || "";
+            kelasJurusan = kelasJurusan.toString().toLowerCase().trim();
+
+            var $mapelSelects = $("#mata_pelajaran_umum, #mata_pelajaran_jurusan");
+            var $hiddenMapel = $("#mata_pelajaran_id");
+            var currentVal = $hiddenMapel.val();
+            var validValFound = false;
+            
+            // Allow initial mapel
+            var initialMapel = cfg.initialMapelId || currentVal;
+
+            $mapelSelects.find("option").each(function () {
+                var $opt = $(this);
+                if (!$opt.val()) return; // skip placeholder
+
+                var mapelJurusan = ($opt.data("jurusan") || "").toString().toLowerCase().trim();
+                
+                var show = (mapelJurusan === "umum" || mapelJurusan === "" || !kelasJurusan || mapelJurusan === kelasJurusan || $opt.val() === currentVal || $opt.val() === initialMapel);
+                
+                if (show) {
+                    $opt.prop("disabled", false);
+                    if ($opt.parent().is("span.hide-opt")) {
+                        $opt.unwrap();
+                    }
+                    if ($opt.val() === currentVal) validValFound = true;
+                } else {
+                    $opt.prop("disabled", true);
+                    if (!$opt.parent().is("span.hide-opt")) {
+                        $opt.wrap('<span class="hide-opt" style="display:none;"></span>');
+                    }
+                }
+            });
+
+            if ($.fn.select2) {
+                $("#mata_pelajaran_umum").select2("destroy").select2({ width: "100%", allowClear: true });
+                $("#mata_pelajaran_jurusan").select2("destroy").select2({ width: "100%", allowClear: true });
+            }
+
+            if (currentVal && !validValFound) {
+                $("#mata_pelajaran_umum").val("").trigger("change.select2");
+                $("#mata_pelajaran_jurusan").val("").trigger("change.select2");
+                $hiddenMapel.val("").trigger("change");
+            }
+        }
 
         if (cfg.initialKelas) {
             loadStudentsByKelas(cfg.initialKelas, cfg.preselectSiswa);
         }
 
+        // Handle Mapel Dual Selectors
+        $("#mata_pelajaran_umum").on("change", function () {
+            if ($(this).val()) {
+                $("#mata_pelajaran_jurusan").val("").trigger("change.select2");
+                $("#mata_pelajaran_id").val($(this).val()).trigger("change");
+            } else if (!$("#mata_pelajaran_jurusan").val()) {
+                $("#mata_pelajaran_id").val("").trigger("change");
+            }
+        });
+        $("#mata_pelajaran_jurusan").on("change", function () {
+            if ($(this).val()) {
+                $("#mata_pelajaran_umum").val("").trigger("change.select2");
+                $("#mata_pelajaran_id").val($(this).val()).trigger("change");
+            } else if (!$("#mata_pelajaran_umum").val()) {
+                $("#mata_pelajaran_id").val("").trigger("change");
+            }
+        });
+
         // --- RECOMMENDATION & SLOT LOGIC ---
         function rebuildSlotEndOptions(startId, allowedSlotsArray) {
             var startIdx = startId ? slotIndex(startId) : -1;
+            var curEnd = $slotEnd.val();
             $slotEnd.find("option").each(function () {
                 var val = $(this).val();
                 if (!val) return;
@@ -110,11 +177,12 @@
                     enable = allowedSlotsArray.includes(String(val));
                 }
                 if (startIdx >= 0 && idx < startIdx) enable = false;
+                if (val === curEnd) enable = true;
                 $(this).prop("disabled", !enable);
             });
 
-            var curEnd = $slotEnd.val();
-            if (curEnd && $slotEnd.find('option[value="' + curEnd + '"]').prop("disabled")) {
+            var checkEnd = $slotEnd.val();
+            if (checkEnd && $slotEnd.find('option[value="' + checkEnd + '"]').prop("disabled")) {
                 $slotEnd.val("").trigger("change");
             }
             if ($.fn && $.fn.select2) $slotEnd.trigger("change.select2");
@@ -122,16 +190,22 @@
 
         function applyAvailableSlotsToSelects(availableSlots) {
             availableSlotsCache = Array.isArray(availableSlots) ? availableSlots.map(String) : null;
+            
+            var curStart = $slotStart.val();
+            var curEnd = $slotEnd.val();
+            
             $slotStart.find("option").each(function () {
                 var val = $(this).val();
                 if (!val) return;
                 var enable = availableSlotsCache ? availableSlotsCache.includes(String(val)) : true;
+                if (val === curStart) enable = true;
                 $(this).prop("disabled", !enable);
             });
             $slotEnd.find("option").each(function () {
                 var val = $(this).val();
                 if (!val) return;
                 var enable = availableSlotsCache ? availableSlotsCache.includes(String(val)) : true;
+                if (val === curEnd) enable = true;
                 $(this).prop("disabled", !enable);
             });
 

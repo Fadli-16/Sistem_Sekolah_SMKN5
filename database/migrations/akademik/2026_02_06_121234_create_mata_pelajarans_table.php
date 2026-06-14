@@ -16,7 +16,9 @@ class CreateMataPelajaransTable extends Migration
         Schema::create('mata_pelajaran', function (Blueprint $table) {
             $table->id();
             $table->string('nama_mata_pelajaran');
-            $table->foreignId('guru_id')->constrained('users')->cascadeOnUpdate() ->restrictOnDelete();
+            $table->string('kategori')->nullable();
+            $table->string('jurusan')->nullable();
+            $table->foreignId('guru_id')->constrained('users')->cascadeOnUpdate()->restrictOnDelete();
             $table->timestamps();
         });
     }

@@ -69,6 +69,38 @@
     <script src="{{ asset('assets/js/superadmin.js') }}"></script>
 
     @yield('scripts')
+
+    <script>
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: '{!! session('success') !!}',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        @endif
+
+        @if(session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: '{!! session('error') !!}',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        @endif
+
+        @if(session('status'))
+            Swal.fire({
+                icon: '{!! session('status') !!}',
+                title: '{!! session('title', session('status') == 'success' ? 'Berhasil!' : 'Pemberitahuan') !!}',
+                text: '{!! session('message') !!}',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        @endif
+    </script>
 </body>
 
 </html>

@@ -1,42 +1,121 @@
 button {
-        background-color: #004080;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
-        border: none;
-    }
+    background-color: #004080;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+}
 
-    button:hover {
-        background-color: #002b5c;
-    }
+button:hover {
+    background-color: #002b5c;
+}
 
-    .select2-container--default .select2-selection--multiple {
-        border: 1px solid #ced4da;
-        border-radius: .25rem;
-        min-height: 38px;
-    }
+.select2-container--default .select2-selection--multiple {
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    min-height: 38px;
+}
 
-    .select2-container--default .select2-selection--multiple .select2-selection__choice {
-        background-color: #4ecdc4;
-        border: 1px solid #4ecdc4;
-        color: white;
-        padding: 2px 8px;
-    }
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #4ecdc4;
+    border: 1px solid #4ecdc4;
+    color: white;
+    padding: 2px 8px;
+}
 
-    .loading-spinner {
-        display: inline-block;
-        width: 1rem;
-        height: 1rem;
-        vertical-align: middle;
-        border: .2em solid currentColor;
-        border-right-color: transparent;
-        border-radius: 50%;
-        animation: spinner-border .75s linear infinite;
-        margin-right: .5rem;
-    }
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    vertical-align: middle;
+    border: .2em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border .75s linear infinite;
+    margin-right: .5rem;
+}
 
-    @keyframes spinner-border {
-        to {
-            transform: rotate(360deg);
-        }
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
     }
+}
+
+.course-header {
+    background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+    color: white;
+    padding: 2rem;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 0;
+}
+
+.course-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.info-label {
+    font-weight: 600;
+    color: #1a2a3a;
+    width: 120px;
+    display: inline-block;
+}
+
+.info-value {
+    color: #495057;
+}
+
+.info-item {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.back-btn {
+    background-color: #004080;
+    color: white;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 1.5rem;
+}
+
+.back-btn:hover {
+    background-color: #002b5c;
+    color: white;
+}
+
+.student-list {
+    margin-top: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 0.5rem;
+}
+
+.student-list-item {
+    padding: 0.5rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.student-list-item:last-child {
+    border-bottom: none;
+}
+
+.student-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background-color: #e9ecef;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-left: 0.5rem;
+}

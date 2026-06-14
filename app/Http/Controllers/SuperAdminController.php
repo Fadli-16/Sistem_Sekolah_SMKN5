@@ -23,8 +23,15 @@ class SuperAdminController extends Controller
         $header = 'Kelola Pengguna Sistem';
         $users  = User::all();
 
-        // Untuk filter export
-        $jurusanList = \App\Models\Kelas::select('jurusan')
+        // Untuk filter export Siswa
+        $jurusanSiswaList = \App\Models\Kelas::select('jurusan')
+            ->whereNotNull('jurusan')
+            ->distinct()
+            ->orderBy('jurusan')
+            ->pluck('jurusan');
+
+        // Untuk filter export Guru
+        $jurusanGuruList = \App\Models\Guru::select('jurusan')
             ->whereNotNull('jurusan')
             ->distinct()
             ->orderBy('jurusan')
@@ -32,7 +39,7 @@ class SuperAdminController extends Controller
 
         $kelasList = \App\Models\Kelas::orderBy('jurusan')->orderBy('nama_kelas')->get();
 
-        return view('admin.manage.users.index', compact('users', 'title', 'header', 'jurusanList', 'kelasList'));
+        return view('admin.manage.users.index', compact('users', 'title', 'header', 'jurusanSiswaList', 'jurusanGuruList', 'kelasList'));
     }
 
     public function createUser()
@@ -56,9 +63,11 @@ class SuperAdminController extends Controller
 
     public function storeUser(Request $request)
     {
+        $isOptionalNip = $request->role === 'guru' && auth()->check() && in_array(auth()->user()->role, ['admin_sa', 'super_admin']);
+
         $data = $request->validate([
             'nama' => 'required|string|max:255',
-            'nis_nip' => 'required|string|max:20',
+            'nis_nip' => $isOptionalNip ? 'nullable|string|max:20' : 'required|string|max:20',
             'email' => 'nullable|string|email|max:255|unique:users',
             'password' => 'required|string|min:4',
             'role' => ['required', Rule::in(['super_admin', 'admin_ppdb', 'admin_sa', 'admin_perpus', 'admin_lab', 'admin_magang', 'wakil_perusahaan', 'guru', 'siswa'])],
@@ -120,9 +129,11 @@ class SuperAdminController extends Controller
 
     public function updateUser(Request $request, User $user)
     {
+        $isOptionalNip = $request->role === 'guru' && auth()->check() && in_array(auth()->user()->role, ['admin_sa', 'super_admin']);
+
         $data = $request->validate([
             'nama'              => 'required|string|max:255',
-            'nis_nip'           => 'required|string|max:20',
+            'nis_nip'           => $isOptionalNip ? 'nullable|string|max:20' : 'required|string|max:20',
             'email'             => 'nullable|string|email|max:255|unique:users,email,' . $user->id,
             'old_password'      => ['required_with:password', function ($attr, $value, $fail) use ($user) {
                 if (!Hash::check($value, $user->password)) {
@@ -206,8 +217,11 @@ class SuperAdminController extends Controller
 
     public function destroyUser(User $user)
     {
+        $this->deleteUserPhoto($user);
+        
         $user->siswa()->delete();
         $user->guru()->delete();
+        $user->adminProfile()->delete();
         $user->delete();
 
         return redirect()->route('admin.manage.users')
@@ -220,9 +234,31 @@ class SuperAdminController extends Controller
     {
         $ids = $request->input('selected_users', []);
         if (!empty($ids)) {
+            $users = User::whereIn('id', $ids)->get();
+            foreach ($users as $u) {
+                $this->deleteUserPhoto($u);
+                $u->siswa()->delete();
+                $u->guru()->delete();
+                $u->adminProfile()->delete();
+            }
             User::whereIn('id', $ids)->delete();
             return back()->with('success', count($ids) . ' user berhasil dihapus.');
         }
         return back()->with('warning', 'Tidak ada user yang dipilih.');
+    }
+
+    private function deleteUserPhoto(User $user)
+    {
+        $image = null;
+        if ($user->siswa) $image = $user->siswa->image;
+        elseif ($user->guru) $image = $user->guru->image;
+        elseif ($user->adminProfile) $image = $user->adminProfile->image;
+
+        if ($image) {
+            $path = public_path('assets/profile/' . $image);
+            if (file_exists($path)) {
+                @unlink($path);
+            }
+        }
     }
 }

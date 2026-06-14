@@ -1,5 +1,9 @@
 @extends('sistem_akademik.layouts.main')
 
+@section('css')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+@endsection
+
 @section('content')
 <div class="container">
     <div class="page-header">
@@ -146,6 +150,26 @@
                         @error('guru_bk_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
+                    <div class="col-12">
+                        <label for="siswa_ids" class="form-label">Data Siswa</label>
+                        <select class="form-control select2-multiple @error('siswa_ids') is-invalid @enderror" id="siswa_ids" name="siswa_ids[]" multiple>
+                            @if(isset($siswaList) && $siswaList->isNotEmpty())
+                                @foreach($siswaList as $s)
+                                    @php
+                                        $nama = optional($s->user)->nama ?? ($s->nama ?? '-');
+                                        $nis = $s->nis ?? $s->nisn ?? '-';
+                                        $label = $nama . ' - ' . $nis;
+                                    @endphp
+                                    <option value="{{ $s->id }}" {{ in_array($s->id, (array)$selectedSiswaIds) ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <div class="form-text">Pilih siswa yang akan dimasukkan ke dalam kelas ini. Hanya menampilkan siswa yang belum memiliki kelas.</div>
+                        @error('siswa_ids')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
                     <div class="col-md-6">
                         <label for="ruangan" class="form-label">Ruangan</label>
                         <input type="text" class="form-control @error('ruangan') is-invalid @enderror"
@@ -171,6 +195,8 @@
 @endsection
 
 @section('script')
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     // Build lookup maps from datalist options on page load
     const waliMap   = {};
@@ -214,5 +240,15 @@
             document.getElementById('guru_bk_id').value = '';
         }
     }
+
+    $(document).ready(function() {
+        if ($.fn.select2) {
+            $('#siswa_ids').select2({
+                placeholder: "-- Pilih Siswa --",
+                width: "100%",
+                allowClear: true
+            });
+        }
+    });
 </script>
 @endsection

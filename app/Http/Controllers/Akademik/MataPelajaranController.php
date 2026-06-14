@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 
 class MataPelajaranController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
@@ -22,10 +22,30 @@ class MataPelajaranController extends Controller
             $query->where('guru_id', $user->id);
         }
 
+        if ($request->filled('jurusan')) {
+            $query->where('jurusan', $request->jurusan);
+        }
+
         $mapels = $query->orderBy('nama_mata_pelajaran')->get();
+        
+        $jurusans = [
+            'Umum',
+            'Bisnis Konstruksi dan Properti',
+            'Desain Pemodelan dan Informasi Bangunan',
+            'Teknik Audio Video',
+            'Teknik Elektronika Industri',
+            'Teknik Instalasi Tenaga Listrik',
+            'Teknik Pemesinan',
+            'Teknik Kendaraan Ringan',
+            'Teknik Bodi Kendaraan Ringan',
+            'Teknik Bisnis Sepeda Motor',
+            'Teknik Pendingin dan Tata Udara',
+            'Teknik Komputer Jaringan'
+        ];
 
         return view('sistem_akademik.mata_pelajaran.index', [
             'mapels' => $mapels,
+            'jurusans' => $jurusans,
             'title'  => 'Daftar Mata Pelajaran',
             'header' => 'Daftar Mata Pelajaran',
         ]);
@@ -37,10 +57,26 @@ class MataPelajaranController extends Controller
         $namaMapelList = MataPelajaran::select('nama_mata_pelajaran')
             ->distinct()->orderBy('nama_mata_pelajaran')->pluck('nama_mata_pelajaran');
 
+        $jurusans = [
+            'Umum',
+            'Bisnis Konstruksi dan Properti',
+            'Desain Pemodelan dan Informasi Bangunan',
+            'Teknik Audio Video',
+            'Teknik Elektronika Industri',
+            'Teknik Instalasi Tenaga Listrik',
+            'Teknik Pemesinan',
+            'Teknik Kendaraan Ringan',
+            'Teknik Bodi Kendaraan Ringan',
+            'Teknik Bisnis Sepeda Motor',
+            'Teknik Pendingin dan Tata Udara',
+            'Teknik Komputer Jaringan'
+        ];
+
         return view('sistem_akademik.mata_pelajaran.createOrEdit', [
             'mapel'         => null,
             'gurus'         => $gurus,
             'namaMapelList' => $namaMapelList,
+            'jurusans'      => $jurusans,
             'header'        => 'Tambah Mata Pelajaran',
         ]);
     }
@@ -57,11 +93,13 @@ class MataPelajaranController extends Controller
                 'integer',
                 Rule::exists($userTable, 'id'),
             ],
+            'jurusan' => 'required|string',
         ]);
 
         MataPelajaran::create([
             'nama_mata_pelajaran' => $request->nama_mata_pelajaran,
             'guru_id' => $request->guru_id,
+            'jurusan' => $request->jurusan,
         ]);
 
         return redirect()->route('sistem_akademik.mata_pelajaran.index')
@@ -75,10 +113,26 @@ class MataPelajaranController extends Controller
         $namaMapelList = MataPelajaran::select('nama_mata_pelajaran')
             ->distinct()->orderBy('nama_mata_pelajaran')->pluck('nama_mata_pelajaran');
 
+        $jurusans = [
+            'Umum',
+            'Bisnis Konstruksi dan Properti',
+            'Desain Pemodelan dan Informasi Bangunan',
+            'Teknik Audio Video',
+            'Teknik Elektronika Industri',
+            'Teknik Instalasi Tenaga Listrik',
+            'Teknik Pemesinan',
+            'Teknik Kendaraan Ringan',
+            'Teknik Bodi Kendaraan Ringan',
+            'Teknik Bisnis Sepeda Motor',
+            'Teknik Pendingin dan Tata Udara',
+            'Teknik Komputer Jaringan'
+        ];
+
         return view('sistem_akademik.mata_pelajaran.createOrEdit', [
             'mapel'         => $mataPelajaran,
             'gurus'         => $gurus,
             'namaMapelList' => $namaMapelList,
+            'jurusans'      => $jurusans,
             'header'        => 'Edit Mata Pelajaran',
         ]);
     }
@@ -94,11 +148,13 @@ class MataPelajaranController extends Controller
                 'integer',
                 Rule::exists($userTable, 'id'),
             ],
+            'jurusan' => 'required|string',
         ]);
 
         $mataPelajaran->update([
             'nama_mata_pelajaran' => $request->nama_mata_pelajaran,
             'guru_id' => $request->guru_id,
+            'jurusan' => $request->jurusan,
         ]);
 
         return redirect()->route('sistem_akademik.mata_pelajaran.index')

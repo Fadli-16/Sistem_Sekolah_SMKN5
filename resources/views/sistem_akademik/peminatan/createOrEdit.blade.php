@@ -76,41 +76,17 @@
                 {{-- Conditional fields --}}
                 <div id="group-pemilihan-jurusan" class="conditional-field mb-3" data-for="kuliah" style="display:none;">
                     <label class="form-label">Jurusan yang Dipilih</label>
-                    <select name="pemilihan_jurusan" class="form-select">
-                        <option value="">-- Pilih Jurusan --</option>
-                        @php
-                            $jurusanKuliah = ['Teknik Informatika / Ilmu Komputer', 'Teknik Mesin / Otomotif', 'Teknik Elektro', 'Teknik Sipil / Arsitektur', 'Sistem Informasi', 'Pendidikan Teknik', 'Manajemen Bisnis', 'Lainnya'];
-                        @endphp
-                        @foreach($jurusanKuliah as $jk)
-                        <option value="{{ $jk }}" {{ old('pemilihan_jurusan', $peminatan->pemilihan_jurusan ?? '') == $jk ? 'selected' : '' }}>{{ $jk }}</option>
-                        @endforeach
-                    </select>
+                    <input type="text" name="pemilihan_jurusan" class="form-control" placeholder="Masukkan jurusan kuliah (misal: Teknik Informatika)" value="{{ old('pemilihan_jurusan', $peminatan->pemilihan_jurusan ?? '') }}">
                 </div>
 
                 <div id="group-jenis-pekerjaan" class="conditional-field mb-3" data-for="bekerja" style="display:none;">
                     <label class="form-label">Jenis Pekerjaan</label>
-                    <select name="jenis_pekerjaan" class="form-select">
-                        <option value="">-- Pilih Jenis Pekerjaan --</option>
-                        @php
-                            $pekerjaanList = ['Teknisi Jaringan / IT Support', 'Mekanik / Montir Otomotif', 'Teknisi Elektronika / Listrik', 'Operator Mesin Industri', 'Drafter / Estimator Bangunan', 'Administrasi / Pemasaran', 'Lainnya'];
-                        @endphp
-                        @foreach($pekerjaanList as $pk)
-                        <option value="{{ $pk }}" {{ old('jenis_pekerjaan', $peminatan->jenis_pekerjaan ?? '') == $pk ? 'selected' : '' }}>{{ $pk }}</option>
-                        @endforeach
-                    </select>
+                    <input type="text" name="jenis_pekerjaan" class="form-control" placeholder="Masukkan jenis pekerjaan (misal: IT Support)" value="{{ old('jenis_pekerjaan', $peminatan->jenis_pekerjaan ?? '') }}">
                 </div>
 
                 <div id="group-ide-bisnis" class="conditional-field mb-3" data-for="wirausaha" style="display:none;">
                     <label class="form-label">Ide Bisnis</label>
-                    <select name="ide_bisnis" class="form-select">
-                        <option value="">-- Pilih Ide Bisnis --</option>
-                        @php
-                            $bisnisList = ['Bengkel Motor / Mobil', 'Jasa Servis Elektronik', 'Jasa Instalasi Jaringan / Listrik', 'Biro Bangunan / Desain', 'Toko Komputer / Elektronik', 'Lainnya'];
-                        @endphp
-                        @foreach($bisnisList as $bl)
-                        <option value="{{ $bl }}" {{ old('ide_bisnis', $peminatan->ide_bisnis ?? '') == $bl ? 'selected' : '' }}>{{ $bl }}</option>
-                        @endforeach
-                    </select>
+                    <input type="text" name="ide_bisnis" class="form-control" placeholder="Masukkan ide bisnis (misal: Jasa Servis Komputer)" value="{{ old('ide_bisnis', $peminatan->ide_bisnis ?? '') }}">
                 </div>
 
                 <div class="mb-3">

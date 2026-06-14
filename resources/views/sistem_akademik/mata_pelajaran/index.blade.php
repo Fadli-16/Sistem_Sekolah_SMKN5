@@ -20,6 +20,25 @@
         </div>
     </div>
 
+    <div class="table-container mb-3 p-3">
+        <form action="{{ route('sistem_akademik.mata_pelajaran.index') }}" method="GET" class="row g-2">
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-1">Filter Jurusan</label>
+                <select name="jurusan" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Semua Jurusan</option>
+                    @foreach($jurusans as $j)
+                        <option value="{{ $j }}" {{ request('jurusan') == $j ? 'selected' : '' }}>{{ $j }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <a href="{{ route('sistem_akademik.mata_pelajaran.index') }}" class="btn btn-sm btn-secondary-app w-100">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
     <div class="table-container">
         <div class="table-responsive">
             <table class="table table-hover" id="data-table">
@@ -32,6 +51,7 @@
                         @endif
                         <th width="5%">No</th>
                         <th>Nama Mata Pelajaran</th>
+                        <th>Jurusan</th>
                         <th>Guru Pengampu</th>
                         @if(Auth::check() && (Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa'))
                         <th width="12%">Aksi</th>
@@ -55,6 +75,13 @@
                                 </div>
                                 <span style="font-weight:500;font-size:0.875rem;">{{ $mapel->nama_mata_pelajaran }}</span>
                             </div>
+                        </td>
+                        <td>
+                            @if($mapel->jurusan)
+                                <span class="badge-modern badge-blue">{{ $mapel->jurusan }}</span>
+                            @else
+                                <span class="badge-modern badge-blue">Umum</span>
+                            @endif
                         </td>
                         <td>
                             @php $guruNama = optional($mapel->guru)->nama ?? optional($mapel->guru)->name ?? null; @endphp
@@ -110,6 +137,7 @@
     $(document).ready(function () {
         if (!$.fn.DataTable.isDataTable('#data-table')) {
             $('#data-table').DataTable({
+                stateSave: true,
                 responsive: true,
                 columnDefs: [{ orderable: false, targets: [0, -1] }],
                 language: {

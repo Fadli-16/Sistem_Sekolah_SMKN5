@@ -17,10 +17,12 @@ class Siswa extends Model
         'image',
         'kelas',
         'jurusan',
+        'tempat_lahir',
         'tanggal_lahir',
         'jenis_kelamin',
         'agama',
         'alamat',
+        'tahun_masuk',
         'no_hp',
         'kelas_id',
     ];
@@ -30,13 +32,14 @@ class Siswa extends Model
         return $this->belongsTo(Kelas::class);
     }
 
+    public function kelasData()
+    {
+        return $this->belongsTo(Kelas::class, 'kelas_id');
+    }
+
+
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function courses()
-    {
-        return $this->belongsToMany(\App\Models\Course::class, 'course_siswa', 'siswa_id', 'course_id')->withTimestamps();
     }
 }

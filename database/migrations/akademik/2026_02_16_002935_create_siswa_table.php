@@ -22,9 +22,11 @@ class CreateSiswaTable extends Migration
             $table->string('kelas');
             $table->string('jurusan');
             $table->string('jenis_kelamin')->default('Laki-laki');
+            $table->string('tempat_lahir')->nullable();
             $table->date('tanggal_lahir')->nullable();
             $table->string('agama', 50)->nullable();
             $table->text('alamat')->nullable();
+            $table->string('tahun_masuk', 4)->nullable();
             $table->string('no_hp')->default('0000000000');
             $table->timestamps();
         });

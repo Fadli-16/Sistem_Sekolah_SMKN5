@@ -56,17 +56,17 @@
                 </a>
             </li>
 
-            <li class="{{ request()->routeIs('sistem_akademik.peminatan.*') ? 'active' : '' }}">
-                <a href="{{ route('sistem_akademik.peminatan.index') }}" data-title="Kelola Peminatan">
-                    <i class="bi bi-diagram-3-fill"></i>
-                    <span class="menu-text">Kelola Peminatan</span>
-                </a>
-            </li>
-
             <li class="{{ request()->routeIs('sistem_akademik.course.*') ? 'active' : '' }}">
                 <a href="{{ route('sistem_akademik.course.index') }}" data-title="Kelola Jadwal">
                     <i class="bi bi-calendar3"></i>
                     <span class="menu-text">Kelola Jadwal</span>
+                </a>
+            </li>
+
+             <li class="{{ request()->routeIs('sistem_akademik.peminatan.*') ? 'active' : '' }}">
+                <a href="{{ route('sistem_akademik.peminatan.index') }}" data-title="Kelola Peminatan">
+                    <i class="bi bi-diagram-3-fill"></i>
+                    <span class="menu-text">Kelola Peminatan</span>
                 </a>
             </li>
             @endif

@@ -32,10 +32,4 @@ class Course extends Model
     {
         return $this->belongsTo(User::class, 'guru_id');
     }
-    
-    public function siswa()
-    {
-        return $this->belongsToMany(Siswa::class, 'course_siswa', 'course_id', 'siswa_id')
-                    ->withTimestamps();
-    }
 }

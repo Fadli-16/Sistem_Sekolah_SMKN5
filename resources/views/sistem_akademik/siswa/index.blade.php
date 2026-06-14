@@ -37,8 +37,17 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-1">Filter Tahun Masuk</label>
+                <select name="tahun_masuk" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Semua Tahun</option>
+                    @foreach($tahunMasukList as $t)
+                        <option value="{{ $t->tahun_masuk }}" {{ request('tahun_masuk') == $t->tahun_masuk ? 'selected' : '' }}>{{ $t->tahun_masuk }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="col-md-2 d-flex align-items-end">
-                <a href="{{ route('sistem_akademik.siswa.index') }}" class="btn btn-sm btn-secondary-app w-100">
+                <a href="{{ route('sistem_akademik.siswa.index', ['reset' => 1]) }}" class="btn btn-sm btn-secondary-app w-100">
                     <i class="bi bi-arrow-clockwise me-1"></i> Reset
                 </a>
             </div>
@@ -60,6 +69,7 @@
                         <th>Jenis Kelamin</th>
                         <th>Agama</th>
                         <th>No HP</th>
+                        <th>Tahun Masuk</th>
                         <th width="8%">Aksi</th>
                     </tr>
                 </thead>
@@ -85,9 +95,11 @@
                                 </div>
                             </div>
                         </td>
-                        <td>{{ $student->kelas ?? '-' }}</td>
+                        <td>{{ optional($student->kelasData)->nama_kelas ?? $student->kelas ?? '-' }}</td>
                         <td>
-                            @if($student->jurusan)
+                            @if(optional($student->kelasData)->jurusan)
+                                <span class="badge-modern badge-info">{{ $student->kelasData->jurusan }}</span>
+                            @elseif($student->jurusan)
                                 <span class="badge-modern badge-info">{{ $student->jurusan }}</span>
                             @else -
                             @endif
@@ -102,6 +114,12 @@
                         </td>
                         <td>{{ $student->agama ?? '-' }}</td>
                         <td>{{ $student->no_hp ?? '-' }}</td>
+                        <td>
+                            @if($student->tahun_masuk)
+                                <span class="badge-modern badge-secondary"><i class="bi bi-calendar-event"></i> {{ $student->tahun_masuk }}</span>
+                            @else -
+                            @endif
+                        </td>
                         <td>
                             <div class="d-flex gap-1">
                                 <a href="{{ route('sistem_akademik.siswa.edit', $student->id) }}"
@@ -142,6 +160,7 @@
     $(document).ready(function () {
         if (!$.fn.DataTable.isDataTable('#data-table')) {
             $('#data-table').DataTable({
+                stateSave: true,
                 responsive: false,
                 autoWidth: false,
                 columnDefs: [{ orderable: false, targets: [0, -1] }],

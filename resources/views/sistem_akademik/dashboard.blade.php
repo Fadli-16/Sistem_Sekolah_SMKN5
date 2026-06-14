@@ -62,7 +62,7 @@
                             <div class="stat-value" style="font-size: 1.4rem; font-weight: 700;">{{ $stat['value'] }}</div>
                             <div class="stat-label text-muted small fw-bold text-uppercase">{{ $stat['label'] }}</div>
                         </div>
-                        <a href="{{ route($stat['route']) }}" class="stretched-link"></a>
+                        <a href="{{ route($stat['route'], $stat['params'] ?? []) }}" class="stretched-link"></a>
                     </div>
                 </div>
                 @endforeach
@@ -71,10 +71,11 @@
                 {{-- STUDENT STATS --}}
                 @php
                     $peminatanCount = \App\Models\Peminatan::where('user_id', Auth::id())->count();
+                    $kelasId = Auth::user()->siswa->kelas_id;
                     $studentStats = [
-                        ['label' => 'Course Saya', 'value' => Auth::user()->siswa->courses()->count(), 'icon' => 'journal-text', 'color' => 'primary', 'route' => 'sistem_akademik.course.index'],
+                        ['label' => 'Course Saya', 'value' => $kelasId ? \App\Models\Course::where('kelas_id', $kelasId)->count() : 0, 'icon' => 'journal-text', 'color' => 'primary', 'route' => 'sistem_akademik.course.index'],
                         ['label' => 'Status Peminatan', 'value' => ($peminatanCount > 0 ? 'Selesai' : 'Belum'), 'icon' => 'journal-check', 'color' => 'success', 'route' => 'sistem_akademik.peminatan.index'],
-                        ['label' => 'Jadwal Hari Ini', 'value' => Auth::user()->siswa->courses()->where('hari', \Carbon\Carbon::now()->locale('id')->isoFormat('dddd'))->count(), 'icon' => 'calendar-check', 'color' => 'info', 'route' => 'sistem_akademik.course.index'],
+                        ['label' => 'Jadwal Hari Ini', 'value' => $kelasId ? \App\Models\Course::where('kelas_id', $kelasId)->where('hari', \Carbon\Carbon::now()->locale('id')->isoFormat('dddd'))->count() : 0, 'icon' => 'calendar-check', 'color' => 'info', 'route' => 'sistem_akademik.course.index', 'params' => ['hari' => \Carbon\Carbon::now()->locale('id')->isoFormat('dddd')]],
                     ];
                 @endphp
                 @foreach($studentStats as $index => $stat)
@@ -87,7 +88,7 @@
                             <div class="stat-value" style="font-size: 1.4rem; font-weight: 700;">{{ $stat['value'] }}</div>
                             <div class="stat-label text-muted small fw-bold text-uppercase">{{ $stat['label'] }}</div>
                         </div>
-                        <a href="{{ route($stat['route']) }}" class="stretched-link"></a>
+                        <a href="{{ route($stat['route'], $stat['params'] ?? []) }}" class="stretched-link"></a>
                     </div>
                 </div>
                 @endforeach
@@ -95,10 +96,11 @@
             @elseif(Auth::user()->role == 'guru')
                 {{-- TEACHER STATS --}}
                 @php
+                    $guruKelasIds = \App\Models\Course::whereHas('mataPelajaran', fn($q) => $q->where('guru_id', Auth::id()))->pluck('kelas_id')->unique()->filter()->toArray();
                     $teacherStats = [
                         ['label' => 'Course Saya', 'value' => \App\Models\Course::whereHas('mataPelajaran', fn($q) => $q->where('guru_id', Auth::id()))->count(), 'icon' => 'journal-text', 'color' => 'primary', 'route' => 'sistem_akademik.course.index'],
-                        ['label' => 'Total Siswa', 'value' => \App\Models\Siswa::whereHas('courses', fn($q) => $q->whereHas('mataPelajaran', fn($q2) => $q2->where('guru_id', Auth::id())))->count(), 'icon' => 'people', 'color' => 'success', 'route' => '#'],
-                        ['label' => 'Jadwal Hari Ini', 'value' => \App\Models\Course::whereHas('mataPelajaran', fn($q) => $q->where('guru_id', Auth::id()))->where('hari', \Carbon\Carbon::now()->locale('id')->isoFormat('dddd'))->count(), 'icon' => 'calendar-check', 'color' => 'info', 'route' => 'sistem_akademik.course.index'],
+                        ['label' => 'Total Siswa', 'value' => \App\Models\Siswa::whereIn('kelas_id', $guruKelasIds)->count(), 'icon' => 'people', 'color' => 'success', 'route' => '#'],
+                        ['label' => 'Jadwal Hari Ini', 'value' => \App\Models\Course::whereHas('mataPelajaran', fn($q) => $q->where('guru_id', Auth::id()))->where('hari', \Carbon\Carbon::now()->locale('id')->isoFormat('dddd'))->count(), 'icon' => 'calendar-check', 'color' => 'info', 'route' => 'sistem_akademik.course.index', 'params' => ['hari' => \Carbon\Carbon::now()->locale('id')->isoFormat('dddd')]],
                     ];
                 @endphp
                 @foreach($teacherStats as $index => $stat)
@@ -111,7 +113,7 @@
                             <div class="stat-value" style="font-size: 1.4rem; font-weight: 700;">{{ $stat['value'] }}</div>
                             <div class="stat-label text-muted small fw-bold text-uppercase">{{ $stat['label'] }}</div>
                         </div>
-                        <a href="{{ $stat['route'] != '#' ? route($stat['route']) : 'javascript:void(0)' }}" class="stretched-link"></a>
+                        <a href="{{ $stat['route'] != '#' ? route($stat['route'], $stat['params'] ?? []) : 'javascript:void(0)' }}" class="stretched-link"></a>
                     </div>
                 </div>
                 @endforeach

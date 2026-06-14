@@ -20,11 +20,13 @@ class CreateGurusTable extends Migration
             $table->string('nip')->nullable()->unique();
             $table->string('kelas');
             $table->string('jurusan');
-            $table->date('tanggal_lahir');
+            $table->string('tempat_lahir')->nullable();
+            $table->date('tanggal_lahir')->nullable();
             $table->string('jenis_kelamin')->default('Laki-laki');
             $table->string('agama', 50)->nullable();
             $table->text('alamat');
             $table->string('no_hp');
+            $table->enum('status', ['guru', 'guru tidak tetap', 'pegawai', 'pegawai tidak tetap', 'kepala sekolah', 'wakil kepala kurikulum', 'wakil kepala humas', 'wakil kepala sarana prasarana', 'wakil kepala kesiswaan', 'bendahara gaji', 'bendahara BOS', 'bendahara pembimbing komite', 'kepala jurusan', 'kepala bengkel'])->default('guru');
             $table->timestamps();
         });
     }

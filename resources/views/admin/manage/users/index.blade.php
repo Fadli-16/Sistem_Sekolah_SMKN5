@@ -362,7 +362,7 @@
                         <label class="form-label fw-semibold">Filter Jurusan</label>
                         <select name="jurusan" class="form-select">
                             <option value="">-- Semua Jurusan --</option>
-                            @foreach($jurusanList as $j)
+                            @foreach($jurusanGuruList as $j)
                                 <option value="{{ $j }}">{{ $j }}</option>
                             @endforeach
                         </select>
@@ -409,7 +409,7 @@
                         <label class="form-label fw-semibold">Filter Jurusan</label>
                         <select name="jurusan" id="siswaJurusanFilter" class="form-select">
                             <option value="">-- Semua Jurusan --</option>
-                            @foreach($jurusanList as $j)
+                            @foreach($jurusanSiswaList as $j)
                                 <option value="{{ $j }}">{{ $j }}</option>
                             @endforeach
                         </select>

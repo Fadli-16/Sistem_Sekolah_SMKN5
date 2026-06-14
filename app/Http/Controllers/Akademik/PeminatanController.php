@@ -49,23 +49,33 @@ class PeminatanController extends Controller
 
         $statsPerOption = array_replace($emptyStats, $statsPerOption);
 
+        $getYearFn = function($p) {
+            $tahunAjaran = data_get($p, 'user.siswa.kelasData.tahun_ajaran');
+            return (string) ($tahunAjaran ?: Carbon::parse($p->created_at)->year);
+        };
+
         $years = $filteredCollection
-            ->map(fn($p) => Carbon::parse($p->created_at)->year)
+            ->map($getYearFn)
             ->unique()
             ->sort()
             ->values()
             ->toArray();
 
         if (empty($years)) {
-            $years = Peminatan::select(DB::raw('YEAR(created_at) as year'))
+            $years = \App\Models\Kelas::select('tahun_ajaran')
+                ->whereNotNull('tahun_ajaran')
                 ->distinct()
-                ->orderBy('year')
-                ->pluck('year')
+                ->orderBy('tahun_ajaran')
+                ->pluck('tahun_ajaran')
                 ->toArray();
+            
+            if (empty($years)) {
+                $years = [ (string) Carbon::now()->year ];
+            }
         }
 
         $groupedByYear = $filteredCollection
-            ->groupBy(fn($p) => Carbon::parse($p->created_at)->year)
+            ->groupBy($getYearFn)
             ->map(fn($rows) => $rows->groupBy('minat')->map->count()->toArray());
 
         $perOptionPerYear = [];
@@ -163,7 +173,7 @@ class PeminatanController extends Controller
         } else {
             $jurusanCounts = $filteredCollection
                 ->where('minat', $topMinat)
-                ->pluck('user.siswa.kelas.jurusan')
+                ->pluck('user.siswa.kelasData.jurusan')
                 ->filter()
                 ->countBy()
                 ->sortDesc()
@@ -227,7 +237,7 @@ class PeminatanController extends Controller
             'lainnya'   => 'Lainnya',
         ];
 
-        $query = Peminatan::with(['user.siswa.kelas']);
+        $query = Peminatan::with(['user.siswa.kelasData']);
 
         // Filter Pencarian (Nama atau NIS)
         $query->when($request->filled('search'), function ($q) use ($request) {
@@ -247,7 +257,7 @@ class PeminatanController extends Controller
         });
 
         $query->when($request->filled('guru_bk'), function ($q) use ($request) {
-            $q->whereHas('user.siswa.kelas', function ($kq) use ($request) {
+            $q->whereHas('user.siswa.kelasData', function ($kq) use ($request) {
                 $kq->where('guru_bk_id', $request->guru_bk);
             });
         });
@@ -257,13 +267,13 @@ class PeminatanController extends Controller
         });
 
         $query->when($request->filled('jurusan'), function ($q) use ($request) {
-            $q->whereHas('user.siswa.kelas', function ($kc) use ($request) {
+            $q->whereHas('user.siswa.kelasData', function ($kc) use ($request) {
                 $kc->where('jurusan', $request->jurusan);
             });
         });
 
         $query->when($request->filled('tahun_ajaran'), function ($q) use ($request) {
-            $q->whereHas('user.siswa.kelas', function ($kc) use ($request) {
+            $q->whereHas('user.siswa.kelasData', function ($kc) use ($request) {
                 $kc->where('tahun_ajaran', $request->tahun_ajaran);
             });
         });
@@ -274,7 +284,7 @@ class PeminatanController extends Controller
             $query->orderByRaw("CASE WHEN user_id = ? THEN 0 ELSE 1 END", [$user->id]);
         }
         
-        $peminatans = $query->latest()->paginate(25)->appends($request->query());
+        $peminatans = $query->latest()->get();
 
         $hasOwnPeminatan = false;
         if ($user && $user->role === 'siswa') {

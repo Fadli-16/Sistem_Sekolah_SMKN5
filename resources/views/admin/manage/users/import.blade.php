@@ -77,17 +77,6 @@
 
                 <form action="{{ route('admin.manage.users.import.post') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    <div class="mb-3">
-                        <label for="role" class="form-label fw-semibold">Tipe Import</label>
-                        <select name="role" id="role" class="form-select @error('role') is-invalid @enderror" required>
-                            <option value="">-- Pilih Tipe --</option>
-                            <option value="guru">Guru</option>
-                            <option value="siswa">Siswa</option>
-                        </select>
-                        @error('role')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
                     <div class="mb-4">
                         <label for="csv_file" class="form-label fw-semibold">Pilih File CSV</label>
                         <input type="file" name="csv_file" id="csv_file"
@@ -124,27 +113,15 @@
                 <p class="text-muted small mb-4">Download template sesuai tipe data yang ingin diimport. Template sudah berisi contoh baris data agar format CSV benar.</p>
 
                 <div class="row g-3 mb-4">
-                    <div class="col-6">
+                    <div class="col-12">
                         <div class="template-card text-center">
                             <div class="template-icon text-success">
-                                <i class="bi bi-mortarboard"></i>
+                                <i class="bi bi-file-earmark-spreadsheet"></i>
                             </div>
-                            <div class="fw-semibold mb-2">Template Guru</div>
-                            <a href="{{ route('admin.manage.users.import.template', 'guru') }}"
+                            <div class="fw-semibold mb-2">Template Import Users (Guru & Siswa)</div>
+                            <a href="{{ route('admin.manage.users.import.template', 'all') }}"
                                class="sa-btn sa-btn-success w-100">
-                                <i class="bi bi-download me-1"></i> Download
-                            </a>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="template-card text-center">
-                            <div class="template-icon text-primary">
-                                <i class="bi bi-people"></i>
-                            </div>
-                            <div class="fw-semibold mb-2">Template Siswa</div>
-                            <a href="{{ route('admin.manage.users.import.template', 'siswa') }}"
-                               class="sa-btn sa-btn-primary w-100">
-                                <i class="bi bi-download me-1"></i> Download
+                                <i class="bi bi-download me-1"></i> Download Template
                             </a>
                         </div>
                     </div>
@@ -154,57 +131,33 @@
                 <div class="accordion" id="columnGuide">
                     <div class="accordion-item border-0 mb-2">
                         <h2 class="accordion-header">
-                            <button class="accordion-button collapsed py-2 px-3 rounded" type="button"
-                                data-bs-toggle="collapse" data-bs-target="#guruColumns"
+                            <button class="accordion-button py-2 px-3 rounded" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#unifiedColumns"
+                                aria-expanded="true"
                                 style="background:#f0fdf4; font-size:0.9rem; font-weight:600;">
-                                <i class="bi bi-mortarboard text-success me-2"></i> Kolom Template Guru
+                                <i class="bi bi-info-circle text-success me-2"></i> Kolom Template
                             </button>
                         </h2>
-                        <div id="guruColumns" class="accordion-collapse collapse" data-bs-parent="#columnGuide">
+                        <div id="unifiedColumns" class="accordion-collapse collapse show" data-bs-parent="#columnGuide">
                             <div class="accordion-body p-2">
                                 <table class="table column-table table-sm table-bordered mb-0">
                                     <thead class="table-light">
                                         <tr><th>Kolom</th><th>Keterangan</th><th>Status</th></tr>
                                     </thead>
                                     <tbody>
-                                        <tr><td>NIP</td><td>NIP Guru</td><td><span class="required-badge">Wajib</span></td></tr>
+                                        <tr><td>Role</td><td>Isi dengan "guru" atau "siswa"</td><td><span class="required-badge">Wajib</span></td></tr>
+                                        <tr><td>NIS/NIP</td><td>NIS (Siswa) atau NIP (Guru)</td><td><span class="required-badge">Wajib (Siswa)</span></td></tr>
                                         <tr><td>Nama</td><td>Nama lengkap</td><td><span class="required-badge">Wajib</span></td></tr>
                                         <tr><td>Email</td><td>Alamat email</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Password</td><td>Password login (default: user123)</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>Jurusan</td><td>Nama jurusan</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>ID Kelas</td><td>Input ID Kelas (Khusus Siswa)</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>Jenis kelamin</td><td>Laki-laki / Perempuan</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>agama</td><td>Agama</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Agama</td><td>Agama</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Tempat lahir</td><td>Tempat Lahir</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>Tanggal lahir</td><td>Format: YYYY-MM-DD</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>Alamat</td><td>Alamat lengkap</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>No.hp</td><td>Nomor HP</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item border-0">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed py-2 px-3 rounded" type="button"
-                                data-bs-toggle="collapse" data-bs-target="#siswaColumns"
-                                style="background:#eff6ff; font-size:0.9rem; font-weight:600;">
-                                <i class="bi bi-people text-primary me-2"></i> Kolom Template Siswa
-                            </button>
-                        </h2>
-                        <div id="siswaColumns" class="accordion-collapse collapse" data-bs-parent="#columnGuide">
-                            <div class="accordion-body p-2">
-                                <table class="table column-table table-sm table-bordered mb-0">
-                                    <thead class="table-light">
-                                        <tr><th>Kolom</th><th>Keterangan</th><th>Status</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr><td>NIS</td><td>NIS Siswa</td><td><span class="required-badge">Wajib</span></td></tr>
-                                        <tr><td>Nama</td><td>Nama lengkap</td><td><span class="required-badge">Wajib</span></td></tr>
-                                        <tr><td>Email</td><td>Alamat email</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>Jurusan</td><td>Nama jurusan</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>kelas</td><td>Nama kelas (teks)</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>Jenis kelamin</td><td>Laki-laki / Perempuan</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>agama</td><td>Agama</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>Tanggal lahir</td><td>Format: YYYY-MM-DD</td><td><span class="optional-badge">Opsional</span></td></tr>
-                                        <tr><td>Alamat</td><td>Alamat lengkap</td><td><span class="optional-badge">Opsional</span></td></tr>
+                                        <tr><td>Tahun Masuk</td><td>Tahun masuk siswa, contoh: 2023 (Khusus Siswa)</td><td><span class="optional-badge">Opsional</span></td></tr>
                                         <tr><td>No.hp</td><td>Nomor HP</td><td><span class="optional-badge">Opsional</span></td></tr>
                                     </tbody>
                                 </table>

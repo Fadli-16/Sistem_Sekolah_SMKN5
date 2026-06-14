@@ -247,16 +247,6 @@
                         <i class="bi bi-arrow-clockwise"></i>
                     </a>
                 </div>
-
-                {{-- Bagian Kanan: Search --}}
-                <div class="d-flex gap-2">
-                    <div class="search-box-custom" style="width: 250px;">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari Nama / NIS..." value="{{ request('search') }}">
-                    </div>
-                    <button type="submit" class="btn btn-sm btn-primary-app">
-                        <i class="bi bi-search me-1"></i> Cari
-                    </button>
-                </div>
             </form>
         </div>
 
@@ -290,7 +280,7 @@
                             <input type="checkbox" class="form-check-input select-item" value="{{ $p->id }}">
                         </td>
                         @endif
-                        <td>{{ ($peminatans->currentPage()-1) * $peminatans->perPage() + $loop->iteration }}</td>
+                        <td>{{ $loop->iteration }}</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <div style="font-weight:600; color:var(--text-dark);">{{ optional($p->user)->nama }}</div>
@@ -391,15 +381,7 @@
             </table>
         </div>
         
-        {{-- Pagination Links --}}
-        <div class="px-4 py-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div class="text-muted small">
-                Menampilkan <strong>{{ $peminatans->firstItem() ?? 0 }}</strong> sampai <strong>{{ $peminatans->lastItem() ?? 0 }}</strong> dari <strong>{{ $peminatans->total() }}</strong> data
-            </div>
-            <div class="pagination-modern">
-                {{ $peminatans->onEachSide(1)->links('pagination::bootstrap-4') }}
-            </div>
-        </div>
+        
     </div>
 
     {{-- RINGKASAN DI ATAS CHART --}}
@@ -605,15 +587,13 @@
         if (!$.fn.DataTable.isDataTable('#data-table')) {
             $('#data-table').DataTable({
                 responsive: true,
-                searching: false,
-                paging: false, // Hilangkan paginasi DataTable karena sudah ada paginasi Laravel
-                info: false,   // Hilangkan info DataTable juga agar tidak ambigu
                 @if(in_array(Auth::user()->role, ['admin', 'super_admin', 'admin_sa']))
                 columnDefs: [{ orderable: false, targets: [0, -1, -2] }],
                 @else
                 columnDefs: [{ orderable: false, targets: [-1, -2] }],
                 @endif
                 language: {
+                    search: "Cari:",
                     lengthMenu: "Tampilkan _MENU_ data",
                     info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
                     infoEmpty: "Tidak ada data",

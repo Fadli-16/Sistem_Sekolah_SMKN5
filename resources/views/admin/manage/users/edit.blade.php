@@ -280,7 +280,7 @@
 
                                 <div class="mb-4">
                                     <label for="nis_nip" class="sa-form-label">NIS/NIP</label>
-                                    <input type="text" name="nis_nip" id="nis_nip" class="sa-form-control @error('nis_nip') is-invalid @enderror" value="{{ old('nis_nip', $user->nis_nip) }}" required>
+                                    <input type="text" name="nis_nip" id="nis_nip" class="sa-form-control @error('nis_nip') is-invalid @enderror" value="{{ old('nis_nip', $user->nis_nip) }}">
                                     @error('nis_nip')
                                     <div class="sa-form-error">{{ $message }}</div>
                                     @enderror

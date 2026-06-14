@@ -51,6 +51,25 @@
                     <small class="text-muted"><i class="bi bi-lightbulb me-1"></i>Mulai ketik untuk melihat saran nama mapel yang sudah ada.</small>
                 </div>
 
+                {{-- ── JURUSAN ── --}}
+                <div class="mb-3">
+                    <label for="jurusan" class="form-label">
+                        Jurusan <span class="text-danger">*</span>
+                    </label>
+                    <select id="jurusan" name="jurusan"
+                            class="form-select @error('jurusan') is-invalid @enderror"
+                            required>
+                        <option value="" disabled {{ !$isEdit ? 'selected' : '' }}>-- Pilih Jurusan --</option>
+                        @foreach(($jurusans ?? []) as $j)
+                        <option value="{{ $j }}"
+                            {{ old('jurusan', $mapel->jurusan ?? '') == $j ? 'selected' : '' }}>
+                            {{ $j }}
+                        </option>
+                        @endforeach
+                    </select>
+                    @error('jurusan')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+
                 {{-- ── GURU (Select2 searchable) ── --}}
                 <div class="mb-4">
                     <label for="guru_id" class="form-label">

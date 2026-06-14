@@ -67,7 +67,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-6 mb-4 mb-lg-0" data-aos="fade-right" data-aos-delay="100">
                     <div class="about-img">
-                        <img src="{{ asset('assets/images/banner.jpg') }}" alt="SMK Padang" class="img-fluid" loading="lazy">
+                        <img src="{{ asset('assets/images/about-img.jpg') }}" alt="SMK Padang" class="img-fluid" loading="lazy">
                     </div>
                 </div>
                 <div class="col-lg-6" data-aos="fade-left" data-aos-delay="200">

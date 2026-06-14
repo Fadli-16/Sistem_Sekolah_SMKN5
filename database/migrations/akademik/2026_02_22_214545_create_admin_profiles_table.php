@@ -20,6 +20,7 @@ class CreateAdminProfilesTable extends Migration
             $table->string('jurusan')->nullable();
             $table->string('jenis_kelamin')->default('Laki-laki');
             $table->date('tanggal_lahir')->nullable();
+            $table->string('tempat_lahir')->nullable();
             $table->string('agama', 50)->nullable();
             $table->text('alamat')->nullable();
             $table->string('no_hp')->nullable();

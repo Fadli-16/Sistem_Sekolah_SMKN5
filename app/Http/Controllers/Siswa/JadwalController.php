@@ -18,6 +18,7 @@ class JadwalController extends Controller
         $laborList = Labor::orderBy('nama_labor', 'asc')->get();
         $selectedLabor = $request->input('labor', '');
         $selectedDate = $request->input('date', '');
+        $selectedHari = $request->input('hari', '');
         
         // Build query with filters
         $query = Laboratorium::query();
@@ -35,6 +36,11 @@ class JadwalController extends Controller
             $query->whereDate('start', '>=', Carbon::now()->subDays(1));
         }
         
+        // Apply hari filter
+        if (!empty($selectedHari)) {
+            $query->where('hari', $selectedHari);
+        }
+        
         // Get schedules
         $jadwal = $query->orderBy('start', 'asc')->get();
         
@@ -44,7 +50,8 @@ class JadwalController extends Controller
             'jadwal', 
             'laborList', 
             'selectedLabor',
-            'selectedDate'
+            'selectedDate',
+            'selectedHari'
         ));
     }
 }

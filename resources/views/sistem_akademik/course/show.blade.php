@@ -1,7 +1,7 @@
 @extends('sistem_akademik.layouts.main')
 
 @section('css')
-    <link href="{{ asset('css/course.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/course.css') }}?v={{ filemtime(public_path('css/course.css')) }}" rel="stylesheet">
 @endsection
 
 @section('content')
@@ -77,9 +77,12 @@
         <div class="info-item">
             <span class="info-label">Siswa:</span>
             <div class="info-value">
-                @if(method_exists($course, 'siswa') && $course->siswa->count() > 0)
+                @php
+                    $siswaList = optional($course->kelas)->siswa;
+                @endphp
+                @if($siswaList && $siswaList->count() > 0)
                 <div class="student-list">
-                    @foreach($course->siswa as $s)
+                    @foreach($siswaList as $s)
                     @php
                     // fallbacks: siswa->user->nama || siswa->nama || nisn
                     $sNama = data_get($s, 'user.nama') ?? data_get($s, 'user.name') ?? ($s->nama ?? ($s->nisn ?? '-'));
@@ -100,7 +103,7 @@
                     @endforeach
                 </div>
                 @else
-                <p class="text-muted">Belum ada siswa yang terdaftar di course ini.</p>
+                <p class="text-muted">Belum ada siswa yang terdaftar di kelas ini.</p>
                 @endif
             </div>
         </div>

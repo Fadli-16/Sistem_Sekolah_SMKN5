@@ -115,7 +115,12 @@
                             @endforeach
                         </select>
 
-                        <button type="button" id="download-timetable" class="btn btn-sm btn-primary-app px-3" {{ !$selectedKelasId ? 'disabled title=Pilih_kelas_terlebih_dahulu' : '' }}>
+                        @php
+                            $canDownloadAll = in_array(Auth::user()->role, ['admin','super_admin','admin_sa']);
+                            $isDisabled = !$selectedKelasId && !$canDownloadAll;
+                            $titleText = $isDisabled ? 'title="Pilih kelas terlebih dahulu"' : ($canDownloadAll && !$selectedKelasId ? 'title="Cetak Seluruh Jadwal"' : 'title="Cetak Jadwal Kelas"');
+                        @endphp
+                        <button type="button" id="download-timetable" class="btn btn-sm btn-primary-app px-3" {{ $isDisabled ? 'disabled' : '' }} {!! $titleText !!}>
                             <i class="bi bi-file-earmark-pdf-fill me-1"></i> Cetak PDF
                         </button>
                         
@@ -270,6 +275,7 @@
     $(document).ready(function() {
         if (!$.fn.DataTable.isDataTable('#data-table')) {
             $('#data-table').DataTable({
+                stateSave: true,
                 responsive: true,
                 columnDefs: [{ orderable: false, targets: [0, -1] }],
                 language: {

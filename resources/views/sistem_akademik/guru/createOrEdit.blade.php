@@ -69,10 +69,13 @@
                                id="email" name="email" value="{{ old('email', $guru->user->email ?? '') }}">
                         @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    @php
+                        $isOptionalNip = auth()->check() && in_array(auth()->user()->role, ['admin_sa', 'super_admin']);
+                    @endphp
                     <div class="col-md-6">
-                        <label for="nip" class="form-label">NIP <span class="text-danger">*</span></label>
+                        <label for="nip" class="form-label">NIP @if(!$isOptionalNip)<span class="text-danger">*</span>@endif</label>
                         <input type="text" class="form-control @error('nip') is-invalid @enderror"
-                               id="nip" name="nip" value="{{ old('nip', $guru->nip ?? '') }}" required>
+                               id="nip" name="nip" value="{{ old('nip', $guru->nip ?? '') }}" {{ $isOptionalNip ? '' : 'required' }}>
                         @error('nip')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
@@ -80,9 +83,14 @@
                             Password
                             <small class="text-muted fw-normal">({{ isset($guru) ? 'kosongkan jika tidak diubah' : 'wajib diisi' }})</small>
                         </label>
-                        <input type="password" class="form-control @error('password') is-invalid @enderror"
-                               id="password" name="password" {{ isset($guru) ? '' : 'required' }}>
-                        @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="input-group has-validation">
+                            <input type="password" class="form-control @error('password') is-invalid @enderror"
+                                   id="password" name="password" {{ isset($guru) ? '' : 'required' }}>
+                            <span class="input-group-text toggle-password" style="cursor: pointer;">
+                                <i class="bi bi-eye"></i>
+                            </span>
+                            @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                     </div>
                 </div>
 
@@ -96,16 +104,94 @@
                         <small class="text-muted">Status: Wali Kelas aktif</small>
                     </div>
                     @endif
-                    <div class="{{ (isset($guru) && $guru->waliKelasDi) ? 'col-md-6' : 'col-md-12' }}">
+                    <div class="col-md-6">
+                        <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                        <select name="status" id="status" class="form-select" required>
+                            <option value="guru" {{ old('status', $guru->status ?? '') == 'guru' ? 'selected' : '' }}>Guru</option>
+                            <option value="guru tidak tetap" {{ old('status', $guru->status ?? '') == 'guru tidak tetap' ? 'selected' : '' }}>Guru Tidak Tetap</option>
+                            <option value="pegawai" {{ old('status', $guru->status ?? '') == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
+                            <option value="pegawai tidak tetap" {{ old('status', $guru->status ?? '') == 'pegawai tidak tetap' ? 'selected' : '' }}>Pegawai Tidak Tetap</option>
+                            <option value="kepala sekolah" {{ old('status', $guru->status ?? '') == 'kepala sekolah' ? 'selected' : '' }}>Kepala Sekolah</option>
+                            <option value="wakil kepala kurikulum" {{ old('status', $guru->status ?? '') == 'wakil kepala kurikulum' ? 'selected' : '' }}>Wakil Kepala Kurikulum</option>
+                            <option value="wakil kepala humas" {{ old('status', $guru->status ?? '') == 'wakil kepala humas' ? 'selected' : '' }}>Wakil Kepala Humas</option>
+                            <option value="wakil kepala sarana prasarana" {{ old('status', $guru->status ?? '') == 'wakil kepala sarana prasarana' ? 'selected' : '' }}>Wakil Kepala Sarana Prasarana</option>
+                            <option value="wakil kepala kesiswaan" {{ old('status', $guru->status ?? '') == 'wakil kepala kesiswaan' ? 'selected' : '' }}>Wakil Kepala Kesiswaan</option>
+                            <option value="bendahara gaji" {{ old('status', $guru->status ?? '') == 'bendahara gaji' ? 'selected' : '' }}>Bendahara Gaji</option>
+                            <option value="bendahara BOS" {{ old('status', $guru->status ?? '') == 'bendahara BOS' ? 'selected' : '' }}>Bendahara BOS</option>
+                            <option value="bendahara pembimbing komite" {{ old('status', $guru->status ?? '') == 'bendahara pembimbing komite' ? 'selected' : '' }}>Bendahara Pembimbing Komite</option>
+                            <option value="kepala jurusan" {{ old('status', $guru->status ?? '') == 'kepala jurusan' ? 'selected' : '' }}>Kepala Jurusan</option>
+                            <option value="kepala bengkel" {{ old('status', $guru->status ?? '') == 'kepala bengkel' ? 'selected' : '' }}>Kepala Bengkel</option>
+                        </select>
+                    </div>
+                    <div class="{{ (isset($guru) && $guru->waliKelasDi) ? 'col-md-12' : 'col-md-6' }}">
                         <label for="jurusan" class="form-label">Jurusan</label>
-                        <input type="text" class="form-control" id="jurusan" name="jurusan"
-                               value="{{ old('jurusan', $guru->jurusan ?? '') }}">
+                        <input type="text" class="form-control" id="jurusan" name="jurusan" 
+                               value="{{ old('jurusan', $guru->jurusan ?? '') }}" list="jurusan_options" 
+                               placeholder="-- Ketik atau Pilih Jurusan --" autocomplete="off">
+                        <datalist id="jurusan_options">
+                            @php
+                                $defaultJurusans = [
+                                    'Bisnis Konstruksi dan Properti',
+                                    'Desain Pemodelan dan Informasi Bangunan',
+                                    'Teknik Audio Video',
+                                    'Teknik Elektronika Industri',
+                                    'Teknik Instalasi Tenaga Listrik',
+                                    'Teknik Pemesinan',
+                                    'Teknik Kendaraan Ringan',
+                                    'Teknik Bodi Kendaraan Ringan',
+                                    'Teknik Bisnis Sepeda Motor',
+                                    'Teknik Pendingin dan Tata Udara',
+                                    'Teknik Komputer Jaringan',
+                                    'Bimbingan Konseling'
+                                ];
+                                $dbJurusans = isset($jurusanList) ? (is_array($jurusanList) ? $jurusanList : $jurusanList->toArray()) : [];
+                                $allJurusans = array_unique(array_merge($defaultJurusans, $dbJurusans));
+                                sort($allJurusans);
+                            @endphp
+                            @foreach($allJurusans as $j)
+                                <option value="{{ $j }}">
+                            @endforeach
+                        </datalist>
+                    </div>
+                    <div class="col-md-6" id="jabatan_jurusan_container" style="display: none;">
+                        <label for="jabatan_jurusan" class="form-label" id="label-jabatan-jurusan">Spesialisasi Jabatan <span class="text-danger">*</span></label>
+                        <select class="form-select" id="jabatan_jurusan" name="jabatan_jurusan">
+                            <option value="">-- Pilih Jurusan yang Dikepalai --</option>
+                            @php
+                                $majors = [
+                                    'Bisnis Konstruksi dan Properti',
+                                    'Desain Pemodelan dan Informasi Bangunan',
+                                    'Teknik Audio Video',
+                                    'Teknik Elektronika Industri',
+                                    'Teknik Instalasi Tenaga Listrik',
+                                    'Teknik Pemesinan',
+                                    'Teknik Kendaraan Ringan',
+                                    'Teknik Bodi Kendaraan Ringan',
+                                    'Teknik Bisnis Sepeda Motor',
+                                    'Teknik Pendingin dan Tata Udara',
+                                    'Teknik Komputer Jaringan'
+                                ];
+                            @endphp
+                            @foreach($majors as $m)
+                                <option value="{{ $m }}" {{ old('jabatan_jurusan', $guru->jabatan_jurusan ?? '') == $m ? 'selected' : '' }}>{{ $m }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
                 <p class="form-section-title mt-4">Informasi Personal</p>
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <label for="tempat_lahir" class="form-label">Tempat Lahir</label>
+                        <input type="text" id="tempat_lahir" name="tempat_lahir" class="form-control"
+                               value="{{ old('tempat_lahir', $guru->tempat_lahir ?? '') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="tanggal_lahir" class="form-label">Tanggal Lahir</label>
+                        <input type="date" id="tanggal_lahir" name="tanggal_lahir" class="form-control"
+                               value="{{ old('tanggal_lahir', $guru->tanggal_lahir ?? '') }}">
+                    </div>
+                    <div class="col-md-4">
                         <label for="jenis_kelamin" class="form-label">Jenis Kelamin</label>
                         <select name="jenis_kelamin" id="jenis_kelamin" class="form-select">
                             <option value="">Pilih...</option>
@@ -113,11 +199,7 @@
                             <option value="Perempuan"  {{ old('jenis_kelamin', $guru->jenis_kelamin ?? '') == 'Perempuan'  ? 'selected' : '' }}>Perempuan</option>
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <label for="tanggal_lahir" class="form-label">Tanggal Lahir</label>
-                        <input type="date" id="tanggal_lahir" name="tanggal_lahir" class="form-control"
-                               value="{{ old('tanggal_lahir', $guru->tanggal_lahir ?? '') }}">
-                    </div>
+
                     <div class="col-md-6">
                         <label for="agama" class="form-label">Agama</label>
                         <input type="text" id="agama" name="agama" class="form-control"
@@ -166,6 +248,40 @@
                 reader.readAsDataURL(file);
             });
             avatarPreview.addEventListener('error', function () { this.onerror = null; this.src = defaultAvatar; });
+        }
+
+        const togglePassword = document.querySelector('.toggle-password');
+        const password = document.querySelector('#password');
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function (e) {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                const icon = this.querySelector('i');
+                icon.classList.toggle('bi-eye');
+                icon.classList.toggle('bi-eye-slash');
+            });
+        }
+
+        const statusSelect = document.getElementById('status');
+        const jabatanJurusanContainer = document.getElementById('jabatan_jurusan_container');
+        const jabatanJurusanInput = document.getElementById('jabatan_jurusan');
+
+        function toggleJurusan() {
+            if (statusSelect && jabatanJurusanContainer && jabatanJurusanInput) {
+                if (statusSelect.value === 'kepala jurusan' || statusSelect.value === 'kepala bengkel') {
+                    jabatanJurusanContainer.style.display = 'block';
+                    jabatanJurusanInput.setAttribute('required', 'required');
+                } else {
+                    jabatanJurusanContainer.style.display = 'none';
+                    jabatanJurusanInput.removeAttribute('required');
+                    jabatanJurusanInput.value = '';
+                }
+            }
+        }
+
+        if (statusSelect) {
+            statusSelect.addEventListener('change', toggleJurusan);
+            toggleJurusan(); // run on load
         }
     });
 </script>

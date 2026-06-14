@@ -13,6 +13,7 @@ class AdminProfile extends Model
         'image',
         'jurusan',
         'jenis_kelamin',
+        'tempat_lahir',
         'tanggal_lahir',
         'agama',
         'alamat',
