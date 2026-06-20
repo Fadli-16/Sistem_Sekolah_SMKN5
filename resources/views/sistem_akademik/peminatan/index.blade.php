@@ -782,7 +782,13 @@
     (function() {
         if (document.getElementById('myPieChart')) {
             const ctx = document.getElementById('myPieChart').getContext('2d');
-            const colors = ['#8b5cf6', '#0ea5e9', '#10b981', '#94a3b8'];
+            const paletteMap = {
+                'kuliah': '#8b5cf6',
+                'bekerja': '#0ea5e9',
+                'wirausaha': '#10b981',
+                'lainnya': '#94a3b8'
+            };
+            const colors = chartPieLabels.map(label => paletteMap[label.toLowerCase()] || '#ccc');
             
             new Chart(ctx, {
                 type: 'doughnut',

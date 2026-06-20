@@ -1,5 +1,58 @@
 @extends('sistem_akademik.layouts.main')
 
+@section('css')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    /* Menyesuaikan Select2 dengan .form-select custom dari sistem-akademik.css */
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 1.5px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 0.55rem 0.875rem;
+        font-size: 0.875rem;
+        transition: var(--transition);
+        background-color: var(--bg-card);
+        min-height: auto;
+        display: flex;
+        align-items: center;
+    }
+    
+    .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        padding: 0;
+        line-height: normal;
+        color: var(--text-dark);
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 0.875rem;
+    }
+</style>
+@endsection
+
+@php
+    $jurusans = $kelas->pluck('jurusan')->unique()->filter()->values();
+    $kelasByJurusan = [];
+    foreach($kelas as $k) {
+        if ($k->jurusan) {
+            $kelasByJurusan[$k->jurusan][] = [
+                'id' => $k->id,
+                'nama' => $k->nama_kelas,
+                'tahun' => $k->tahun_ajaran ?? 'Tidak diset'
+            ];
+        }
+    }
+    $selectedJurusan = old('jurusan', $siswa->jurusan ?? '');
+    $selectedKelas = old('kelas_id', $siswa->kelas_id ?? '');
+@endphp
+
 @section('content')
 <div class="container">
     <div class="page-header">
@@ -93,19 +146,24 @@
 
                 <p class="form-section-title mt-4">Informasi Akademik</p>
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="kelas_id" class="form-label">Kelas <span class="text-danger">*</span></label>
-                        <select name="kelas_id" id="kelas_id" class="form-select @error('kelas_id') is-invalid @enderror" required>
-                            <option value="">Pilih Kelas</option>
-                            @foreach($kelas as $k)
-                            <option value="{{ $k->id }}" {{ (string) old('kelas_id', $siswa->kelas_id ?? '') === (string) $k->id ? 'selected' : '' }}>
-                                {{ $k->nama_kelas }} — {{ $k->jurusan }}
-                            </option>
+                    <div class="col-md-4">
+                        <label for="jurusan" class="form-label">Jurusan <span class="text-danger">*</span></label>
+                        <select id="jurusan" name="jurusan" class="form-select select2-basic" required>
+                            <option value="">Pilih Jurusan...</option>
+                            @foreach($jurusans as $j)
+                                <option value="{{ $j }}" {{ $selectedJurusan == $j ? 'selected' : '' }}>{{ $j }}</option>
                             @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="kelas_id" class="form-label">Kelas (Thn Ajaran) <span class="text-danger">*</span></label>
+                        <select name="kelas_id" id="kelas_id" class="form-select select2-basic @error('kelas_id') is-invalid @enderror" required>
+                            <option value="">Pilih Jurusan Terlebih Dahulu</option>
+                            {{-- Diisi via JS --}}
                         </select>
                         @error('kelas_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label for="jenis_kelamin" class="form-label">Jenis Kelamin</label>
                         <select name="jenis_kelamin" id="jenis_kelamin" class="form-select @error('jenis_kelamin') is-invalid @enderror">
                             <option value="">Pilih...</option>
@@ -199,6 +257,43 @@
                 icon.classList.toggle('bi-eye-slash');
             });
         }
+
+        // Select2 & Filter Kelas
+        const kelasData = @json($kelasByJurusan);
+        const selectedKelas = "{{ $selectedKelas }}";
+        
+        $('.select2-basic').select2({
+            theme: 'bootstrap-5',
+            width: '100%'
+        });
+
+        const jurusanSelect = $('#jurusan');
+        const kelasSelect = $('#kelas_id');
+
+        function populateKelas(jurusan, selectedId = null) {
+            kelasSelect.empty();
+            if (!jurusan || !kelasData[jurusan]) {
+                kelasSelect.append('<option value="">Pilih Jurusan Terlebih Dahulu</option>');
+                return;
+            }
+            
+            kelasSelect.append('<option value="">Pilih Kelas...</option>');
+            kelasData[jurusan].forEach(function(k) {
+                const text = k.nama + ' — TA. ' + k.tahun;
+                const isSelected = (String(k.id) === String(selectedId)) ? 'selected' : '';
+                kelasSelect.append(`<option value="${k.id}" ${isSelected}>${text}</option>`);
+            });
+        }
+
+        jurusanSelect.on('change', function() {
+            populateKelas($(this).val());
+        });
+
+        // Trigger on load for edit mode
+        if (jurusanSelect.val()) {
+            populateKelas(jurusanSelect.val(), selectedKelas);
+        }
     });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 @endsection

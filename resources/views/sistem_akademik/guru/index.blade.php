@@ -201,16 +201,6 @@
                 </tbody>
             </table>
         </div>
-
-        @if($gurus->isEmpty())
-        <div class="empty-state">
-            <i class="bi bi-person-x"></i>
-            <p>Belum ada data guru</p>
-            <a href="{{ route('sistem_akademik.guru.create') }}" class="btn-primary-app">
-                <i class="bi bi-plus-lg"></i> Tambah Guru Pertama
-            </a>
-        </div>
-        @endif
     </div>
 </div>
 @endsection

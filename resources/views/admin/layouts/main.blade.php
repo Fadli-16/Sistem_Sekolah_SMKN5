@@ -8,7 +8,7 @@
     <meta name="keywords" content="Akademik, SMK, Padang, Siswa, Guru, Kelas">
     <meta name="author" content="SMK Negeri 5 Padang">
 
-    <title>{{ $title ?? 'Dashboard' }} - Sistem Informasi Labor SMK</title>
+    <title>{{ $title ?? 'Dashboard' }} - Sistem Informasi SMK</title>
     <link rel="icon" href="{{ asset('assets/images/logo.png') }}" type="image/x-icon">
 
     <!-- Styles -->

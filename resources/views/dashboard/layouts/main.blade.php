@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title }} - Sistem Informasi Laboratorium SMK</title>
+    <title>{{ $title }} - Sistem Informasi SMK</title>
     <link rel="icon" href="{{ asset('assets/images/logo.png') }}" type="image/x-icon">
     @yield('css')
 </head>

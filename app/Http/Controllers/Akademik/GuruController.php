@@ -28,10 +28,13 @@ class GuruController extends Controller
         }
 
         if ($request->hasAny(['jurusan', 'wali_kelas', 'status'])) {
-            session()->put('guru_filters', $request->only(['jurusan', 'wali_kelas', 'status']));
-        } elseif (session()->has('guru_filters')) {
-            session()->reflash();
-            return redirect()->route('sistem_akademik.guru.index', session('guru_filters'));
+            $filters = array_filter($request->only(['jurusan', 'wali_kelas', 'status']), fn($val) => !is_null($val));
+            session()->put('guru_filters', $filters);
+        } else {
+            $filters = session('guru_filters', []);
+            if (!empty($filters)) {
+                $request->merge($filters);
+            }
         }
 
         $query = Guru::with(['user', 'waliKelasDi'])

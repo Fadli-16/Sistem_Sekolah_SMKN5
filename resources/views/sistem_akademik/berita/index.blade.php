@@ -24,17 +24,7 @@
             </div>
             <form action="{{ route('sistem_akademik.berita.index') }}" method="GET"
                   class="d-flex align-items-center gap-2 flex-wrap" style="flex:1;justify-content:flex-end;">
-                {{-- Kolom Search Custom --}}
-                <div class="search-box-custom">
-                    <div class="input-group input-group-sm" style="width: 220px;">
-                        <span class="input-group-text bg-white border-end-0 text-muted">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" name="search" class="form-control border-start-0" 
-                               placeholder="Cari berita..." value="{{ request('search') }}">
-                    </div>
-                </div>
-                
+
                 <select name="filter" class="form-select form-select-sm" style="width:160px;min-width:130px;" onchange="this.form.submit()">
                     <option value="">Semua Kategori</option>
                     <option value="informasi"     {{ request('filter') === 'informasi'     ? 'selected' : '' }}>Informasi</option>
@@ -70,7 +60,8 @@
                         <th width="10%">Foto</th>
                         <th>Judul</th>
                         <th width="12%">Kategori</th>
-                        <th width="14%">Tanggal</th>
+                        <th width="10%">Status</th>
+                        <th width="12%">Tanggal</th>
                         <th width="12%">Aksi</th>
                     </tr>
                 </thead>
@@ -81,11 +72,7 @@
                             <input type="checkbox" class="form-check-input select-item" value="{{ $b->id }}">
                         </td>
                         <td>
-                            @if($berita->firstItem())
-                                {{ $berita->firstItem() + $loop->index }}
-                            @else
-                                {{ $loop->iteration }}
-                            @endif
+                            {{ $loop->iteration }}
                         </td>
                         <td>
                             @if($b->foto)
@@ -113,6 +100,15 @@
                                 };
                             @endphp
                             <span class="badge-modern {{ $badgeClass }}">{{ ucfirst($cat ?: '-') }}</span>
+                        </td>
+                        <td>
+                            <a href="javascript:void(0)" onclick="toggleStatus({{ $b->id }})" id="status-badge-{{ $b->id }}" style="text-decoration:none;" title="Klik untuk ubah status">
+                                @if($b->status === 'publish')
+                                    <span class="badge-modern badge-success" style="background:#dcfce7;color:#166534;"><i class="bi bi-check-circle me-1"></i> Publish</span>
+                                @else
+                                    <span class="badge-modern badge-warning" style="background:#fef3c7;color:#92400e;"><i class="bi bi-journal-text me-1"></i> Draft</span>
+                                @endif
+                            </a>
                         </td>
                         <td style="font-size:0.8rem;color:#64748b;">
                             {{ optional($b->created_at)->format('d M Y, H:i') }}
@@ -155,9 +151,7 @@
             </table>
         </div>
 
-        <div class="d-flex justify-content-center py-3">
-            {!! $berita->appends(request()->query())->links() !!}
-        </div>
+
     </div>
 </div>
 @endsection
@@ -174,9 +168,9 @@
         $('#data-table').DataTable({
             responsive: true,
             autoWidth: false,
-            searching: false,
             columnDefs: [{ orderable: false, targets: [0, 2, 6] }],
             language: {
+                search: "Cari:",
                 lengthMenu: "Tampilkan _MENU_ data",
                 info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
                 infoEmpty: "Tidak ada data",
@@ -273,6 +267,51 @@
             focusCancel: true,
         }).then((result) => {
             if (result.isConfirmed) document.getElementById('deleteForm' + id).submit();
+        });
+    }
+
+    function toggleStatus(id) {
+        Swal.fire({
+            title: 'Ubah Status?',
+            text: "Status berita ini akan diubah (Publish <-> Draft).",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3b82f6',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Ubah',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/sistem-akademik/berita/${id}/toggle-status`,
+                    type: 'PATCH',
+                    data: {
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: response.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                            // Update badge
+                            let badge = $(`#status-badge-${id}`);
+                            if (response.new_status === 'publish') {
+                                badge.html('<span class="badge-modern badge-success" style="background:#dcfce7;color:#166534;"><i class="bi bi-check-circle me-1"></i> Publish</span>');
+                            } else {
+                                badge.html('<span class="badge-modern badge-warning" style="background:#fef3c7;color:#92400e;"><i class="bi bi-journal-text me-1"></i> Draft</span>');
+                            }
+                        }
+                    },
+                    error: function(err) {
+                        Swal.fire('Error!', 'Gagal mengubah status berita.', 'error');
+                    }
+                });
+            }
         });
     }
 </script>

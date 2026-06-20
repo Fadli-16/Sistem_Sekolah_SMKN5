@@ -19,6 +19,7 @@ class Berita extends Model
         'isi',
         'kategori',
         'file',
+        'status',
     ];
 
     public function user()

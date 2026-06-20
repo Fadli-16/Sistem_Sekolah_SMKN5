@@ -221,7 +221,7 @@
                                 </div>
                             </div>
                         @endforeach
-                        <div class="d-flex justify-content-center mt-3">
+                        <div class="d-flex justify-content-center mt-4">
                             {!! $berita->appends(request()->query())->links() !!}
                         </div>
                     @endif
@@ -325,10 +325,29 @@
                 if (fromInput) fromInput.addEventListener('change', submitDate);
                 if (toInput) toInput.addEventListener('change', submitDate);
 
-                document.addEventListener('click', (e) => {
-                    if (e.target.closest('.pagination a')) {
-                        saveScroll();
-                    }
+                // AJAX Pagination untuk berita
+                $(document).on('click', '.pagination a', function(e) {
+                    e.preventDefault();
+                    let url = $(this).attr('href');
+                    
+                    $('.announcements-container').css('opacity', '0.5');
+                    
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        success: function(response) {
+                            let newContent = $(response).find('.announcements-container').html();
+                            $('.announcements-container').html(newContent).css('opacity', '1');
+                            
+                            $('html, body').animate({
+                                scrollTop: $('.announcements-container').offset().top - 100
+                            }, 300);
+                        },
+                        error: function() {
+                            $('.announcements-container').css('opacity', '1');
+                            Swal.fire('Error', 'Gagal memuat berita selanjutnya.', 'error');
+                        }
+                    });
                 });
             })();
         </script>

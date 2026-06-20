@@ -29,10 +29,13 @@ class SiswaController extends Controller
         }
 
         if ($request->hasAny(['jurusan', 'kelas_id', 'tahun_masuk'])) {
-            session()->put('siswa_filters', $request->only(['jurusan', 'kelas_id', 'tahun_masuk']));
-        } elseif (session()->has('siswa_filters')) {
-            session()->reflash();
-            return redirect()->route('sistem_akademik.siswa.index', session('siswa_filters'));
+            $filters = array_filter($request->only(['jurusan', 'kelas_id', 'tahun_masuk']), fn($val) => !is_null($val));
+            session()->put('siswa_filters', $filters);
+        } else {
+            $filters = session('siswa_filters', []);
+            if (!empty($filters)) {
+                $request->merge($filters);
+            }
         }
 
         // Base Query

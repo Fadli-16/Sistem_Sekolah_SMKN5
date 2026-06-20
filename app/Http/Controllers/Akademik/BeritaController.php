@@ -50,7 +50,7 @@ class BeritaController extends Controller
             ]);
         }
 
-        $berita = $query->paginate(10)->appends($request->query());
+        $berita = $query->get();
 
         return view('sistem_akademik.berita.index', compact('berita', 'title', 'header'));
     }
@@ -77,6 +77,7 @@ class BeritaController extends Controller
             'judul' => 'required|string|max:255',
             'isi' => 'required|string',
             'kategori' => 'required|string|in:informasi,prestasi,pemberitahuan',
+            'status' => 'required|in:publish,draft',
         ]);
 
         $foto = null;
@@ -101,6 +102,7 @@ class BeritaController extends Controller
         $berita->judul = $request->judul;
         $berita->isi = $request->isi;
         $berita->kategori = $request->kategori;
+        $berita->status = $request->status;
         $berita->foto = $foto;
         $berita->file = $fileName;
         $berita->save();
@@ -149,6 +151,7 @@ class BeritaController extends Controller
             'judul' => 'required|string|max:255',
             'isi' => 'required|string',
             'kategori' => 'required|string|in:informasi,prestasi,pemberitahuan',
+            'status' => 'required|in:publish,draft',
             'remove_file' => 'nullable|in:1',
         ]);
 
@@ -192,6 +195,7 @@ class BeritaController extends Controller
         $berita->judul = $request->judul;
         $berita->isi = $request->isi;
         $berita->kategori = $request->kategori;
+        $berita->status = $request->status;
         $berita->save();
 
         return redirect()->route('sistem_akademik.berita.index')
@@ -392,5 +396,17 @@ class BeritaController extends Controller
         $destroyImage($img);
 
         return $success;
+    }
+    public function toggleStatus($id)
+    {
+        $berita = Berita::findOrFail($id);
+        $berita->status = $berita->status === 'publish' ? 'draft' : 'publish';
+        $berita->save();
+
+        return response()->json([
+            'success' => true,
+            'new_status' => $berita->status,
+            'message' => 'Status berita berhasil diubah menjadi ' . ucfirst($berita->status)
+        ]);
     }
 }

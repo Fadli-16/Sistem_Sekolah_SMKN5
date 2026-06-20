@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('judul');
             $table->text('isi');
             $table->enum('kategori', ['informasi', 'prestasi', 'pemberitahuan']);
+            $table->enum('status', ['publish', 'draft'])->default('draft');
             $table->string('foto')->nullable();
             $table->string('file')->nullable();
             $table->timestamps();

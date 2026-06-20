@@ -10,7 +10,7 @@ class SistemAkademikController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Berita::query();
+        $query = \App\Models\Berita::query()->where('status', 'publish');
 
         // SEARCH
         if ($request->filled('search')) {
@@ -47,7 +47,7 @@ class SistemAkademikController extends Controller
 
         $berita = $query->withExists(['readers as has_read' => function($q) {
             $q->where('user_id', auth()->id());
-        }])->paginate(4)->appends($request->query());
+        }])->paginate(3)->appends($request->query());
 
         return view('sistem_akademik.dashboard', compact('berita'));
     }

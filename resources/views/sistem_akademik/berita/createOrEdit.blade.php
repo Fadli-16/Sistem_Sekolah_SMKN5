@@ -39,7 +39,7 @@
                         @error('judul')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="kategori" class="form-label">Kategori <span class="text-danger">*</span></label>
                         <select name="kategori" id="kategori" class="form-select @error('kategori') is-invalid @enderror" required>
                             <option value="">Pilih kategori...</option>
@@ -48,6 +48,15 @@
                             <option value="pemberitahuan" {{ old('kategori', $berita->kategori ?? '') === 'pemberitahuan' ? 'selected' : '' }}>Pemberitahuan</option>
                         </select>
                         @error('kategori')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                        <select name="status" id="status" class="form-select @error('status') is-invalid @enderror" required>
+                            <option value="publish" {{ old('status', $berita->status ?? 'publish') === 'publish' ? 'selected' : '' }}>Publish</option>
+                            <option value="draft"   {{ old('status', $berita->status ?? '') === 'draft'   ? 'selected' : '' }}>Draft</option>
+                        </select>
+                        @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="col-12">

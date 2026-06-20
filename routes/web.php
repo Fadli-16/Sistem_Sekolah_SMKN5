@@ -149,6 +149,7 @@ Route::prefix('sistem-akademik')
             Route::get('berita/{berita}/edit', [BeritaController::class, 'edit'])->name('berita.edit');
             Route::put('berita/{berita}', [BeritaController::class, 'update'])->name('berita.update');
             Route::delete('berita/{berita}', [BeritaController::class, 'destroy'])->name('berita.destroy');
+            Route::patch('berita/{berita}/toggle-status', [BeritaController::class, 'toggleStatus'])->name('berita.toggleStatus');
         });
     
         Route::get('berita/{berita}', [BeritaController::class, 'show'])->name('berita.show');
