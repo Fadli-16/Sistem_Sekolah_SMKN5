@@ -16,7 +16,7 @@ class CreatePeminatansTable extends Migration
         if (!Schema::hasTable('peminatans')) {
             Schema::create('peminatans', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('user_id')->constrained()->onDelete('cascade'); // relasi ke tabel users
+                $table->foreignId('siswa_id')->constrained('siswa')->onDelete('cascade'); // relasi ke tabel siswa
                 $table->string('minat')->nullable();
                 $table->text('alasan')->nullable();
                 $table->string('pemilihan_jurusan')->nullable();

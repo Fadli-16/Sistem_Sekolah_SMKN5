@@ -15,8 +15,7 @@ class Siswa extends Model
         'user_id',
         'nis',
         'image',
-        'kelas',
-        'jurusan',
+
         'tempat_lahir',
         'tanggal_lahir',
         'jenis_kelamin',
@@ -30,6 +29,16 @@ class Siswa extends Model
     public function kelas()
     {
         return $this->belongsTo(Kelas::class);
+    }
+
+    public function readBeritas()
+    {
+        return $this->belongsToMany(Berita::class, 'berita_reads', 'siswa_id', 'berita_id')->withTimestamps();
+    }
+
+    public function peminatan()
+    {
+        return $this->hasOne(Peminatan::class, 'siswa_id');
     }
 
     public function kelasData()

@@ -23,7 +23,7 @@ class BeritaController extends Controller
     {
         $title = 'Berita';
         $header = 'Daftar Berita';
-        $query = Berita::query()->latest();
+        $query = Berita::query();
 
         if ($request->filled('search')) {
             $q = $request->search;
@@ -34,13 +34,21 @@ class BeritaController extends Controller
         }
 
         if ($request->filled('filter')) {
-
-            if ($request->filter === 'terlama') {
-                $query->orderBy('created_at', 'asc');
-            }
             if (in_array($request->filter, ['informasi', 'prestasi', 'pemberitahuan'])) {
                 $query->where('kategori', $request->filter);
             }
+        }
+
+        if ($request->filled('status')) {
+            if (in_array($request->status, ['publish', 'draft'])) {
+                $query->where('status', $request->status);
+            }
+        }
+
+        if ($request->filled('filter') && $request->filter === 'terlama') {
+            $query->oldest();
+        } else {
+            $query->latest();
         }
 
         if ($request->filled('from') && $request->filled('to')) {

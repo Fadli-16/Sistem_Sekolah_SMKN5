@@ -33,6 +33,12 @@
                     <option value="terbaru"       {{ request('filter') === 'terbaru'       ? 'selected' : '' }}>Terbaru</option>
                     <option value="terlama"       {{ request('filter') === 'terlama'       ? 'selected' : '' }}>Terlama</option>
                 </select>
+
+                <select name="status" class="form-select form-select-sm" style="width:130px;" onchange="this.form.submit()">
+                    <option value="">Semua Status</option>
+                    <option value="publish" {{ request('status') === 'publish' ? 'selected' : '' }}>Publish</option>
+                    <option value="draft"   {{ request('status') === 'draft'   ? 'selected' : '' }}>Draft</option>
+                </select>
                 <div class="d-flex align-items-center gap-1" style="white-space:nowrap;">
                     <input type="date" name="from" class="form-control form-control-sm" style="width:145px;"
                            value="{{ request('from') }}" onchange="this.form.submit()">

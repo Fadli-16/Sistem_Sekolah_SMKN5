@@ -32,17 +32,17 @@
                 <div class="mb-3">
                     <label class="form-label">Nama Siswa</label>
                     @if(in_array(Auth::user()->role, ['admin_sa', 'super_admin']))
-                    <select name="user_id" class="form-select select2" required>
+                    <select name="siswa_id" class="form-select select2" required>
                         <option value="">-- Pilih Nama --</option>
-                        @foreach($users as $user)
-                        <option value="{{ $user->id }}"
-                            {{ old('user_id', $peminatan->user_id ?? '') == $user->id ? 'selected' : '' }}>
-                            {{ $user->nama }}
+                        @foreach($users as $userOption)
+                        <option value="{{ $userOption->siswa->id ?? '' }}"
+                            {{ old('siswa_id', $peminatan->siswa_id ?? '') == ($userOption->siswa->id ?? 0) ? 'selected' : '' }}>
+                            {{ $userOption->nama }}
                         </option>
                         @endforeach
                     </select>
                     @else
-                    <input type="hidden" name="user_id" value="{{ Auth::id() }}">
+                    <input type="hidden" name="siswa_id" value="{{ Auth::user()->siswa->id ?? '' }}">
                     <input type="text" class="form-control" readonly value="{{ Auth::user()->nama }}"
                            style="background:#f8fafc;font-weight:600;">
                     @endif

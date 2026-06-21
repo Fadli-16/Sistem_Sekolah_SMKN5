@@ -50,7 +50,7 @@ class PeminatanController extends Controller
         $statsPerOption = array_replace($emptyStats, $statsPerOption);
 
         $getYearFn = function($p) {
-            $tahunAjaran = data_get($p, 'user.siswa.kelasData.tahun_ajaran');
+            $tahunAjaran = data_get($p, 'siswa.kelasData.tahun_ajaran');
             return (string) ($tahunAjaran ?: Carbon::parse($p->created_at)->year);
         };
 
@@ -173,7 +173,7 @@ class PeminatanController extends Controller
         } else {
             $jurusanCounts = $filteredCollection
                 ->where('minat', $topMinat)
-                ->pluck('user.siswa.kelasData.jurusan')
+                ->pluck('siswa.kelasData.jurusan')
                 ->filter()
                 ->countBy()
                 ->sortDesc()
@@ -237,27 +237,27 @@ class PeminatanController extends Controller
             'lainnya'   => 'Lainnya',
         ];
 
-        $query = Peminatan::with(['user.siswa.kelasData']);
+        $query = Peminatan::with(['siswa.user', 'siswa.kelasData']);
 
         // Filter Pencarian (Nama atau NIS)
         $query->when($request->filled('search'), function ($q) use ($request) {
-            $q->whereHas('user', function ($sq) use ($request) {
+            $q->whereHas('siswa', function ($sq) use ($request) {
                 $search = $request->search;
-                $sq->where('nama', 'like', "%{$search}%")
-                   ->orWhereHas('siswa', function($ssq) use ($search) {
-                       $ssq->where('nis', 'like', "%{$search}%");
+                $sq->where('nis', 'like', "%{$search}%")
+                   ->orWhereHas('user', function($uq) use ($search) {
+                       $uq->where('nama', 'like', "%{$search}%");
                    });
             });
         });
 
         $query->when($request->filled('kelas'), function ($q) use ($request) {
-            $q->whereHas('user.siswa', function ($sq) use ($request) {
+            $q->whereHas('siswa', function ($sq) use ($request) {
                 $sq->where('kelas_id', $request->kelas);
             });
         });
 
         $query->when($request->filled('guru_bk'), function ($q) use ($request) {
-            $q->whereHas('user.siswa.kelasData', function ($kq) use ($request) {
+            $q->whereHas('siswa.kelasData', function ($kq) use ($request) {
                 $kq->where('guru_bk_id', $request->guru_bk);
             });
         });
@@ -267,13 +267,13 @@ class PeminatanController extends Controller
         });
 
         $query->when($request->filled('jurusan'), function ($q) use ($request) {
-            $q->whereHas('user.siswa.kelasData', function ($kc) use ($request) {
+            $q->whereHas('siswa.kelasData', function ($kc) use ($request) {
                 $kc->where('jurusan', $request->jurusan);
             });
         });
 
         $query->when($request->filled('tahun_ajaran'), function ($q) use ($request) {
-            $q->whereHas('user.siswa.kelasData', function ($kc) use ($request) {
+            $q->whereHas('siswa.kelasData', function ($kc) use ($request) {
                 $kc->where('tahun_ajaran', $request->tahun_ajaran);
             });
         });
@@ -281,14 +281,15 @@ class PeminatanController extends Controller
         $filteredCollection = (clone $query)->get();
         
         if ($user && $user->role === 'siswa') {
-            $query->orderByRaw("CASE WHEN user_id = ? THEN 0 ELSE 1 END", [$user->id]);
+            $siswaId = $user->siswa->id ?? 0;
+            $query->orderByRaw("CASE WHEN siswa_id = ? THEN 0 ELSE 1 END", [$siswaId]);
         }
         
         $peminatans = $query->latest()->get();
 
         $hasOwnPeminatan = false;
         if ($user && $user->role === 'siswa') {
-            $hasOwnPeminatan = Peminatan::where('user_id', $user->id)->exists();
+            $hasOwnPeminatan = Peminatan::where('siswa_id', $user->siswa->id ?? 0)->exists();
         }
 
         $totalStudents = User::where('role', 'siswa')->count();
@@ -328,7 +329,9 @@ class PeminatanController extends Controller
         $header = 'Tambah Data Peminatan';
 
         $users = User::where('role', 'siswa')
-            ->whereDoesntHave('peminatan')
+            ->whereHas('siswa', function ($q) {
+                $q->whereDoesntHave('peminatan');
+            })
             ->orderBy('nama')
             ->get();
 
@@ -379,11 +382,9 @@ class PeminatanController extends Controller
             'file_raport'         => 'nullable|url',
         ];
 
-        // Jika admin (admin_sa) membuat untuk siswa, user_id wajib
+        // Jika admin (admin_sa) membuat untuk siswa, siswa_id wajib
         if (Auth::user()->role === 'admin_sa' || Auth::user()->role === 'super_admin') {
-            $rules['user_id'] = ['required', 'integer', Rule::exists('users', 'id')->where(function ($q) {
-                $q->where('role', 'siswa');
-            })];
+            $rules['siswa_id'] = ['required', 'integer', Rule::exists('siswa', 'id')];
         } else if (Auth::user()->role === 'siswa') {
             $peminatanSetting = PeminatanSetting::first();
             if ($peminatanSetting && ($peminatanSetting->start_date || $peminatanSetting->end_date)) {
@@ -405,23 +406,23 @@ class PeminatanController extends Controller
 
         $validated = $request->validate($rules);
 
-        // Tentukan user_id (jika siswa, pakai auth)
+        // Tentukan siswa_id (jika siswa, pakai auth)
         if (Auth::user()->role === 'siswa') {
-            $userId = Auth::id();
+            $siswaId = Auth::user()->siswa->id ?? null;
         } else {
-            $userId = $validated['user_id'] ?? $request->input('user_id');
+            $siswaId = $validated['siswa_id'] ?? $request->input('siswa_id');
         }
 
         // Cek: apakah siswa ini sudah punya peminatan?
-        if (Peminatan::where('user_id', $userId)->exists()) {
+        if (Peminatan::where('siswa_id', $siswaId)->exists()) {
             return back()
                 ->withInput()
-                ->withErrors(['user_id' => 'Siswa ini sudah memiliki data peminatan (1 siswa = 1 peminatan).']);
+                ->withErrors(['siswa_id' => 'Siswa ini sudah memiliki data peminatan (1 siswa = 1 peminatan).']);
         }
 
         // Simpan
         $data = [
-            'user_id' => $userId,
+            'siswa_id' => $siswaId,
             'minat' => $validated['minat'],
             'alasan' => $validated['alasan'],
             'pemilihan_jurusan' => $validated['pemilihan_jurusan'] ?? null,
@@ -449,9 +450,9 @@ class PeminatanController extends Controller
         $header = 'Edit Data Peminatan';
 
         $users = User::where('role', 'siswa')
-            ->where(function ($q) use ($peminatan) {
+            ->whereHas('siswa', function ($q) use ($peminatan) {
                 $q->whereDoesntHave('peminatan')
-                    ->orWhere('id', $peminatan->user_id);
+                  ->orWhere('id', $peminatan->siswa_id);
             })
             ->orderBy('nama')
             ->get();
@@ -479,32 +480,30 @@ class PeminatanController extends Controller
         ];
 
         if (Auth::user()->role === 'admin_sa' || Auth::user()->role === 'super_admin') {
-            $rules['user_id'] = ['required', 'integer', Rule::exists('users', 'id')->where(function ($q) {
-                $q->where('role', 'siswa');
-            })];
+            $rules['siswa_id'] = ['required', 'integer', Rule::exists('siswa', 'id')];
         }
 
         $validated = $request->validate($rules);
 
-        // Tentukan user_id
+        // Tentukan siswa_id
         if (Auth::user()->role === 'siswa') {
+            $siswaId = Auth::user()->siswa->id ?? null;
             // siswa hanya boleh update miliknya sendiri
-            if ($peminatan->user_id !== Auth::id()) {
+            if ($peminatan->siswa_id !== $siswaId) {
                 abort(403);
             }
-            $userId = Auth::id();
         } else {
-            $userId = $validated['user_id'] ?? $request->input('user_id');
+            $siswaId = $validated['siswa_id'] ?? $request->input('siswa_id');
         }
 
-        if ($userId != $peminatan->user_id && Peminatan::where('user_id', $userId)->exists()) {
+        if ($siswaId != $peminatan->siswa_id && Peminatan::where('siswa_id', $siswaId)->exists()) {
             return back()
                 ->withInput()
-                ->withErrors(['user_id' => 'Siswa tujuan sudah memiliki data peminatan.']);
+                ->withErrors(['siswa_id' => 'Siswa tujuan sudah memiliki data peminatan.']);
         }
 
         $data = [
-            'user_id' => $userId,
+            'siswa_id' => $siswaId,
             'minat' => $validated['minat'],
             'alasan' => $validated['alasan'],
             'pemilihan_jurusan' => $validated['pemilihan_jurusan'] ?? null,

@@ -115,20 +115,8 @@ class UsersImport extends DefaultValueBinder implements ToCollection, WithHeadin
                 $idKelas = $row['id_kelas'] ?? ($row['kelas'] ?? null);
                 if (!empty($idKelas) && is_numeric($idKelas)) {
                     $siswaData['kelas_id'] = $idKelas;
-                    $kelasObj = \App\Models\Kelas::find($idKelas);
-                    if ($kelasObj) {
-                        $siswaData['kelas'] = $kelasObj->nama_kelas;
-                        if (!isset($row['jurusan']) || empty(trim($row['jurusan']))) {
-                            $siswaData['jurusan'] = $kelasObj->jurusan;
-                        }
-                    } else {
-                        $siswaData['kelas'] = $idKelas;
-                    }
-                } elseif (!empty($idKelas)) {
-                    $siswaData['kelas'] = $idKelas;
                 }
 
-                if (isset($row['jurusan']) && !empty(trim($row['jurusan']))) $siswaData['jurusan'] = $row['jurusan'];
                 if (isset($row['tempat_lahir'])) $siswaData['tempat_lahir'] = $row['tempat_lahir'];
                 if ($tanggal_lahir !== null) $siswaData['tanggal_lahir'] = $tanggal_lahir;
                 if (isset($row['jenis_kelamin'])) $siswaData['jenis_kelamin'] = $row['jenis_kelamin'];

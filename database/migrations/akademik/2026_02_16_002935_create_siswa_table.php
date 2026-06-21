@@ -19,8 +19,6 @@ class CreateSiswaTable extends Migration
             $table->foreignId('kelas_id')->nullable();
             $table->string('nis')->unique();
             $table->string('image')->nullable();
-            $table->string('kelas');
-            $table->string('jurusan');
             $table->string('jenis_kelamin')->default('Laki-laki');
             $table->string('tempat_lahir')->nullable();
             $table->date('tanggal_lahir')->nullable();
@@ -39,14 +37,6 @@ class CreateSiswaTable extends Migration
      */
     public function down()
     {
-        Schema::table('siswa', function (Blueprint $table) {
-            // Kembalikan ke nullable jika diperlukan
-            $table->string('kelas')->nullable();
-            $table->string('jurusan')->nullable();
-            $table->string('jenis_kelamin')->nullable();
-            $table->date('tanggal_lahir')->nullable();
-            $table->text('alamat')->nullable();
-            $table->string('no_hp')->nullable();
-        });
+        Schema::dropIfExists('siswa');
     }
 }

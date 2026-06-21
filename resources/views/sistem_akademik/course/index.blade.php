@@ -133,10 +133,10 @@
                 @php
                     $siswa = $user->siswa;
                     // Gunakan fungsi relasi kelas() secara eksplisit untuk menghindari konflik atribut
-                    $kelasRelasi = $siswa->kelas()->first();
+                    $kelasRelasi = optional($siswa->kelasData);
                     
-                    $namaKelas = $kelasRelasi->nama_kelas ?? $siswa->kelas ?? '—';
-                    $jurusan = $kelasRelasi->jurusan ?? $siswa->jurusan ?? '—';
+                    $namaKelas = $kelasRelasi->nama_kelas ?? '—';
+                    $jurusan = $kelasRelasi->jurusan ?? '—';
                     $ta = $kelasRelasi->tahun_ajaran ?? '—';
                 @endphp
                 <div class="d-flex align-items-center justify-content-between w-100">

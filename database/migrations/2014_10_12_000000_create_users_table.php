@@ -19,6 +19,7 @@ class CreateUsersTable extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->enum('role', ['admin', 'guru', 'siswa']); 
+            $table->string('nis_nip', 20)->nullable();
             $table->enum('menu', ['ppdb', 'sistem_akademik', 'perpus', 'labor', 'magang'])->nullable(); 
             $table->timestamp('email_verified_at')->nullable(); 
             $table->rememberToken();

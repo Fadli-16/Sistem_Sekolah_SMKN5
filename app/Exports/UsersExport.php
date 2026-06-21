@@ -13,6 +13,7 @@ class UsersExport implements FromCollection, WithHeadings
         return DB::table('users')
             // left join ke siswa dan guru
             ->leftJoin('siswa', 'users.id', '=', 'siswa.user_id')
+            ->leftJoin('kelas as kelas_siswa_tbl', 'siswa.kelas_id', '=', 'kelas_siswa_tbl.id')
             ->leftJoin('guru',  'users.id', '=', 'guru.user_id')
             ->select([
                 'users.nama',
@@ -23,15 +24,15 @@ class UsersExport implements FromCollection, WithHeadings
                 // kolom siswa
                 'siswa.nis as nis_siswa',
                 'siswa.kelas_id as kelas_id_siswa',
-                'siswa.kelas as kelas_siswa',
-                'siswa.jurusan as jurusan_siswa',
+                'kelas_siswa_tbl.nama_kelas as kelas_siswa',
+                'kelas_siswa_tbl.jurusan as jurusan_siswa',
                 'siswa.tanggal_lahir as lahir_siswa',
                 'siswa.alamat as alamat_siswa',
                 'siswa.no_hp as hp_siswa',
                 // kolom guru
                 'guru.nip as nip_guru',
-                'guru.kelas as kelas_guru',
-                'guru.jurusan as jurusan_guru',
+                DB::raw("'' as kelas_guru"),
+                'guru.spesialisasi as jurusan_guru',
                 'guru.tempat_lahir as tempat_lahir_guru',
                 'guru.tanggal_lahir as lahir_guru',
                 'guru.alamat as alamat_guru',

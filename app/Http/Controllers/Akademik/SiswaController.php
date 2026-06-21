@@ -43,9 +43,11 @@ class SiswaController extends Controller
             ->leftJoin('users', 'siswa.user_id', '=', 'users.id')
             ->select('siswa.*');
 
-        // Filter Jurusan
+        // Filter Jurusan (dari tabel kelas)
         if ($request->filled('jurusan')) {
-            $query->where('siswa.jurusan', $request->jurusan);
+            $query->whereHas('kelasData', function ($q) use ($request) {
+                $q->where('jurusan', $request->jurusan);
+            });
         }
 
         // Filter Kelas
@@ -120,8 +122,6 @@ class SiswaController extends Controller
             'user_id' => $user->id,
             'nis' => $request->nis,
             'kelas_id' => $kelas->id,
-            'kelas' => $kelas->nama_kelas ?? null,
-            'jurusan' => $kelas->jurusan ?? null,
             'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
             'alamat' => $request->alamat,
@@ -198,8 +198,6 @@ class SiswaController extends Controller
         $siswa->update([
             'nis' => $request->nis,
             'kelas_id' => $kelas->id,
-            'kelas' => $kelas->nama_kelas ?? null,
-            'jurusan' => $kelas->jurusan ?? null,
             'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
             'alamat' => $request->alamat,

@@ -142,24 +142,14 @@
                                 Pegawai Tidak Tetap
                             @elseif($guru->status === 'kepala sekolah')
                                 Kepala Sekolah
-                            @elseif($guru->status === 'wakil kepala kurikulum')
-                                Wakil Kepala Kurikulum
-                            @elseif($guru->status === 'wakil kepala humas')
-                                Wakil Kepala Humas
-                            @elseif($guru->status === 'wakil kepala sarana prasarana')
-                                Wakil Kepala Sarana Prasarana
-                            @elseif($guru->status === 'wakil kepala kesiswaan')
-                                Wakil Kepala Kesiswaan
-                            @elseif($guru->status === 'bendahara gaji')
-                                Bendahara Gaji
-                            @elseif($guru->status === 'bendahara BOS')
-                                Bendahara BOS
-                            @elseif($guru->status === 'bendahara pembimbing komite')
-                                Bendahara Pembimbing Komite
+                            @elseif($guru->status === 'wakil kepala')
+                                Wakil Kepala {{ $guru->spesialisasi ? '- ' . $guru->spesialisasi : '' }}
+                            @elseif($guru->status === 'bendahara')
+                                Bendahara {{ $guru->spesialisasi ? '- ' . $guru->spesialisasi : '' }}
                             @elseif($guru->status === 'kepala jurusan')
-                                Kepala Jurusan {{ $guru->jabatan_jurusan ? '- ' . $guru->jabatan_jurusan : '' }}
+                                Kepala Jurusan {{ $guru->spesialisasi ? '- ' . $guru->spesialisasi : '' }}
                             @elseif($guru->status === 'kepala bengkel')
-                                Kepala Bengkel {{ $guru->jabatan_jurusan ? '- ' . $guru->jabatan_jurusan : '' }}
+                                Kepala Bengkel {{ $guru->spesialisasi ? '- ' . $guru->spesialisasi : '' }}
                             @else
                                 Guru
                             @endif

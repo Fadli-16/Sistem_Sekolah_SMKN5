@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Akademik;
 
 use App\Http\Controllers\Controller;
 use App\Models\Guru;
+use App\Models\Kelas;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -87,7 +88,6 @@ class GuruController extends Controller
             'email'         => 'nullable|email|unique:users',
             'password'      => 'required|min:6',
             'nip'           => $isOptionalNip ? 'nullable|string|max:20|unique:guru' : 'required|string|max:20|unique:guru',
-            'kelas'         => 'nullable|string',
             'jurusan'       => 'nullable|string',
             'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
             'agama'         => 'required|string',
@@ -95,7 +95,7 @@ class GuruController extends Controller
             'tanggal_lahir' => 'required|date',
             'alamat'        => 'required',
             'no_hp'         => 'nullable|string',
-            'status'        => 'required|in:guru,guru tidak tetap,pegawai,pegawai tidak tetap,kepala sekolah,wakil kepala kurikulum,wakil kepala humas,wakil kepala sarana prasarana,wakil kepala kesiswaan,bendahara gaji,bendahara BOS,bendahara pembimbing komite,kepala jurusan,kepala bengkel',
+            'status'        => 'required|in:guru,guru tidak tetap,pegawai,pegawai tidak tetap,kepala sekolah,wakil kepala,bendahara,kepala jurusan,kepala bengkel',
             'jabatan_jurusan' => 'nullable|string',
             'image'         => 'nullable|image'
         ]);
@@ -113,14 +113,13 @@ class GuruController extends Controller
         $guru = Guru::create([
             'user_id'       => $user->id,
             'nip'           => $request->nip,
-            'kelas'         => $request->kelas,
             'jurusan'       => $request->jurusan,
             'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
             'alamat'        => $request->alamat,
             'no_hp'         => $request->no_hp,
             'status'        => $request->status,
-            'jabatan_jurusan' => in_array($request->status, ['kepala jurusan', 'kepala bengkel']) ? $request->jabatan_jurusan : null,
+            'spesialisasi' => in_array($request->status, ['wakil kepala', 'bendahara', 'kepala jurusan', 'kepala bengkel']) ? $request->spesialisasi : null,
             'jenis_kelamin' => $request->jenis_kelamin,
             'agama'         => $request->agama,
         ]);
@@ -164,14 +163,13 @@ class GuruController extends Controller
             'nama'          => 'required|string|max:255',
             'email'         => 'nullable|email|unique:users,email,' . $guru->user_id,
             'nip'           => $isOptionalNip ? 'nullable|string|max:20|unique:guru,nip,' . $guru->id : 'required|string|max:20|unique:guru,nip,' . $guru->id,
-            'kelas'         => 'nullable|string',
             'jurusan'       => 'nullable|string',
             'tempat_lahir'  => 'nullable|string',
             'tanggal_lahir' => 'nullable|date',
             'alamat'        => 'nullable|string',
             'no_hp'         => 'nullable|string',
-            'status'        => 'required|in:guru,guru tidak tetap,pegawai,pegawai tidak tetap,kepala sekolah,wakil kepala kurikulum,wakil kepala humas,wakil kepala sarana prasarana,wakil kepala kesiswaan,bendahara gaji,bendahara BOS,bendahara pembimbing komite,kepala jurusan,kepala bengkel',
-            'jabatan_jurusan' => 'nullable|string',
+            'status'        => 'required|in:guru,guru tidak tetap,pegawai,pegawai tidak tetap,kepala sekolah,wakil kepala,bendahara,kepala jurusan,kepala bengkel',
+            'spesialisasi' => 'nullable|string',
             'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
             'agama'         => 'nullable|string',
             'image'         => 'nullable|image'
@@ -188,14 +186,13 @@ class GuruController extends Controller
         // Update guru
         $guru->update([
             'nip'           => $request->nip,
-            'kelas'         => $request->kelas,
             'jurusan'       => $request->jurusan,
             'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
             'alamat'        => $request->alamat,
             'no_hp'         => $request->no_hp,
             'status'        => $request->status,
-            'jabatan_jurusan' => in_array($request->status, ['kepala jurusan', 'kepala bengkel']) ? $request->jabatan_jurusan : null,
+            'spesialisasi' => in_array($request->status, ['wakil kepala', 'bendahara', 'kepala jurusan', 'kepala bengkel']) ? $request->spesialisasi : null,
             'jenis_kelamin' => $request->jenis_kelamin,
             'agama'         => $request->agama,
         ]);

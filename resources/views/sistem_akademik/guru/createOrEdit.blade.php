@@ -112,13 +112,8 @@
                             <option value="pegawai" {{ old('status', $guru->status ?? '') == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
                             <option value="pegawai tidak tetap" {{ old('status', $guru->status ?? '') == 'pegawai tidak tetap' ? 'selected' : '' }}>Pegawai Tidak Tetap</option>
                             <option value="kepala sekolah" {{ old('status', $guru->status ?? '') == 'kepala sekolah' ? 'selected' : '' }}>Kepala Sekolah</option>
-                            <option value="wakil kepala kurikulum" {{ old('status', $guru->status ?? '') == 'wakil kepala kurikulum' ? 'selected' : '' }}>Wakil Kepala Kurikulum</option>
-                            <option value="wakil kepala humas" {{ old('status', $guru->status ?? '') == 'wakil kepala humas' ? 'selected' : '' }}>Wakil Kepala Humas</option>
-                            <option value="wakil kepala sarana prasarana" {{ old('status', $guru->status ?? '') == 'wakil kepala sarana prasarana' ? 'selected' : '' }}>Wakil Kepala Sarana Prasarana</option>
-                            <option value="wakil kepala kesiswaan" {{ old('status', $guru->status ?? '') == 'wakil kepala kesiswaan' ? 'selected' : '' }}>Wakil Kepala Kesiswaan</option>
-                            <option value="bendahara gaji" {{ old('status', $guru->status ?? '') == 'bendahara gaji' ? 'selected' : '' }}>Bendahara Gaji</option>
-                            <option value="bendahara BOS" {{ old('status', $guru->status ?? '') == 'bendahara BOS' ? 'selected' : '' }}>Bendahara BOS</option>
-                            <option value="bendahara pembimbing komite" {{ old('status', $guru->status ?? '') == 'bendahara pembimbing komite' ? 'selected' : '' }}>Bendahara Pembimbing Komite</option>
+                            <option value="wakil kepala" {{ old('status', $guru->status ?? '') == 'wakil kepala' ? 'selected' : '' }}>Wakil Kepala</option>
+                            <option value="bendahara" {{ old('status', $guru->status ?? '') == 'bendahara' ? 'selected' : '' }}>Bendahara</option>
                             <option value="kepala jurusan" {{ old('status', $guru->status ?? '') == 'kepala jurusan' ? 'selected' : '' }}>Kepala Jurusan</option>
                             <option value="kepala bengkel" {{ old('status', $guru->status ?? '') == 'kepala bengkel' ? 'selected' : '' }}>Kepala Bengkel</option>
                         </select>
@@ -153,10 +148,12 @@
                             @endforeach
                         </datalist>
                     </div>
-                    <div class="col-md-6" id="jabatan_jurusan_container" style="display: none;">
-                        <label for="jabatan_jurusan" class="form-label" id="label-jabatan-jurusan">Spesialisasi Jabatan <span class="text-danger">*</span></label>
-                        <select class="form-select" id="jabatan_jurusan" name="jabatan_jurusan">
-                            <option value="">-- Pilih Jurusan yang Dikepalai --</option>
+                    <div class="col-md-6" id="spesialisasi_container" style="display: none;">
+                        <label for="spesialisasi" class="form-label" id="label-spesialisasi">Spesialisasi Jabatan <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="spesialisasi" name="spesialisasi"
+                               value="{{ old('spesialisasi', $guru->spesialisasi ?? '') }}" list="jabatan_options"
+                               placeholder="-- Ketik Spesialisasi atau Pilih Jurusan --" autocomplete="off">
+                        <datalist id="jabatan_options">
                             @php
                                 $majors = [
                                     'Bisnis Konstruksi dan Properti',
@@ -173,9 +170,9 @@
                                 ];
                             @endphp
                             @foreach($majors as $m)
-                                <option value="{{ $m }}" {{ old('jabatan_jurusan', $guru->jabatan_jurusan ?? '') == $m ? 'selected' : '' }}>{{ $m }}</option>
+                                <option value="{{ $m }}">
                             @endforeach
-                        </select>
+                        </datalist>
                     </div>
                 </div>
 
@@ -263,18 +260,29 @@
         }
 
         const statusSelect = document.getElementById('status');
-        const jabatanJurusanContainer = document.getElementById('jabatan_jurusan_container');
-        const jabatanJurusanInput = document.getElementById('jabatan_jurusan');
+        const spesialisasiContainer = document.getElementById('spesialisasi_container');
+        const spesialisasiInput = document.getElementById('spesialisasi');
 
         function toggleJurusan() {
-            if (statusSelect && jabatanJurusanContainer && jabatanJurusanInput) {
-                if (statusSelect.value === 'kepala jurusan' || statusSelect.value === 'kepala bengkel') {
-                    jabatanJurusanContainer.style.display = 'block';
-                    jabatanJurusanInput.setAttribute('required', 'required');
+            if (statusSelect && spesialisasiContainer && spesialisasiInput) {
+                if (statusSelect.value === 'kepala jurusan' || statusSelect.value === 'kepala bengkel' || statusSelect.value === 'wakil kepala' || statusSelect.value === 'bendahara') {
+                    spesialisasiContainer.style.display = 'block';
+                    spesialisasiInput.setAttribute('required', 'required');
+                    
+                    if(statusSelect.value === 'wakil kepala') {
+                        document.getElementById('label-spesialisasi').innerHTML = 'Spesialisasi Wakil Kepala <span class="text-danger">*</span>';
+                        spesialisasiInput.placeholder = 'Contoh: Kurikulum, Humas, dsb.';
+                    } else if(statusSelect.value === 'bendahara') {
+                        document.getElementById('label-spesialisasi').innerHTML = 'Spesialisasi Bendahara <span class="text-danger">*</span>';
+                        spesialisasiInput.placeholder = 'Contoh: BOS, Gaji, dsb.';
+                    } else {
+                        document.getElementById('label-spesialisasi').innerHTML = 'Jurusan <span class="text-danger">*</span>';
+                        spesialisasiInput.placeholder = '-- Ketik atau Pilih Jurusan --';
+                    }
                 } else {
-                    jabatanJurusanContainer.style.display = 'none';
-                    jabatanJurusanInput.removeAttribute('required');
-                    jabatanJurusanInput.value = '';
+                    spesialisasiContainer.style.display = 'none';
+                    spesialisasiInput.removeAttribute('required');
+                    spesialisasiInput.value = '';
                 }
             }
         }

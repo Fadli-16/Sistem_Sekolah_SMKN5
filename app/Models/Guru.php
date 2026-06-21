@@ -15,7 +15,6 @@ class Guru extends Model
         'user_id',
         'image',
         'nip',
-        'kelas',
         'jurusan',
         'tempat_lahir',
         'tanggal_lahir',
@@ -24,7 +23,7 @@ class Guru extends Model
         'alamat',
         'no_hp',
         'status',
-        'jabatan_jurusan',
+        'spesialisasi',
     ];
 
     public function user()

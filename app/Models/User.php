@@ -96,11 +96,6 @@ class User extends Authenticatable
         return $this->hasOne(MagangSiswa::class, 'user_id');
     }
 
-    public function peminatan()
-    {
-        return $this->hasOne(Peminatan::class, 'user_id');
-    }
-
     public function readBerita()
     {
         return $this->belongsToMany(Berita::class, 'berita_reads')->withTimestamps();

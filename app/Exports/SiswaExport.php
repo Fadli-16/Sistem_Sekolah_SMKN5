@@ -28,7 +28,7 @@ class SiswaExport implements FromCollection, WithHeadings, WithStyles
                 'siswa.nis',
                 'users.nama',
                 'users.email',
-                'siswa.jurusan',
+                'kelas.jurusan',
                 'kelas.nama_kelas as kelas',
                 'siswa.jenis_kelamin',
                 'siswa.agama',
@@ -39,7 +39,7 @@ class SiswaExport implements FromCollection, WithHeadings, WithStyles
             ->orderBy('users.nama');
 
         if ($this->jurusan) {
-            $query->where('siswa.jurusan', $this->jurusan);
+            $query->where('kelas.jurusan', $this->jurusan);
         }
 
         if ($this->kelasId) {

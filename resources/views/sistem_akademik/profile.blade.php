@@ -66,9 +66,9 @@
                 <div class="identifier">{{ $identifier }}</div>
                 <div class="role">
                     @if($role === 'siswa')
-                    {{ $siswa ? ((optional($siswa->kelasData)->nama_kelas ?? $siswa->kelas) . ' - ' . (optional($siswa->kelasData)->jurusan ?? $siswa->jurusan)) : 'Siswa' }}
+                    {{ $siswa ? (optional($siswa->kelasData)->nama_kelas ?? '-') . ' - ' . (optional($siswa->kelasData)->jurusan ?? '-') : 'Siswa' }}
                     @elseif($role === 'guru')
-                    {{ $guru ? ($guru->kelas . ' - ' . $guru->jurusan) : 'Guru' }}
+                    {{ $guru ? ((optional($guru->waliKelasDi)->nama_kelas ?? ucwords(str_replace('_', ' ', $guru->status ?? 'Guru'))) . ' - ' . $guru->jurusan) : 'Guru' }}
                     @else
                     Administrator
                     @endif
@@ -110,7 +110,7 @@
                         <input name="jurusan"
                             type="text"
                             class="form-control {{ $isStudentOrTeacher ? 'locked-field' : '' }}"
-                            value="{{ old('jurusan', (isset($siswa) ? (optional($siswa->kelasData)->jurusan ?? $siswa->jurusan) : null) ?? $guru->jurusan ?? $admin->jurusan ?? '') }}"
+                            value="{{ old('jurusan', (isset($siswa) ? optional($siswa->kelasData)->jurusan : null) ?? optional($guru)->jurusan ?? optional($admin)->jurusan ?? '') }}"
                             {{ $isStudentOrTeacher ? 'readonly' : '' }}>
                     </div>
 

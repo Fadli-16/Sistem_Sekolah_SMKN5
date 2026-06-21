@@ -10,7 +10,7 @@ class Peminatan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'siswa_id',
         'minat',
         'alasan',
         'pemilihan_jurusan',
@@ -22,9 +22,9 @@ class Peminatan extends Model
         'file_angket',
     ];
 
-    public function user()
+    public function siswa()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Siswa::class);
     }
     
     public function kelas()

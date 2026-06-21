@@ -271,7 +271,7 @@
                 <tbody>
                     @foreach($peminatans as $p)
                     @php
-                        $isOwner = $p->user_id === $user->id;
+                        $isOwner = $user->role === 'siswa' && optional($user->siswa)->id === $p->siswa_id;
                         $canSeePrivate = $isAdmin || $isGuru || $isOwner;
                     @endphp
                     <tr>
@@ -283,15 +283,15 @@
                         <td>{{ $loop->iteration }}</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <div style="font-weight:600; color:var(--text-dark);">{{ optional($p->user)->nama }}</div>
-                                <span class="badge-modern badge-gray" style="font-size: 0.65rem;">{{ optional($p->user->siswa)->nis }}</span>
+                                <div style="font-weight:600; color:var(--text-dark);">{{ optional(optional($p->siswa)->user)->nama }}</div>
+                                <span class="badge-modern badge-gray" style="font-size: 0.65rem;">{{ optional($p->siswa)->nis }}</span>
                             </div>
                             <div style="font-size:0.75rem; color:var(--text-muted);">
                                 @php
-                                    $siswa = optional($p->user)->siswa;
+                                    $siswa = $p->siswa;
                                     $namaKelas = '-';
                                     if($siswa) {
-                                        $namaKelas = $siswa->kelas()->first()->nama_kelas ?? $siswa->kelas ?? '-';
+                                        $namaKelas = optional($siswa->kelasData)->nama_kelas ?? '-';
                                     }
                                 @endphp
                                 Kelas: {{ $namaKelas }}
@@ -356,7 +356,7 @@
                                     $isAdmin = in_array($user->role, ['admin', 'super_admin', 'admin_sa']);
                                     $isGuru = $user->role === 'guru';
                                     $isSiswa = $user->role === 'siswa';
-                                    $isOwner = $p->user_id === $user->id;
+                                    $isOwner = $user->role === 'siswa' && optional($user->siswa)->id === $p->siswa_id;
                                 @endphp
 
                                 @if($isAdmin)
