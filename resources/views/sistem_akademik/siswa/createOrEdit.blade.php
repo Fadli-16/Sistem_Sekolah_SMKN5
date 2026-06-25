@@ -3,38 +3,7 @@
 @section('css')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-<style>
-    /* Menyesuaikan Select2 dengan .form-select custom dari sistem-akademik.css */
-    .select2-container--bootstrap-5 .select2-selection {
-        border: 1.5px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 0.55rem 0.875rem;
-        font-size: 0.875rem;
-        transition: var(--transition);
-        background-color: var(--bg-card);
-        min-height: auto;
-        display: flex;
-        align-items: center;
-    }
-    
-    .select2-container--bootstrap-5.select2-container--focus .select2-selection {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
-    }
-    
-    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-        padding: 0;
-        line-height: normal;
-        color: var(--text-dark);
-    }
-    
-    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        right: 0.875rem;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/siswa.css') }}">
 @endsection
 
 @php

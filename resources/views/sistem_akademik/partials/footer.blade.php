@@ -9,7 +9,7 @@
                 <span class="text-gray-300">|</span>
                 <a href="#" class="text-decoration-none text-muted hover-primary">Bantuan</a>
                 <span class="text-gray-300">|</span>
-                <span class="text-muted">v2.0.4</span>
+                <span class="text-muted">v2.3.4</span>
             </div>
         </div>
     </div>

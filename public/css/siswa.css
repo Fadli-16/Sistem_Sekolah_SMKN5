@@ -1,0 +1,35 @@
+/* Custom CSS untuk Siswa Form (Create/Edit) */
+
+/* Menyesuaikan Select2 dengan .form-select custom dari sistem-akademik.css */
+.select2-container--bootstrap-5 .select2-selection {
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 0.55rem 0.875rem;
+    font-size: 0.875rem;
+    transition: var(--transition);
+    background-color: var(--bg-card);
+    min-height: auto;
+    display: flex;
+    align-items: center;
+}
+
+/* State saat Select2 fokus */
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
+}
+
+/* Mengatur padding dan line-height untuk teks di dalam Select2 */
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    padding: 0;
+    line-height: normal;
+    color: var(--text-dark);
+}
+
+/* Mengatur posisi tanda panah pada Select2 */
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 0.875rem;
+}
