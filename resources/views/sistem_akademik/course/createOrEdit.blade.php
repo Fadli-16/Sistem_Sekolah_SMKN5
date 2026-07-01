@@ -219,7 +219,7 @@ $conflictDetails = session('conflict_details', null);
                 <a href="{{ route('sistem_akademik.course.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Kembali</a>
                 <button type="submit" class="btn btn-primary ms-auto">
                     <i class="bi bi-{{ isset($course) ? 'save' : 'plus-circle' }}"></i>
-                    {{ isset($course) ? 'Update Course' : 'Simpan Course' }}
+                    {{ isset($course) ? 'Simpan Perubahan' : 'Simpan Jadwal' }}
                 </button>
             </div>
         </form>

@@ -17,6 +17,13 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class CourseController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:admin,super_admin,admin_sa')->only([
+            'create', 'store', 'edit', 'update', 'destroy', 'bulkDestroy'
+        ]);
+    }
+
     protected function slotOrder(): array
     {
         return [
@@ -350,6 +357,10 @@ class CourseController extends Controller
         }
 
         $guruModel = $user->guru;
+        $status = $guruModel->status ?? '';
+        if (in_array($status, ['kepala sekolah', 'wakil kepala'])) {
+            return []; // no filter for kepsek/wakil
+        }
 
         return array_values(array_filter([
             $guruModel?->user_id ?? $user->id,
@@ -428,21 +439,27 @@ class CourseController extends Controller
 
         $guruKelasIds = [];
 
+        $isBiasaGuru = false;
+
         // Role based restriction
         if ($user?->role === 'guru') {
             $guruModel = $user->guru;
-            $guruUserId = $guruModel?->user_id ?? $user->id;
-            $guruModelId = $guruModel?->id;
+            $status = $guruModel->status ?? '';
+            if (!in_array($status, ['kepala sekolah', 'wakil kepala'])) {
+                $isBiasaGuru = true;
+                $guruUserId = $guruModel?->user_id ?? $user->id;
+                $guruModelId = $guruModel?->id;
 
-            $guruFilter = function ($q) use ($guruUserId, $guruModelId) {
-                $q->where(function ($subQ) use ($guruUserId, $guruModelId) {
-                    $subQ->where('guru_id', $guruUserId);
-                    if ($guruModelId) $subQ->orWhere('guru_id', $guruModelId);
-                });
-            };
+                $guruFilter = function ($q) use ($guruUserId, $guruModelId) {
+                    $q->where(function ($subQ) use ($guruUserId, $guruModelId) {
+                        $subQ->where('guru_id', $guruUserId);
+                        if ($guruModelId) $subQ->orWhere('guru_id', $guruModelId);
+                    });
+                };
 
-            $query->whereHas('mataPelajaran', $guruFilter);
-            $guruKelasIds = Course::whereHas('mataPelajaran', $guruFilter)->pluck('kelas_id')->unique()->filter()->values()->toArray();
+                $query->whereHas('mataPelajaran', $guruFilter);
+                $guruKelasIds = Course::whereHas('mataPelajaran', $guruFilter)->pluck('kelas_id')->unique()->filter()->values()->toArray();
+            }
         } elseif ($user?->role === 'siswa' && $user->siswa) {
             $kelasId = $user->siswa->kelas_id;
             if ($kelasId) {
@@ -456,7 +473,7 @@ class CourseController extends Controller
 
         // Data pendukung filter
         $kelasQuery = Kelas::query();
-        if ($user?->role === 'guru') {
+        if ($isBiasaGuru) {
             $kelasQuery->whereIn('id', $guruKelasIds);
         }
         if ($selectedJurusan) {
@@ -465,7 +482,7 @@ class CourseController extends Controller
         $kelasList = $kelasQuery->orderBy('nama_kelas')->get();
         
         $mapelQuery = MataPelajaran::select('nama_mata_pelajaran')->distinct();
-        if ($user?->role === 'guru') {
+        if ($isBiasaGuru) {
             $mapelQuery->where(function ($subQ) use ($guruUserId, $guruModelId) {
                 $subQ->where('guru_id', $guruUserId);
                 if ($guruModelId) $subQ->orWhere('guru_id', $guruModelId);
@@ -483,7 +500,7 @@ class CourseController extends Controller
         $hariList  = $this->allowedDays();
         
         $ruanganQuery = Course::whereNotNull('ruangan')->distinct();
-        if ($user?->role === 'guru') {
+        if ($isBiasaGuru) {
             $ruanganQuery->whereHas('mataPelajaran', function ($q) use ($guruUserId, $guruModelId) {
                 $q->where('guru_id', $guruUserId);
                 if ($guruModelId) $q->orWhere('guru_id', $guruModelId);
@@ -492,7 +509,7 @@ class CourseController extends Controller
         $ruanganList = $ruanganQuery->pluck('ruangan');
 
         $jurusanQuery = Kelas::select('jurusan')->whereNotNull('jurusan')->distinct();
-        if ($user?->role === 'guru') {
+        if ($isBiasaGuru) {
             $jurusanQuery->whereIn('id', $guruKelasIds);
         }
         $jurusanList = $jurusanQuery->orderBy('jurusan')->get();
@@ -945,30 +962,33 @@ class CourseController extends Controller
 
         if ($user?->role === 'guru') {
             $guruModel = $user->guru;
-            $guruUserId = $guruModel?->user_id ?? $user->id;
-            $guruModelId = $guruModel?->id;
+            $status = $guruModel->status ?? '';
+            if (!in_array($status, ['kepala sekolah', 'wakil kepala'])) {
+                $guruUserId = $guruModel?->user_id ?? $user->id;
+                $guruModelId = $guruModel?->id;
 
-            $guruFilter = function ($q) use ($guruUserId, $guruModelId) {
-                $q->where(function ($subQ) use ($guruUserId, $guruModelId) {
-                    $subQ->where('guru_id', $guruUserId);
-                    if ($guruModelId) {
-                        $subQ->orWhere('guru_id', $guruModelId);
-                    }
-                });
-            };
+                $guruFilter = function ($q) use ($guruUserId, $guruModelId) {
+                    $q->where(function ($subQ) use ($guruUserId, $guruModelId) {
+                        $subQ->where('guru_id', $guruUserId);
+                        if ($guruModelId) {
+                            $subQ->orWhere('guru_id', $guruModelId);
+                        }
+                    });
+                };
 
-            $query->whereHas('mataPelajaran', $guruFilter);
+                $query->whereHas('mataPelajaran', $guruFilter);
 
-            $kelasIds = Course::whereHas('mataPelajaran', $guruFilter)
-                ->pluck('kelas_id')
-                ->unique()
-                ->filter()
-                ->values()
-                ->toArray();
+                $kelasIds = Course::whereHas('mataPelajaran', $guruFilter)
+                    ->pluck('kelas_id')
+                    ->unique()
+                    ->filter()
+                    ->values()
+                    ->toArray();
 
-            $kelasList = Kelas::whereIn('id', $kelasIds)
-                ->orderBy('nama_kelas')
-                ->get();
+                $kelasList = Kelas::whereIn('id', $kelasIds)
+                    ->orderBy('nama_kelas')
+                    ->get();
+            }
         } elseif ($user?->role === 'siswa' && $user->siswa) {
             $selectedKelasId = $user->siswa->kelas_id;
             $query->where('kelas_id', $selectedKelasId);

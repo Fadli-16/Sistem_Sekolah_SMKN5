@@ -8,12 +8,14 @@
             <p class="page-subtitle"><i class="bi bi-people-fill me-1"></i>Kelola biodata seluruh siswa</p>
         </div>
         <div class="d-flex gap-2 align-items-center">
+            @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
             <button type="button" id="btn-bulk-delete" class="btn btn-sm btn-danger-app d-none" onclick="bulkDelete()">
                 <i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selected-count">0</span>)
             </button>
             <a href="{{ route('sistem_akademik.siswa.create') }}" class="btn-primary-app">
                 <i class="bi bi-plus-lg"></i> Tambah Siswa
             </a>
+            @endif
         </div>
     </div>
 
@@ -59,9 +61,11 @@
             <table class="table table-hover" id="data-table">
                 <thead>
                     <tr>
+                        @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                         <th width="3%">
                             <input type="checkbox" id="select-all" class="form-check-input">
                         </th>
+                        @endif
                         <th width="4%">No</th>
                         <th>Siswa</th>
                         <th>Kelas</th>
@@ -70,7 +74,9 @@
                         <th>Agama</th>
                         <th>No HP</th>
                         <th>Tahun Masuk</th>
+                        @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                         <th width="8%">Aksi</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -81,9 +87,11 @@
                         $name   = optional($student->user)->nama ?? '-';
                     @endphp
                     <tr>
+                        @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                         <td>
                             <input type="checkbox" class="form-check-input select-item" value="{{ $student->id }}">
                         </td>
+                        @endif
                         <td>{{ $index + 1 }}</td>
                         <td>
                             <div style="display:flex;align-items:center;gap:10px;">
@@ -120,6 +128,7 @@
                             @else -
                             @endif
                         </td>
+                        @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                         <td>
                             <div class="d-flex gap-1">
                                 <a href="{{ route('sistem_akademik.siswa.edit', $student->id) }}"
@@ -136,6 +145,7 @@
                                 </form>
                             </div>
                         </td>
+                        @endif
                     </tr>
                     @endforeach
                 </tbody>
@@ -146,9 +156,11 @@
         <div class="empty-state">
             <i class="bi bi-people"></i>
             <p>Belum ada data siswa</p>
+            @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
             <a href="{{ route('sistem_akademik.siswa.create') }}" class="btn-primary-app">
                 <i class="bi bi-plus-lg"></i> Tambah Siswa Pertama
             </a>
+            @endif
         </div>
         @endif
     </div>

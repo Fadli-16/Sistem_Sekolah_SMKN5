@@ -60,7 +60,7 @@
                 <h2>
                     {{ $user->nama }}
                     @if($role === 'guru' && $guru)
-                    <span class="badge ms-2 align-middle" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; font-size: 0.75rem; padding: 0.5em 0.85em; font-weight: 600; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); text-transform: uppercase; letter-spacing: 0.5px;">{{ ucwords(str_replace(' tidak tetap', ' Tidak Tetap', $guru->status ?? 'Guru')) }}</span>
+                    <span class="badge ms-2 align-middle" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; font-size: 0.75rem; padding: 0.5em 0.85em; font-weight: 600; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); text-transform: uppercase; letter-spacing: 0.5px;">{{ ucwords(str_replace(' tidak tetap', ' Tidak Tetap', ($guru->status ?? 'Guru') . ($guru->spesialisasi ? ' ' . $guru->spesialisasi : ''))) }}</span>
                     @endif
                 </h2>
                 <div class="identifier">{{ $identifier }}</div>

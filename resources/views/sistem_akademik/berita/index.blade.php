@@ -8,9 +8,11 @@
             <h1 class="page-title">{{ $header }}</h1>
             <p class="page-subtitle"><i class="bi bi-newspaper me-1"></i>Kelola berita dan informasi sekolah</p>
         </div>
+        @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
         <a href="{{ route('sistem_akademik.berita.create') }}" class="btn-primary-app">
             <i class="bi bi-plus-lg"></i> Tambah Berita
         </a>
+        @endif
     </div>
 
     <div class="table-container">
@@ -18,9 +20,11 @@
         <div class="table-container-header" style="flex-wrap:wrap;gap:0.75rem; padding: 1rem 1.5rem; display:flex; align-items:center;">
             <div class="d-flex align-items-center gap-3">
                 <span style="font-weight:600;font-size:0.875rem;color:#374151;white-space:nowrap;">Daftar Berita</span>
+                @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                 <button type="button" id="btn-bulk-delete" class="btn btn-sm btn-danger-app d-none" onclick="bulkDelete()">
                     <i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selected-count">0</span>)
                 </button>
+                @endif
             </div>
             <form action="{{ route('sistem_akademik.berita.index') }}" method="GET"
                   class="d-flex align-items-center gap-2 flex-wrap" style="flex:1;justify-content:flex-end;">
@@ -59,9 +63,11 @@
             <table class="table table-hover" id="data-table">
                 <thead>
                     <tr>
+                        @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                         <th width="3%">
                             <input type="checkbox" id="select-all" class="form-check-input">
                         </th>
+                        @endif
                         <th width="5%">No</th>
                         <th width="10%">Foto</th>
                         <th>Judul</th>
@@ -74,9 +80,11 @@
                 <tbody>
                     @forelse ($berita as $b)
                     <tr>
+                        @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                         <td>
                             <input type="checkbox" class="form-check-input select-item" value="{{ $b->id }}">
                         </td>
+                        @endif
                         <td>
                             {{ $loop->iteration }}
                         </td>
@@ -108,6 +116,7 @@
                             <span class="badge-modern {{ $badgeClass }}">{{ ucfirst($cat ?: '-') }}</span>
                         </td>
                         <td>
+                            @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                             <a href="javascript:void(0)" onclick="toggleStatus({{ $b->id }})" id="status-badge-{{ $b->id }}" style="text-decoration:none;" title="Klik untuk ubah status">
                                 @if($b->status === 'publish')
                                     <span class="badge-modern badge-success" style="background:#dcfce7;color:#166534;"><i class="bi bi-check-circle me-1"></i> Publish</span>
@@ -115,6 +124,13 @@
                                     <span class="badge-modern badge-warning" style="background:#fef3c7;color:#92400e;"><i class="bi bi-journal-text me-1"></i> Draft</span>
                                 @endif
                             </a>
+                            @else
+                                @if($b->status === 'publish')
+                                    <span class="badge-modern badge-success" style="background:#dcfce7;color:#166534;"><i class="bi bi-check-circle me-1"></i> Publish</span>
+                                @else
+                                    <span class="badge-modern badge-warning" style="background:#fef3c7;color:#92400e;"><i class="bi bi-journal-text me-1"></i> Draft</span>
+                                @endif
+                            @endif
                         </td>
                         <td style="font-size:0.8rem;color:#64748b;">
                             {{ optional($b->created_at)->format('d M Y, H:i') }}
@@ -125,6 +141,7 @@
                                    class="btn-icon btn-icon-info" title="Lihat">
                                     <i class="bi bi-eye-fill"></i>
                                 </a>
+                                @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                                 <a href="{{ route('sistem_akademik.berita.edit', $b->id) }}"
                                    class="btn-icon btn-icon-warning" title="Edit">
                                     <i class="bi bi-pencil-fill"></i>
@@ -137,6 +154,7 @@
                                         <i class="bi bi-trash-fill"></i>
                                     </button>
                                 </form>
+                                @endif
                                 @if(!empty($b->file))
                                 <a href="{{ asset('file/' . $b->file) }}" class="btn-icon btn-icon-info" title="Unduh" target="_blank" download>
                                     <i class="bi bi-download"></i>

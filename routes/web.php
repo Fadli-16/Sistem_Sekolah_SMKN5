@@ -136,13 +136,7 @@ Route::prefix('sistem-akademik')
         Route::get('/', [SistemAkademikController::class, 'index'])->name('index');
         Route::get('/dashboard', [App\Http\Controllers\Akademik\SistemAkademikController::class, 'index'])->name('dashboard');
 
-        /*
-    |--------------------------------------------------------------------------
-    | BERITA - KHUSUS ADMIN
-    |--------------------------------------------------------------------------
-    */
         Route::middleware(['role:super_admin,admin_sa'])->group(function () {
-            Route::get('berita', [BeritaController::class, 'index'])->name('berita.index');
             Route::delete('berita/bulk-delete', [BeritaController::class, 'bulkDestroy'])->name('berita.bulkDestroy');
             Route::get('berita/create', [BeritaController::class, 'create'])->name('berita.create');
             Route::post('berita', [BeritaController::class, 'store'])->name('berita.store');
@@ -150,24 +144,30 @@ Route::prefix('sistem-akademik')
             Route::put('berita/{berita}', [BeritaController::class, 'update'])->name('berita.update');
             Route::delete('berita/{berita}', [BeritaController::class, 'destroy'])->name('berita.destroy');
             Route::patch('berita/{berita}/toggle-status', [BeritaController::class, 'toggleStatus'])->name('berita.toggleStatus');
-        });
-    
-        Route::get('berita/{berita}', [BeritaController::class, 'show'])->name('berita.show');
-        /*
-    |--------------------------------------------------------------------------
-    | ADMIN MODULE
-    |--------------------------------------------------------------------------
-    */
-        Route::middleware(['role:super_admin,admin_sa'])->group(function () {
+            
             Route::delete('kelas/bulk-delete', [KelasController::class, 'bulkDestroy'])->name('kelas.bulkDestroy');
             Route::delete('guru/bulk-delete', [GuruController::class, 'bulkDestroy'])->name('guru.bulkDestroy');
             Route::delete('siswa/bulk-delete', [SiswaController::class, 'bulkDestroy'])->name('siswa.bulkDestroy');
             Route::resource('kelas', KelasController::class)->parameters(['kelas' => 'kelas']);
-            Route::resource('guru', GuruController::class);
-            Route::resource('siswa', SiswaController::class);
+            Route::resource('guru', GuruController::class)->except(['index', 'show']);
+            Route::resource('siswa', SiswaController::class)->except(['index', 'show']);
 
             Route::get('/get-students-by-jurusan', [CourseController::class, 'getStudentsByJurusan'])
                 ->name('get-students-by-jurusan');
+        });
+
+        /*
+    |--------------------------------------------------------------------------
+    | BERITA - KHUSUS ADMIN & VIEWERS
+    |--------------------------------------------------------------------------
+    */
+        Route::middleware(['role:super_admin,admin_sa,guru_kepsek_wakil'])->group(function () {
+            Route::get('berita', [BeritaController::class, 'index'])->name('berita.index');
+            Route::get('berita/{berita}', [BeritaController::class, 'show'])->name('berita.show');
+            Route::get('guru', [GuruController::class, 'index'])->name('guru.index');
+            Route::get('guru/{guru}', [GuruController::class, 'show'])->name('guru.show');
+            Route::get('siswa', [SiswaController::class, 'index'])->name('siswa.index');
+            Route::get('siswa/{siswa}', [SiswaController::class, 'show'])->name('siswa.show');
         });
 
     /*

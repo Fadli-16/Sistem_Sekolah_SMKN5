@@ -23,6 +23,14 @@ class CheckRole
             if (in_array(Auth::user()->role, $roles)) {
                 return $next($request);
             }
+
+            // Pseudo-role for kepala sekolah and wakil kepala
+            if (in_array('guru_kepsek_wakil', $roles) && Auth::user()->role === 'guru') {
+                $guruStatus = Auth::user()->guru->status ?? '';
+                if (in_array($guruStatus, ['kepala sekolah', 'wakil kepala'])) {
+                    return $next($request);
+                }
+            }
             
             // Only redirect if attempting to access restricted areas
             // Don't redirect for public-facing service pages

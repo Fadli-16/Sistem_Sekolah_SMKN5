@@ -42,7 +42,8 @@
             <div class="actions">
                 @php
                     $role = Auth::user()->role;
-                    $backRoute = in_array($role, ['admin', 'super_admin', 'admin_sa']) 
+                    $isKepsekWakil = $role == 'guru' && Auth::user()->guru && in_array(Auth::user()->guru->status, ['kepala sekolah', 'wakil kepala']);
+                    $backRoute = (in_array($role, ['admin', 'super_admin', 'admin_sa']) || $isKepsekWakil)
                         ? route('sistem_akademik.berita.index') 
                         : route('sistem_akademik.dashboard');
                 @endphp

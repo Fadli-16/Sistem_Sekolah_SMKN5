@@ -7,7 +7,6 @@
 
 @section('content')
 <div class="container-fluid">
-    {{-- Hapus tag body yang salah di sini --}}
         <!-- Welcome Section -->
         <div class="dashboard-welcome fade-in-up mb-4" style="background: linear-gradient(135deg, #1e3a5f 0%, #2a5298 100%); border-radius: 16px; padding: 2rem; color: white; position: relative; overflow: hidden;">
             <div class="row align-items-center">
@@ -70,7 +69,7 @@
             @elseif(Auth::user()->role == 'siswa' && Auth::user()->siswa)
                 {{-- STUDENT STATS --}}
                 @php
-                    $peminatanCount = \App\Models\Peminatan::where('user_id', Auth::id())->count();
+                    $peminatanCount = \App\Models\Peminatan::where('siswa_id', Auth::user()->siswa->id)->count();
                     $kelasId = Auth::user()->siswa->kelas_id;
                     $studentStats = [
                         ['label' => 'Course Saya', 'value' => $kelasId ? \App\Models\Course::where('kelas_id', $kelasId)->count() : 0, 'icon' => 'journal-text', 'color' => 'primary', 'route' => 'sistem_akademik.course.index'],

@@ -19,7 +19,10 @@ class MataPelajaranController extends Controller
         $query = MataPelajaran::with('guru');
 
         if ($user && $user->role === 'guru') {
-            $query->where('guru_id', $user->id);
+            $status = $user->guru->status ?? '';
+            if (!in_array($status, ['kepala sekolah', 'wakil kepala'])) {
+                $query->where('guru_id', $user->id);
+            }
         }
 
         if ($request->filled('jurusan')) {
@@ -96,6 +99,15 @@ class MataPelajaranController extends Controller
             'jurusan' => 'required|string',
         ]);
 
+        $exists = MataPelajaran::where('nama_mata_pelajaran', $request->nama_mata_pelajaran)
+            ->where('guru_id', $request->guru_id)
+            ->where('jurusan', $request->jurusan)
+            ->exists();
+
+        if ($exists) {
+            return back()->withInput()->with('status', 'error')->with('message', 'Data mata pelajaran sudah ada.');
+        }
+
         MataPelajaran::create([
             'nama_mata_pelajaran' => $request->nama_mata_pelajaran,
             'guru_id' => $request->guru_id,
@@ -150,6 +162,16 @@ class MataPelajaranController extends Controller
             ],
             'jurusan' => 'required|string',
         ]);
+
+        $exists = MataPelajaran::where('nama_mata_pelajaran', $request->nama_mata_pelajaran)
+            ->where('guru_id', $request->guru_id)
+            ->where('jurusan', $request->jurusan)
+            ->where('id', '!=', $mataPelajaran->id)
+            ->exists();
+
+        if ($exists) {
+            return back()->withInput()->with('status', 'error')->with('message', 'Data mata pelajaran sudah ada.');
+        }
 
         $mataPelajaran->update([
             'nama_mata_pelajaran' => $request->nama_mata_pelajaran,

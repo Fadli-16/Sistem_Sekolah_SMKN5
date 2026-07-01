@@ -18,7 +18,7 @@
             ];
         }
     }
-    $selectedJurusan = old('jurusan', $siswa->jurusan ?? '');
+    $selectedJurusan = old('jurusan', $siswa->kelas->jurusan ?? '');
     $selectedKelas = old('kelas_id', $siswa->kelas_id ?? '');
 @endphp
 

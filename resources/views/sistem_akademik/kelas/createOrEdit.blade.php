@@ -150,24 +150,46 @@
                         @error('guru_bk_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
-                    <div class="col-12">
-                        <label for="siswa_ids" class="form-label">Data Siswa</label>
-                        <select class="form-control select2-multiple @error('siswa_ids') is-invalid @enderror" id="siswa_ids" name="siswa_ids[]" multiple>
+                    <div class="col-12 mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">Data Siswa</label>
+                            <input type="text" id="searchSiswa" class="form-control form-control-sm" style="width: 250px;" placeholder="Cari nama atau NIS...">
+                        </div>
+                        <div class="row g-2 border rounded p-2 bg-light" id="siswaContainer" style="max-height: 350px; overflow-y: auto;">
                             @if(isset($siswaList) && $siswaList->isNotEmpty())
                                 @foreach($siswaList as $s)
                                     @php
                                         $nama = optional($s->user)->nama ?? ($s->nama ?? '-');
                                         $nis = $s->nis ?? $s->nisn ?? '-';
-                                        $label = $nama . ' - ' . $nis;
+                                        $avatar = $s->image ? asset('assets/profile/' . ltrim($s->image, '/')) : asset('assets/profile/default.png');
+                                        $isChecked = in_array($s->id, (array)$selectedSiswaIds) ? 'checked' : '';
                                     @endphp
-                                    <option value="{{ $s->id }}" {{ in_array($s->id, (array)$selectedSiswaIds) ? 'selected' : '' }}>
-                                        {{ $label }}
-                                    </option>
+                                    <div class="col-md-4 siswa-item">
+                                        <div class="card h-100 siswa-card {{ $isChecked ? 'border-primary' : '' }}">
+                                            <div class="card-body p-2 d-flex align-items-center">
+                                                <div class="form-check m-0">
+                                                    <input class="form-check-input siswa-checkbox" type="checkbox" name="siswa_ids[]" value="{{ $s->id }}" id="siswa_{{ $s->id }}" {{ $isChecked }}>
+                                                </div>
+                                                <label class="form-check-label d-flex align-items-center w-100 ms-2" for="siswa_{{ $s->id }}" style="cursor: pointer;">
+                                                    <img src="{{ $avatar }}" alt="avatar" class="rounded-circle me-2 border" style="width: 38px; height: 38px; object-fit: cover;">
+                                                    <div style="line-height: 1.2; overflow: hidden;">
+                                                        <span class="fw-semibold text-truncate d-block siswa-nama" style="font-size: 0.85rem;" title="{{ $nama }}">{{ $nama }}</span>
+                                                        <small class="text-muted siswa-nis" style="font-size: 0.75rem;">{{ $nis }}</small>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 @endforeach
+                            @else
+                                <div class="col-12 text-center text-muted p-4">
+                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                    Tidak ada data siswa yang tersedia.
+                                </div>
                             @endif
-                        </select>
-                        <div class="form-text">Pilih siswa yang akan dimasukkan ke dalam kelas ini. Hanya menampilkan siswa yang belum memiliki kelas.</div>
-                        @error('siswa_ids')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="form-text mt-1">Pilih siswa yang akan dimasukkan ke dalam kelas ini. Hanya menampilkan siswa yang belum memiliki kelas.</div>
+                        @error('siswa_ids')<div class="text-danger mt-1" style="font-size: 0.875rem;">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="col-md-6">
@@ -242,13 +264,29 @@
     }
 
     $(document).ready(function() {
-        if ($.fn.select2) {
-            $('#siswa_ids').select2({
-                placeholder: "-- Pilih Siswa --",
-                width: "100%",
-                allowClear: true
+        // Search functionality for Siswa grid
+        $('#searchSiswa').on('input', function() {
+            const val = $(this).val().toLowerCase();
+            $('.siswa-item').each(function() {
+                const name = $(this).find('.siswa-nama').text().toLowerCase();
+                const nis = $(this).find('.siswa-nis').text().toLowerCase();
+                if (name.includes(val) || nis.includes(val)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
             });
-        }
+        });
+
+        // Toggle card style on checkbox change
+        $('.siswa-checkbox').on('change', function() {
+            const card = $(this).closest('.siswa-card');
+            if ($(this).is(':checked')) {
+                card.addClass('border-primary');
+            } else {
+                card.removeClass('border-primary');
+            }
+        });
     });
 </script>
 @endsection

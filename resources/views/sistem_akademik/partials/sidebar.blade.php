@@ -15,7 +15,11 @@
                 </a>
             </li>
 
-            @if(Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa')
+            @php
+                $isKepsekWakil = Auth::user()->role == 'guru' && Auth::user()->guru && in_array(Auth::user()->guru->status, ['kepala sekolah', 'wakil kepala']);
+            @endphp
+
+            @if(Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa' || $isKepsekWakil)
 
             <div class="sidebar-section-title">Manajemen</div>
 
@@ -39,7 +43,9 @@
                     <span class="menu-text">Kelola Siswa</span>
                 </a>
             </li>
+            @endif
 
+            @if(Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa')
             <div class="sidebar-section-title">Akademik</div>
 
             <li class="{{ request()->routeIs('sistem_akademik.kelas.*') ? 'active' : '' }}">

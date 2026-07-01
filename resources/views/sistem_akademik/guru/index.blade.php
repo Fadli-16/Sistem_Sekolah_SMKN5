@@ -14,12 +14,14 @@
             <p class="page-subtitle"><i class="bi bi-person-workspace me-1"></i>Kelola biodata guru dan tendik</p>
         </div>
         <div class="d-flex gap-2 align-items-center">
+            @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
             <button type="button" id="btn-bulk-delete" class="btn btn-sm btn-danger-app d-none" onclick="bulkDelete()">
                 <i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selected-count">0</span>)
             </button>
             <a href="{{ route('sistem_akademik.guru.create') }}" class="btn-primary-app">
                 <i class="bi bi-plus-lg"></i> Tambah Guru
             </a>
+            @endif
         </div>
     </div>
     
@@ -71,9 +73,11 @@
             <table class="table table-hover" id="data-table">
                 <thead>
                     <tr>
+                        @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                         <th width="3%">
                             <input type="checkbox" id="select-all" class="form-check-input">
                         </th>
+                        @endif
                         <th width="5%">No</th>
                         <th>Guru</th>
                         <th>Jurusan</th>
@@ -84,7 +88,9 @@
                         <th>Jenis Kelamin</th>
                         <th>Tempat, Tgl Lahir</th>
                         <th>Alamat</th>
+                        @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                         <th width="10%">Aksi</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -96,9 +102,11 @@
                         $nama = optional($guru->user)->nama ?? '-';
                     @endphp
                     <tr>
+                        @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                         <td>
                             <input type="checkbox" class="form-check-input select-item" value="{{ $guru->id }}">
                         </td>
+                        @endif
                         <td>{{ $index + 1 }}</td>
                         <td>
                             <div class="cell-name-wrap">
@@ -164,6 +172,7 @@
                             {{ $tempat . $tanggal ?: '-' }}
                         </td>
                         <td>{{ \Illuminate\Support\Str::limit($guru->alamat ?? '-', 30) }}</td>
+                        @if(in_array(Auth::user()->role, ['super_admin','admin_sa']))
                         <td>
                             <div class="d-flex gap-1">
                                 <a href="{{ route('sistem_akademik.guru.edit', $guru->id) }}"
@@ -180,6 +189,7 @@
                                 </form>
                             </div>
                         </td>
+                        @endif
                     </tr>
                     @endforeach
                 </tbody>
