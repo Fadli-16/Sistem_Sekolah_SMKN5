@@ -73,8 +73,6 @@ Route::prefix('admin/manage')->name('admin.manage.')->middleware(['auth', 'role:
     Route::get('/', [SuperAdminController::class, 'index'])->name('index');
 
     // Export users to CSV/XLSX
-    Route::get('users/export', [UserController::class, 'export'])
-        ->name('users.export');
     Route::get('users/export/guru', [UserController::class, 'exportGuru'])
         ->name('users.export.guru');
     Route::get('users/export/siswa', [UserController::class, 'exportSiswa'])

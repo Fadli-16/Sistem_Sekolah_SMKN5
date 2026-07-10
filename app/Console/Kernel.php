@@ -17,6 +17,12 @@ class Kernel extends ConsoleKernel
     {
         // Jalankan otomasi pembaruan tahun ajaran setiap hari
         $schedule->command('app:update-academic-year')->daily();
+
+        // Jadwal backup database (tanpa file) seminggu sekali tiap hari Senin jam 01:00
+        $schedule->command('backup:run --only-db')->weeklyOn(1, '01:00');
+        
+        // Membersihkan backup lama
+        $schedule->command('backup:clean')->weeklyOn(1, '01:30');
     }
 
     /**

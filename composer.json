@@ -17,6 +17,7 @@
         "laravel/tinker": "^2.5",
         "maatwebsite/excel": "^3.1",
         "simplesoftwareio/simple-qrcode": "^4.2",
+        "spatie/laravel-backup": "7.0",
         "spatie/laravel-csp": "^2.8"
     },
     "require-dev": {
@@ -60,7 +61,7 @@
         }
     },
     "config": {
-        "optimize-autoloader": true,
+        "optimize-autoloader": false,
         "preferred-install": "dist",
         "sort-packages": true
     },

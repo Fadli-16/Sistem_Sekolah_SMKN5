@@ -41,7 +41,7 @@
 
     <div class="table-container">
         <div class="table-responsive">
-            <table class="table table-hover" id="data-table">
+            <table class="table table-hover" id="data-table" style="font-size: 1rem;">
                 <thead>
                     <tr>
                         @if(Auth::check() && (Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa'))
@@ -69,28 +69,36 @@
                         <td>{{ $index + 1 }}</td>
                         <td>
                             <div style="display:flex;align-items:center;gap:8px;">
-                                <div style="width:32px;height:32px;background:#eff6ff;border-radius:8px;
+                                <div style="width:36px;height:36px;background:#eff6ff;border-radius:8px;
                                             display:flex;align-items:center;justify-content:center;color:#2563eb;flex-shrink:0;">
-                                    <i class="bi bi-book" style="font-size:0.85rem;"></i>
+                                    <i class="bi bi-book" style="font-size:1rem;"></i>
                                 </div>
-                                <span style="font-weight:500;font-size:0.875rem;">{{ $mapel->nama_mata_pelajaran }}</span>
+                                <span style="font-weight:500;font-size:1rem;">{{ $mapel->nama_mata_pelajaran }}</span>
                             </div>
                         </td>
                         <td>
                             @if($mapel->jurusan)
-                                <span class="badge-modern badge-blue">{{ $mapel->jurusan }}</span>
+                                <span class="badge-modern badge-blue" style="font-size: 0.85rem;">{{ $mapel->jurusan }}</span>
                             @else
-                                <span class="badge-modern badge-blue">Umum</span>
+                                <span class="badge-modern badge-blue" style="font-size: 0.85rem;">Umum</span>
                             @endif
                         </td>
                         <td>
-                            @php $guruNama = optional($mapel->guru)->nama ?? optional($mapel->guru)->name ?? null; @endphp
+                            @php 
+                                $guruUser = $mapel->guru;
+                                $guruNama = optional($guruUser)->nama ?? optional($guruUser)->name ?? null; 
+                                $guruAvatar = asset('assets/profile/default.png');
+                                if ($guruUser && $guruUser->guru && $guruUser->guru->image) {
+                                    $guruAvatar = asset('assets/profile/' . ltrim($guruUser->guru->image, '/'));
+                                }
+                            @endphp
                             @if($guruNama)
-                                <span class="badge-modern badge-teal">
-                                    <i class="bi bi-person-workspace"></i> {{ $guruNama }}
+                                <span class="badge-modern badge-teal" style="font-size: 0.85rem;">
+                                    <img src="{{ $guruAvatar }}" alt="avatar" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover; margin-right: 5px;" onerror="this.onerror=null;this.src='{{ asset('assets/profile/default.png') }}'">
+                                    {{ $guruNama }}
                                 </span>
                             @else
-                                <span class="text-muted" style="font-size:0.8rem;">Belum ada guru</span>
+                                <span class="text-muted" style="font-size:0.85rem;">Belum ada guru</span>
                             @endif
                         </td>
                         @if(Auth::check() && (Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa'))

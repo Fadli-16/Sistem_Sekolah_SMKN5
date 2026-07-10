@@ -23,7 +23,7 @@ class BeritaController extends Controller
     {
         $title = 'Berita';
         $header = 'Daftar Berita';
-        $query = Berita::query();
+        $query = Berita::with('user');
 
         if ($request->filled('search')) {
             $q = $request->search;

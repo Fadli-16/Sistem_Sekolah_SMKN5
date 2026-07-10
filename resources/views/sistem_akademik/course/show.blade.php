@@ -44,7 +44,7 @@
             }
             @endphp
             <span class="info-value d-flex align-items-center gap-2" style="display: inline-flex !important; vertical-align: middle;">
-                <img src="{{ $teacherAvatar }}" alt="avatar" class="rounded-circle border" style="width: 32px; height: 32px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('assets/profile/default.png') }}'">
+                <img src="{{ $teacherAvatar }}" alt="avatar" class="rounded-circle border" style="width: 50px; height: 50px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('assets/profile/default.png') }}'">
                 <span>{{ $guruName }}</span>
             </span>
         </div>
@@ -64,6 +64,23 @@
                         ? \Carbon\Carbon::createFromFormat('H:i:s', $course->jam_selesai)->format('H:i')
                         : ( $course->jam_selesai ? date('H:i', strtotime($course->jam_selesai)) : '-' )
                 }}
+                @if($course->jam_mulai && $course->jam_selesai)
+                    @php
+                        $jp = 0;
+                        if ($course->jam_mulai && $course->jam_selesai) {
+                            $cStart = substr($course->jam_mulai, 0, 5);
+                            $cEnd = substr($course->jam_selesai, 0, 5);
+                            $slotStarts = ['07:15', '08:00', '08:45', '10:00', '10:45', '11:30', '13:15', '13:45', '14:15', '14:45', '15:45', '16:15', '16:45'];
+                            
+                            foreach ($slotStarts as $time) {
+                                if ($time >= $cStart && $time < $cEnd) {
+                                    $jp++;
+                                }
+                            }
+                        }
+                    @endphp
+                    ({{ $jp }} JP)
+                @endif
             </span>
         </div>
 
@@ -84,20 +101,20 @@
                 <div class="student-list">
                     @foreach($siswaList as $s)
                     @php
-                    // fallbacks: siswa->user->nama || siswa->nama || nisn
-                    $sNama = data_get($s, 'user.nama') ?? data_get($s, 'user.name') ?? ($s->nama ?? ($s->nisn ?? '-'));
+                    // fallbacks: siswa->user->nama || siswa->nama || nis
+                    $sNama = data_get($s, 'user.nama') ?? data_get($s, 'user.name') ?? ($s->nama ?? ($s->nis ?? '-'));
                     $sAvatar = asset('assets/profile/default.png');
                     if ($s->image) {
                         $sAvatar = asset('assets/profile/' . ltrim($s->image, '/'));
                     }
                     @endphp
                     <div class="student-list-item d-flex align-items-center gap-2">
-                        <img src="{{ $sAvatar }}" alt="avatar" class="rounded-circle border" style="width: 30px; height: 30px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('assets/profile/default.png') }}'">
-                        <div>
-                            {{ $sNama }}
-                            @if(!empty($s->nisn))
-                            <span class="student-badge">{{ $s->nisn }}</span>
+                        <img src="{{ $sAvatar }}" alt="avatar" class="rounded-circle border" style="width: 48px; height: 48px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('assets/profile/default.png') }}'">
+                        <div class="text-truncate">
+                            @if(!empty($s->nis))
+                            <span class="student-badge text-muted">{{ $s->nis }}</span>
                             @endif
+                            {{ $sNama }}
                         </div>
                     </div>
                     @endforeach

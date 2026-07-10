@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add New User - Super Admin Dashboard</title>
+    <title>{{ isset($user) ? 'Edit User' : 'Add New User' }} - Super Admin Dashboard</title>
 
     <!-- Favicon -->
     <link rel="icon" href="{{ asset('assets/images/logo.png') }}" type="image/x-icon">
@@ -87,6 +87,18 @@
             color: var(--sa-danger);
             font-size: var(--sa-font-size-xs);
             margin-top: var(--sa-spacing-xs);
+        }
+
+        .sa-user-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.7rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: var(--sa-secondary-light);
+            color: var(--sa-secondary);
+            margin-left: 0.5rem;
         }
     </style>
 </head>
@@ -183,7 +195,7 @@
                     <button class="sa-menu-toggle">
                         <i class="bi bi-list"></i>
                     </button>
-                    <h4 class="sa-page-title">Add New User</h4>
+                    <h4 class="sa-page-title">{{ isset($user) ? 'Edit User' : 'Add New User' }}</h4>
                 </div>
 
                 <div class="sa-topbar-right">
@@ -215,56 +227,99 @@
             <!-- Main Content Area -->
             <main class="sa-main-content">
                 <div class="sa-page-header">
-                    <h1 class="sa-page-header-title">Add New User</h1>
+                    <h1 class="sa-page-header-title">{{ isset($user) ? 'Edit User' : 'Add New User' }}</h1>
+                    @if(isset($user))
+                    <p class="sa-page-header-subtitle">
+                        User: <strong>{{ $user->nama }}</strong>
+                        @php
+                        $roleDisplay = '';
+                        switch($user->role) {
+                            case 'super_admin': $roleDisplay = 'Super Admin'; break;
+                            case 'admin_ppdb': $roleDisplay = 'Admin PPDB'; break;
+                            case 'admin_sa': $roleDisplay = 'Admin Sistem Akademik'; break;
+                            case 'admin_perpus': $roleDisplay = 'Admin Perpustakaan'; break;
+                            case 'admin_lab': $roleDisplay = 'Admin Laboratorium'; break;
+                            case 'admin_magang': $roleDisplay = 'Admin Magang'; break;
+                            case 'guru': $roleDisplay = 'Guru'; break;
+                            case 'siswa': $roleDisplay = 'Siswa'; break;
+                        }
+                        @endphp
+                        <span class="sa-user-badge">{{ $roleDisplay }}</span>
+                    </p>
+                    @else
                     <p class="sa-page-header-subtitle">Create a new user account in the system</p>
+                    @endif
                 </div>
 
                 <div class="sa-row">
                     <div class="sa-col sa-col-lg-8 sa-col-md-10 sa-col-sm-12">
                         <div class="sa-form-container">
-                            <form action="{{ route('admin.manage.users.store') }}" method="POST">
+                            <form action="{{ isset($user) ? route('admin.manage.users.update', $user->id) : route('admin.manage.users.store') }}" method="POST">
                                 @csrf
-
-                                <div class="mb-4">
-                                    <label for="nis_nip" class="sa-form-label">NIS / NIP</label>
-                                    <input type="text" name="nis_nip" id="nis_nip" class="sa-form-control @error('nis_nip') is-invalid @enderror"
-                                        value="{{ old('nis_nip', $user->nis_nip ?? '') }}">
-                                    @error('nis_nip')
-                                    <div class="sa-form-error">{{ $message }}</div>
-                                    @enderror
-                                </div>
+                                @if(isset($user))
+                                @method('PUT')
+                                @endif
 
                                 <div class="mb-4">
                                     <label for="nama" class="sa-form-label">Full Name</label>
-                                    <input type="text" name="nama" id="nama" class="sa-form-control @error('nama') is-invalid @enderror" value="{{ old('nama') }}" required autofocus>
+                                    <input type="text" name="nama" id="nama" class="sa-form-control @error('nama') is-invalid @enderror" value="{{ old('nama', $user->nama ?? '') }}" required autofocus>
                                     @error('nama')
                                     <div class="sa-form-error">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="mb-4">
-                                    <label for="email" class="sa-form-label">Email Addressqwerty</label>
-                                    <input type="email" name="email" id="email" class="sa-form-control @error('email') is-invalid @enderror" value="{{ old('email') }}">
-                                    @error('email')
+                                    <label for="nis_nip" class="sa-form-label">NIS/NIP (Optional)</label>
+                                    <input type="text" name="nis_nip" id="nis_nip" class="sa-form-control @error('nis_nip') is-invalid @enderror" value="{{ old('nis_nip', $user->nis_nip ?? '') }}">
+                                    @error('nis_nip')
                                     <div class="sa-form-error">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="mb-4">
-                                    <label for="password" class="sa-form-label">Password</label>
-                                    <input type="password" name="password" id="password" class="sa-form-control @error('password') is-invalid @enderror" required>
+                                    <label for="email" class="sa-form-label">Email Address (Optional)</label>
+                                    <input type="email" name="email" id="email" class="sa-form-control @error('email') is-invalid @enderror" value="{{ old('email', $user->email ?? '') }}">
+                                    @error('email')
+                                    <div class="sa-form-error">{{ $message }}</div>
+                                    @enderror
+                                    <div class="sa-form-text">If left empty, email will be auto-generated based on name.</div>
+                                </div>
+
+                                @if(isset($user))
+                                <div class="mb-4">
+                                    <label for="old_password" class="sa-form-label">Old Password</label>
+                                    <input type="password" name="old_password" id="old_password" class="sa-form-control @error('old_password') is-invalid @enderror">
+                                    @error('old_password')
+                                    <div class="sa-form-error">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                @endif
+
+                                <div class="mb-4">
+                                    <label for="password" class="sa-form-label">{{ isset($user) ? 'New Password (Optional)' : 'Password' }}</label>
+                                    <input type="password" name="password" id="password" class="sa-form-control @error('password') is-invalid @enderror" {{ isset($user) ? '' : 'required' }}>
                                     @error('password')
                                     <div class="sa-form-error">{{ $message }}</div>
                                     @enderror
+                                    @if(!isset($user))
                                     <div class="sa-form-text">Password must be at least 6 characters long</div>
+                                    @endif
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="password_confirmation" class="sa-form-label">{{ isset($user) ? 'Confirm New Password' : 'Confirm Password' }}</label>
+                                    <input type="password" name="password_confirmation" id="password_confirmation" class="sa-form-control @error('password_confirmation') is-invalid @enderror" {{ isset($user) ? '' : 'required' }}>
+                                    @error('password_confirmation')
+                                    <div class="sa-form-error">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
                                 <div class="mb-4">
                                     <label for="role" class="sa-form-label">User Role</label>
                                     <select name="role" id="role" class="sa-form-select @error('role') is-invalid @enderror" required>
-                                        <option value="" disabled selected>-- Select Role --</option>
+                                        <option value="" disabled {{ !isset($user) && !old('role') ? 'selected' : '' }}>-- Select Role --</option>
                                         @foreach($roles as $key => $value)
-                                        <option value="{{ $key }}" {{ old('role') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                                        <option value="{{ $key }}" {{ old('role', $user->role ?? '') == $key ? 'selected' : '' }}>{{ $value }}</option>
                                         @endforeach
                                     </select>
                                     @error('role')
@@ -277,7 +332,7 @@
                                         <i class="bi bi-arrow-left"></i> Back to Users
                                     </a>
                                     <button type="submit" class="sa-btn sa-btn-primary">
-                                        <i class="bi bi-person-plus"></i> Create User
+                                        <i class="bi bi-{{ isset($user) ? 'check-circle' : 'person-plus' }}"></i> {{ isset($user) ? 'Save Changes' : 'Create User' }}
                                     </button>
                                 </div>
                             </form>

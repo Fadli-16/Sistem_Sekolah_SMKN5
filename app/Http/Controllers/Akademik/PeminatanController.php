@@ -328,7 +328,8 @@ class PeminatanController extends Controller
     {
         $header = 'Tambah Data Peminatan';
 
-        $users = User::where('role', 'siswa')
+        $users = User::with('siswa')
+            ->where('role', 'siswa')
             ->whereHas('siswa', function ($q) {
                 $q->whereDoesntHave('peminatan');
             })
@@ -449,7 +450,8 @@ class PeminatanController extends Controller
     {
         $header = 'Edit Data Peminatan';
 
-        $users = User::where('role', 'siswa')
+        $users = User::with('siswa')
+            ->where('role', 'siswa')
             ->whereHas('siswa', function ($q) use ($peminatan) {
                 $q->whereDoesntHave('peminatan')
                   ->orWhere('id', $peminatan->siswa_id);

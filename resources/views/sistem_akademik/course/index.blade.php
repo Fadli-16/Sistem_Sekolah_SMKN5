@@ -213,7 +213,7 @@
                             }
                         @endphp
                         <div class="d-flex align-items-center gap-2">
-                            <img src="{{ $teacherAvatar }}" alt="avatar" class="rounded-circle border" style="width: 32px; height: 32px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('assets/profile/default.png') }}'">
+                            <img src="{{ $teacherAvatar }}" alt="avatar" class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('assets/profile/default.png') }}'">
                             <span>{{ $teacherName }}</span>
                         </div>
                     </td>

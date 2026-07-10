@@ -220,7 +220,8 @@ class MataPelajaranController extends Controller
     {
         // Jika ada model Guru spesifik, coba gunakan (opsional)
         if (class_exists(\App\Models\Guru::class)) {
-            $gurus = \App\Models\Guru::query();
+            $gurus = \App\Models\Guru::query()
+                ->whereNotIn('status', ['kepala sekolah', 'pegawai', 'pegawai tidak tetap']);
 
             // jika model Guru punya relasi 'user', eager load supaya kita bisa ambil nama user
             if (method_exists(\App\Models\Guru::class, 'user')) {
@@ -235,10 +236,11 @@ class MataPelajaranController extends Controller
                 $id = $g->user_id ?? $g->id;
                 $nama = $g->nama ?? $g->name ?? (isset($g->user) ? ($g->user->nama ?? $g->user->name ?? null) : null);
 
-                // buat objek sederhana yang blade bisa baca ->id dan ->nama / ->name
+                // buat objek sederhana yang blade bisa baca ->id, ->nama / ->name, dan ->jurusan
                 return (object) [
-                    'id'   => $id,
-                    'nama' => $nama,
+                    'id'      => $id,
+                    'nama'    => $nama,
+                    'jurusan' => $g->jurusan ?? 'Umum',
                     // keep original untuk referensi bila perlu
                     'original' => $g,
                 ];
@@ -252,6 +254,10 @@ class MataPelajaranController extends Controller
 
         return User::where('role', 'guru')
             ->select('id', 'name as nama', 'name')
-            ->get();
+            ->get()
+            ->map(function ($u) {
+                $u->jurusan = 'Umum';
+                return $u;
+            });
     }
 }

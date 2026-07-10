@@ -9,7 +9,6 @@ use App\Models\Kelas;
 use App\Imports\UsersImport;
 use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\UsersExport;
 use App\Exports\GuruExport;
 use App\Exports\SiswaExport;
 use Maatwebsite\Excel\Excel as ExcelWriter;
@@ -43,7 +42,7 @@ class UserController extends Controller
             'siswa'         => 'Siswa',
         ];
 
-        return view('admin.manage.users.create', compact('roles'));
+        return view('admin.manage.users.createOrEdit', compact('roles'));
     }
 
     /**
@@ -53,16 +52,18 @@ class UserController extends Controller
     {
         $data = $request->validate([
             'nama'     => 'required|string|max:255',
-            'nis_nip'  => 'required|string|max:255|unique:users,nis_nip',
-            'email'    => 'required|email|unique:users,email',
+            'nis_nip'  => 'nullable|string|max:255|unique:users,nis_nip',
+            'email'    => 'nullable|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
             'role'     => 'required|in:' . implode(',', array_keys($this->rolesList())),
         ]);
 
+        $email = !empty($data['email']) ? $data['email'] : \Illuminate\Support\Str::slug($data['nama']) . '@smkn5padang.sch.id';
+
         User::create([
             'nama'     => $data['nama'],
-            'nis_nip'  => $data['nis_nip'],
-            'email'    => $data['email'],
+            'nis_nip'  => $data['nis_nip'] ?? null,
+            'email'    => $email,
             'password' => Hash::make($data['password']),
             'role'     => $data['role'],
         ]);
@@ -79,7 +80,7 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
         $roles = $this->rolesList();
-        return view('admin.manage.users.edit', compact('user', 'roles'));
+        return view('admin.manage.users.createOrEdit', compact('user', 'roles'));
     }
 
     /**
@@ -92,14 +93,16 @@ class UserController extends Controller
         $data = $request->validate([
             'nama'     => 'required|string|max:255',
             'nis_nip'  => 'nullable|string|max:255|unique:users,nis_nip,' . $user->id,
-            'email'    => 'required|email|unique:users,email,' . $user->id,
+            'email'    => 'nullable|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
             'role'     => 'required|in:' . implode(',', array_keys($this->rolesList())),
         ]);
 
+        $email = !empty($data['email']) ? $data['email'] : \Illuminate\Support\Str::slug($data['nama']) . '@smkn5padang.sch.id';
+
         $user->nama  = $data['nama'];
-        $user->nis_nip = $data['nis_nip'];
-        $user->email = $data['email'];
+        $user->nis_nip = $data['nis_nip'] ?? null;
+        $user->email = $email;
         $user->role  = $data['role'];
         if (! empty($data['password'])) {
             $user->password = Hash::make($data['password']);
@@ -162,23 +165,22 @@ class UserController extends Controller
             'csv_file' => 'required|file|mimes:csv,txt',
         ]);
 
-        Excel::import(new UsersImport(), $request->file('csv_file'));
+        try {
+            Excel::import(new UsersImport(), $request->file('csv_file'));
 
-        return redirect()
-            ->route('admin.manage.users')
-            ->with('success', 'Import pengguna berhasil.');
-    }
-
-    /**
-     * Export all users ke CSV atau XLSX.
-     */
-    public function export(Request $request)
-    {
-        $format = $request->query('format', 'xlsx');
-        $now    = now()->format('Ymd_His');
-        $file   = "users-{$now}.{$format}";
-        $writerType = $format === 'csv' ? ExcelWriter::CSV : ExcelWriter::XLSX;
-        return Excel::download(new UsersExport, $file, $writerType);
+            return redirect()
+                ->route('admin.manage.users')
+                ->with('success', 'Import pengguna berhasil.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            $errorCode = $e->errorInfo[1] ?? null;
+            if ($errorCode == 1062) {
+                // Duplicate entry
+                return redirect()->back()->with('error', 'Gagal mengimpor data: Terdapat Email atau NIP/NIS duplikat (sudah terdaftar sebelumnya).');
+            }
+            return redirect()->back()->with('error', 'Terjadi kesalahan pada database: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat mengimpor: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -202,12 +204,13 @@ class UserController extends Controller
     {
         $jurusan = $request->query('jurusan') ?: null;
         $kelasId = $request->query('kelas_id') ? (int) $request->query('kelas_id') : null;
+        $withPeminatan = $request->query('with_peminatan') == '1';
         $format  = $request->query('format', 'xlsx');
         $now     = now()->format('Ymd_His');
         $suffix  = $jurusan ? '_' . \Illuminate\Support\Str::slug($jurusan) : '';
         $file    = "siswa{$suffix}-{$now}.{$format}";
         $writerType = $format === 'csv' ? ExcelWriter::CSV : ExcelWriter::XLSX;
-        return Excel::download(new SiswaExport($jurusan, $kelasId), $file, $writerType);
+        return Excel::download(new SiswaExport($jurusan, $kelasId, $withPeminatan), $file, $writerType);
     }
 
     /**

@@ -66,9 +66,19 @@ class GuruController extends Controller
 
         $gurus = $query->orderByRaw("COALESCE(users.nama, '') asc")->get();
         
+        $admins = User::with('adminProfile')
+            ->whereIn('role', [
+                'super_admin', 
+                'admin_ppdb', 
+                'admin_sa', 
+                'admin_perpus', 
+                'admin_lab', 
+                'admin_magang'
+            ])->orderBy('nama')->get();
+
         $jurusanList = Guru::select('jurusan')->distinct()->whereNotNull('jurusan')->orderBy('jurusan')->get();
 
-        return view('sistem_akademik.guru.index', compact('gurus', 'title', 'header', 'jurusanList'));
+        return view('sistem_akademik.guru.index', compact('gurus', 'admins', 'title', 'header', 'jurusanList'));
     }
 
     public function create()

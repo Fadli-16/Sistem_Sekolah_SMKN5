@@ -95,20 +95,20 @@ button:hover {
 
 .student-list {
     margin-top: 1rem;
-    max-height: 200px;
+    max-height: 400px;
     overflow-y: auto;
     border: 1px solid #eee;
     border-radius: 5px;
     padding: 0.5rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
 }
 
 .student-list-item {
     padding: 0.5rem;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.student-list-item:last-child {
-    border-bottom: none;
+    border: 1px solid #f0f0f0;
+    border-radius: 5px;
 }
 
 .student-badge {
@@ -117,5 +117,5 @@ button:hover {
     background-color: #e9ecef;
     border-radius: 20px;
     font-size: 0.85rem;
-    margin-left: 0.5rem;
+    margin-right: 0.5rem;
 }

@@ -196,6 +196,91 @@
             </table>
         </div>
     </div>
+
+    {{-- Table Administrator --}}
+    <div class="page-header mt-5 mb-2">
+        <div>
+            <h4 class="page-title">Data Administrator</h4>
+        </div>
+    </div>
+    <div class="table-container mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover" id="admin-table">
+                <thead>
+                    <tr>
+                        <th width="5%">No</th>
+                        <th>Administrator</th>
+                        <th>Jurusan</th>
+                        <th>Status</th>
+                        <th>Jenis Kelamin</th>
+                        <th>Tempat, Tgl Lahir</th>
+                        <th>Alamat</th>
+                        @if(Auth::user()->role === 'super_admin')
+                        <th width="10%">Aksi</th>
+                        @endif
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($admins as $index => $admin)
+                    @php
+                        $avatarAdmin = $admin->adminProfile && $admin->adminProfile->image
+                            ? asset('assets/profile/' . ltrim($admin->adminProfile->image, '/'))
+                            : asset('assets/profile/default.png');
+                    @endphp
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>
+                            <div class="cell-name-wrap">
+                                <img src="{{ $avatarAdmin }}" alt="avatar" class="avatar-circle"
+                                     onerror="this.onerror=null;this.src='{{ asset('assets/profile/default.png') }}'">
+                                <div class="name-info">
+                                    <div class="name">{{ $admin->nama }}</div>
+                                    <div class="sub" style="margin-top:2px;">NIP: {{ $admin->nis_nip ?? '-' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            @if($admin->adminProfile && $admin->adminProfile->jurusan)
+                            <span class="badge-modern badge-blue">{{ $admin->adminProfile->jurusan }}</span>
+                            @else -
+                            @endif
+                        </td>
+                        <td>
+                            <span class="badge-modern badge-blue">{{ ucwords(str_replace('_', ' ', $admin->role)) }}</span>
+                        </td>
+                        <td>
+                            @if($admin->adminProfile && $admin->adminProfile->jenis_kelamin === 'Laki-laki')
+                                <span class="badge-modern badge-info"><i class="bi bi-gender-male"></i> L</span>
+                            @elseif($admin->adminProfile && $admin->adminProfile->jenis_kelamin === 'Perempuan')
+                                <span class="badge-modern badge-purple"><i class="bi bi-gender-female"></i> P</span>
+                            @else -
+                            @endif
+                        </td>
+                        <td>
+                            @php
+                                $tempatAdmin = ($admin->adminProfile && $admin->adminProfile->tempat_lahir) ? $admin->adminProfile->tempat_lahir . ', ' : '';
+                                $tanggalAdmin = ($admin->adminProfile && !empty($admin->adminProfile->tanggal_lahir)) ? \Carbon\Carbon::parse($admin->adminProfile->tanggal_lahir)->format('d M Y') : '';
+                            @endphp
+                            {{ $tempatAdmin . $tanggalAdmin ?: '-' }}
+                        </td>
+                        <td>{{ \Illuminate\Support\Str::limit($admin->adminProfile->alamat ?? '-', 30) }}</td>
+                        @if(Auth::user()->role === 'super_admin')
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('admin.manage.users.edit', $admin->id) }}"
+                                   class="btn-icon btn-icon-warning" title="Edit">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </a>
+                            </div>
+                        </td>
+                        @endif
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 @endsection
 
@@ -204,6 +289,23 @@
     $(document).ready(function () {
         if (!$.fn.DataTable.isDataTable('#data-table')) {
             $('#data-table').DataTable({
+                stateSave: true,
+                responsive: true,
+                columnDefs: [{ orderable: false, targets: [0, -1] }],
+                language: {
+                    search: "Cari:",
+                    lengthMenu: "Tampilkan _MENU_ data",
+                    info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                    infoEmpty: "Tidak ada data",
+                    infoFiltered: "(difilter dari _MAX_ total data)",
+                    paginate: { first: "«", last: "»", next: "›", previous: "‹" },
+                    zeroRecords: "Data tidak ditemukan"
+                }
+            });
+        }
+
+        if (!$.fn.DataTable.isDataTable('#admin-table')) {
+            $('#admin-table').DataTable({
                 stateSave: true,
                 responsive: true,
                 columnDefs: [{ orderable: false, targets: [0, -1] }],

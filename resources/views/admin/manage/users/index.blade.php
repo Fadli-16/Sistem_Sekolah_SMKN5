@@ -343,6 +343,38 @@
             });
             $('#siswaKelasFilter').val('');
         });
+
+        // SweetAlert untuk Export Siswa + Peminatan
+        $('#btnExportSiswa').on('click', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: "Sertakan Data Peminatan?",
+                text: "Apakah Anda juga ingin mengekspor data peminatan siswa (Minat, Jurusan, Jenis Pekerjaan, Link Raport, dll) bersamaan dengan data biodata?",
+                icon: "question",
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonColor: "#198754",
+                denyButtonColor: "#0dcaf0",
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: "Ya, sertakan",
+                denyButtonText: "Tidak, biodata saja",
+                cancelButtonText: "Batal",
+            }).then((result) => {
+                const form = $('#exportSiswaForm');
+                // Remove existing hidden input if any
+                form.find('input[name="with_peminatan"]').remove();
+
+                if (result.isConfirmed) {
+                    form.append('<input type="hidden" name="with_peminatan" value="1">');
+                    form.submit();
+                    $('#exportSiswaModal').modal('hide');
+                } else if (result.isDenied) {
+                    form.append('<input type="hidden" name="with_peminatan" value="0">');
+                    form.submit();
+                    $('#exportSiswaModal').modal('hide');
+                }
+            });
+        });
     });
 </script>
 
@@ -443,7 +475,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="sa-btn sa-btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="submit" form="exportSiswaForm" class="sa-btn sa-btn-success">
+                <button type="button" id="btnExportSiswa" class="sa-btn sa-btn-success">
                     <i class="bi bi-download me-1"></i> Download
                 </button>
             </div>

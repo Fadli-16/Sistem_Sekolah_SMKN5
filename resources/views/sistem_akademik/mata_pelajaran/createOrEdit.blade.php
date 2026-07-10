@@ -80,7 +80,7 @@
                             required>
                         <option value="" disabled {{ !$isEdit ? 'selected' : '' }}>-- Cari / Pilih Guru --</option>
                         @foreach(($gurus ?? collect()) as $g)
-                        <option value="{{ $g->id }}"
+                        <option value="{{ $g->id }}" data-jurusan="{{ $g->jurusan ?? 'Umum' }}"
                             {{ old('guru_id', $mapel->guru_id ?? '') == $g->id ? 'selected' : '' }}>
                             {{ $g->nama ?? $g->name ?? '-' }}
                         </option>
@@ -122,7 +122,73 @@ $(document).ready(function () {
     });
 
     /* ════════════════════════════════════════════════
-       2. Autocomplete untuk Nama Mata Pelajaran
+       2. Filter Guru Berdasarkan Jurusan
+    ════════════════════════════════════════════════ */
+    const specialJurusan = [
+        'Bisnis Konstruksi dan Properti',
+        'Desain Pemodelan dan Informasi Bangunan',
+        'Teknik Audio Video',
+        'Teknik Elektronika Industri',
+        'Teknik Instalasi Tenaga Listrik',
+        'Teknik Pemesinan',
+        'Teknik Kendaraan Ringan',
+        'Teknik Bodi Kendaraan Ringan',
+        'Teknik Bisnis Sepeda Motor',
+        'Teknik Pendingin dan Tata Udara',
+        'Teknik Komputer Jaringan'
+    ];
+
+    const guruSelect = $('#guru_id');
+    const originalGuruOptions = guruSelect.find('option').clone();
+
+    $('#jurusan').on('change', function() {
+        const selectedJurusan = $(this).val();
+        if (!selectedJurusan) return;
+
+        const isSpecial = specialJurusan.includes(selectedJurusan);
+        const currentGuruId = guruSelect.val();
+
+        guruSelect.empty();
+
+        originalGuruOptions.each(function() {
+            const opt = $(this);
+            const val = opt.val();
+            const guruJurusan = opt.data('jurusan');
+
+            if (!val) {
+                guruSelect.append(opt.clone());
+                return;
+            }
+
+            const guruIsSpecial = specialJurusan.includes(guruJurusan);
+
+            let match = false;
+            if (isSpecial) {
+                match = (guruJurusan === selectedJurusan);
+            } else {
+                match = (!guruIsSpecial);
+            }
+
+            if (match) {
+                guruSelect.append(opt.clone());
+            }
+        });
+
+        if (guruSelect.find('option[value="'+currentGuruId+'"]').length > 0) {
+            guruSelect.val(currentGuruId);
+        } else {
+            guruSelect.val(null);
+        }
+        
+        guruSelect.trigger('change.select2');
+    });
+
+    if ($('#jurusan').val()) {
+        $('#jurusan').trigger('change');
+    }
+
+    /* ════════════════════════════════════════════════
+       3. Autocomplete untuk Nama Mata Pelajaran
     ════════════════════════════════════════════════ */
     const suggestions = @json($namaMapelList ?? []);
     const input  = document.getElementById('nama_mata_pelajaran');

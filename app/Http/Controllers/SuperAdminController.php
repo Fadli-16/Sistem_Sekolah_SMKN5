@@ -58,25 +58,25 @@ class SuperAdminController extends Controller
             'siswa' => 'Siswa'
         ];
 
-        return view('admin.manage.users.create', compact('title', 'header', 'roles'));
+        return view('admin.manage.users.createOrEdit', compact('title', 'header', 'roles'));
     }
 
     public function storeUser(Request $request)
     {
-        $isOptionalNip = $request->role === 'guru' && auth()->check() && in_array(auth()->user()->role, ['admin_sa', 'super_admin']);
-
         $data = $request->validate([
             'nama' => 'required|string|max:255',
-            'nis_nip' => $isOptionalNip ? 'nullable|string|max:20' : 'required|string|max:20',
+            'nis_nip' => 'nullable|string|max:20',
             'email' => 'nullable|string|email|max:255|unique:users',
             'password' => 'required|string|min:4',
             'role' => ['required', Rule::in(['super_admin', 'admin_ppdb', 'admin_sa', 'admin_perpus', 'admin_lab', 'admin_magang', 'wakil_perusahaan', 'guru', 'siswa'])],
         ]);
 
+        $email = $request->email ?: \Illuminate\Support\Str::slug($request->nama) . '@smkn5padang.sch.id';
+
         $user = User::create([
             'nis_nip' => $request->nis_nip,
             'nama' => $request->nama,
-            'email' => $request->email,
+            'email' => $email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
         ]);
@@ -89,9 +89,7 @@ class SuperAdminController extends Controller
                 'alamat'        => null,
                 'no_hp'         => null,
             ]);
-        }
-
-        if ($data['role'] === 'guru') {
+        } elseif ($data['role'] === 'guru') {
             $user->guru()->create([
                 'nip'          => $data['nis_nip'],
                 'kelas'        => null,
@@ -100,6 +98,8 @@ class SuperAdminController extends Controller
                 'alamat'       => null,
                 'no_hp'        => null,
             ]);
+        } elseif (in_array($data['role'], ['super_admin', 'admin_ppdb', 'admin_sa', 'admin_perpus', 'admin_lab', 'admin_magang'])) {
+            $user->adminProfile()->create([]);
         }
 
         return redirect()->route('admin.manage.users')
@@ -124,16 +124,14 @@ class SuperAdminController extends Controller
             'siswa' => 'Siswa'
         ];
 
-        return view('admin.manage.users.edit', compact('title', 'header', 'user', 'roles'));
+        return view('admin.manage.users.createOrEdit', compact('title', 'header', 'user', 'roles'));
     }
 
     public function updateUser(Request $request, User $user)
     {
-        $isOptionalNip = $request->role === 'guru' && auth()->check() && in_array(auth()->user()->role, ['admin_sa', 'super_admin']);
-
         $data = $request->validate([
             'nama'              => 'required|string|max:255',
-            'nis_nip'           => $isOptionalNip ? 'nullable|string|max:20' : 'required|string|max:20',
+            'nis_nip'           => 'nullable|string|max:20',
             'email'             => 'nullable|string|email|max:255|unique:users,email,' . $user->id,
             'old_password'      => ['required_with:password', function ($attr, $value, $fail) use ($user) {
                 if (!Hash::check($value, $user->password)) {
@@ -155,59 +153,60 @@ class SuperAdminController extends Controller
             ])],
         ]);
 
+        $email = $request->email ?: \Illuminate\Support\Str::slug($request->nama) . '@smkn5padang.sch.id';
+
         $update = [
             'nama'    => $data['nama'],
-            'nis_nip' => $data['nis_nip'],
-            'email'   => $data['email'],
+            'nis_nip' => $data['nis_nip'] ?? null,
+            'email'   => $email,
             'role'    => $data['role'],
         ];
 
-        // Jika ada new password, hash dan include
-        if (!empty($data['password'])) {
-            $update['password'] = Hash::make($data['password']);
-        }
-
-        // Jika role menjadi siswa → pastikan ada record di siswa
-        if ($data['role'] === 'siswa') {
-            $s = $user->siswa()
-                ->updateOrCreate([], [
-                    'nis' => $data['nis_nip'],
-                    'kelas_id'      => null,
-                    'tanggal_lahir' => null,
-                    'agama'         => null,
-                    'alamat'        => null,
-                    'no_hp'         => null,
-                ]);
-            // jika sebelumnya guru, hapus guru
-            if ($user->wasChanged('role') && $user->getOriginal('role') === 'guru') {
-                $user->guru()->delete();
-            }
-        }
-
-        // Jika role menjadi guru → pastikan ada record di guru
-        if ($data['role'] === 'guru') {
-            if ($user->guru) {
-                $user->guru->update([
-                    'nip' => $data['nis_nip'],
-                ]);
-            } else {
-                $user->guru()->create([
-                    'nip'           => $data['nis_nip'],
-                    'kelas'         => null,
-                    'jurusan'       => null,
-                    'tanggal_lahir' => null,
-                    'agama'         => null,
-                    'alamat'        => null,
-                    'no_hp'         => null,
-                ]);
-            }
-            // jika sebelumnya siswa, hapus siswa
-            if ($user->wasChanged('role') && $user->getOriginal('role') === 'siswa') {
-                $user->siswa()->delete();
-            }
-        }
+        $oldRole = $user->role;
+        $newRole = $data['role'];
 
         $user->update($update);
+
+        // Jika ada new password, hash dan include
+        if (!empty($data['password'])) {
+            $user->update(['password' => Hash::make($data['password'])]);
+        }
+
+        // Kelola data siswa
+        if ($newRole === 'siswa') {
+            $user->siswa()->updateOrCreate([], [
+                'nis' => $data['nis_nip'],
+                'kelas_id'      => null,
+                'tanggal_lahir' => null,
+                'agama'         => null,
+                'alamat'        => null,
+                'no_hp'         => null,
+            ]);
+        } else {
+            $user->siswa()->delete();
+        }
+
+        // Kelola data guru
+        if ($newRole === 'guru') {
+            $user->guru()->updateOrCreate([], [
+                'nip' => $data['nis_nip'],
+                'kelas'         => null,
+                'jurusan'       => null,
+                'tanggal_lahir' => null,
+                'agama'         => null,
+                'alamat'        => null,
+                'no_hp'         => null,
+            ]);
+        } else {
+            $user->guru()->delete();
+        }
+
+        // Kelola data admin
+        if (in_array($newRole, ['super_admin', 'admin_ppdb', 'admin_sa', 'admin_perpus', 'admin_lab', 'admin_magang'])) {
+            $user->adminProfile()->updateOrCreate([], []);
+        } else {
+            $user->adminProfile()->delete();
+        }
 
         return redirect()->route('admin.manage.users')
             ->with('status', 'success')
