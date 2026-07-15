@@ -980,3 +980,65 @@ section {
         transform: translateY(0);
     }
 }
+
+/* Berita Section Custom Styles */
+.transition-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.transition-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+.berita-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+.berita-filter-form {
+    transition: all 0.3s ease;
+}
+.berita-filter-form:focus-within {
+    box-shadow: 0 8px 15px rgba(0,0,0,0.05) !important;
+}
+.berita-filter-form input, 
+.berita-filter-form select, 
+.berita-filter-form button,
+.berita-filter-form .btn {
+    font-size: 0.9rem;
+}
+.berita-filter-form input:focus, 
+.berita-filter-form select:focus {
+    box-shadow: none !important;
+    background-color: #fff !important;
+    border: 1px solid var(--primary-light) !important;
+}
+
+/* Custom Pagination for Berita */
+.custom-pagination .pagination {
+    gap: 5px;
+}
+.custom-pagination .page-item .page-link {
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.custom-pagination .page-item.active .page-link,
+.custom-pagination .page-item .page-link:hover {
+    background-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(255, 144, 34, 0.3);
+}
+.custom-pagination .page-item.disabled .page-link {
+    background-color: #f8fafc;
+    color: #adb5bd;
+    box-shadow: none;
+}

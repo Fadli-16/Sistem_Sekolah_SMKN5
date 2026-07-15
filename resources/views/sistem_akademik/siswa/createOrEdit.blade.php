@@ -99,8 +99,8 @@
                     </div>
                     <div class="col-md-6">
                         <label for="password" class="form-label">
-                            Password
-                            <small class="text-muted fw-normal">(opsional, otomatis jika kosong)</small>
+                            Password <span class="text-danger">*</span>
+                            <small class="text-muted fw-normal">({{ isset($siswa) ? 'kosongkan jika tidak diubah' : 'jika dikosongkan, default: user123' }})</small>
                         </label>
                         <div class="input-group has-validation">
                             <input type="password" class="form-control @error('password') is-invalid @enderror"

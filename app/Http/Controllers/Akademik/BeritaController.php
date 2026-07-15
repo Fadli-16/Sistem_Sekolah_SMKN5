@@ -161,6 +161,7 @@ class BeritaController extends Controller
             'kategori' => 'required|string|in:informasi,prestasi,pemberitahuan',
             'status' => 'required|in:publish,draft',
             'remove_file' => 'nullable|in:1',
+            'remove_foto' => 'nullable|in:1',
         ]);
 
         $berita = Berita::findOrFail($id);
@@ -179,6 +180,12 @@ class BeritaController extends Controller
             } catch (\Throwable $e) {
                 Log::warning('Berita image upload/update failed: ' . $e->getMessage());
             }
+        } elseif ($request->filled('remove_foto') && $request->remove_foto == '1') {
+            // user requests to remove existing foto
+            if ($berita->foto && file_exists(public_path('assets/berita/' . $berita->foto))) {
+                @unlink(public_path('assets/berita/' . $berita->foto));
+            }
+            $berita->foto = null;
         }
 
         // Handle file upload / removal

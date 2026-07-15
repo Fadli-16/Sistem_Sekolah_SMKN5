@@ -105,8 +105,13 @@ class SiswaController extends Controller
             return redirect()->back()->with('status', 'error')->with('message', 'Kelas tidak ditemukan.');
         }
 
-        $email = $request->email ?: strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $request->nis)) . '@siswa.sch.id';
-        $password = $request->password ? Hash::make($request->password) : Hash::make($request->nis);
+        $email = $request->email ?: strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $request->nama)) . '@gmail.com';
+        // pastikan unik
+        while(User::where('email', $email)->exists()){
+            $email = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $request->nama)) . rand(10,9999) . '@gmail.com';
+        }
+
+        $password = $request->password ? Hash::make($request->password) : Hash::make('user123');
 
         // create user
         $user = User::create([
@@ -124,11 +129,11 @@ class SiswaController extends Controller
             'kelas_id' => $kelas->id,
             'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
-            'alamat' => $request->alamat,
-            'tahun_masuk' => $request->tahun_masuk,
-            'no_hp' => $request->no_hp,
-            'jenis_kelamin' => $request->jenis_kelamin ?? null,
-            'agama' => $request->agama ?? null,
+            'alamat' => $request->alamat ?? '-',
+            'tahun_masuk' => $request->tahun_masuk ?? date('Y'),
+            'no_hp' => $request->no_hp ?? '-',
+            'jenis_kelamin' => $request->jenis_kelamin ?? 'Laki-laki',
+            'agama' => $request->agama ?? '-',
         ]);
 
         // handle image if provided
@@ -184,7 +189,7 @@ class SiswaController extends Controller
             return redirect()->back()->with('status', 'error')->with('message', 'Kelas tidak ditemukan.');
         }
 
-        $email = $request->email ?: strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $request->nis)) . '@siswa.sch.id';
+        $email = $request->email ?: $siswa->user->email;
 
         // update user
         $siswa->user->update([
@@ -200,10 +205,10 @@ class SiswaController extends Controller
             'kelas_id' => $kelas->id,
             'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
-            'alamat' => $request->alamat,
-            'no_hp' => $request->no_hp,
-            'jenis_kelamin' => $request->jenis_kelamin ?? null,
-            'agama' => $request->agama ?? null,
+            'alamat' => $request->alamat ?? '-',
+            'no_hp' => $request->no_hp ?? '-',
+            'jenis_kelamin' => $request->jenis_kelamin ?? 'Laki-laki',
+            'agama' => $request->agama ?? '-',
         ]);
 
         // replace image if uploaded

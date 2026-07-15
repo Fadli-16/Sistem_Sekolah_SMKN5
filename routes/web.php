@@ -154,14 +154,20 @@ Route::prefix('sistem-akademik')
                 ->name('get-students-by-jurusan');
         });
 
-        /*
+    /*
     |--------------------------------------------------------------------------
-    | BERITA - KHUSUS ADMIN & VIEWERS
+    | BERITA - BISA DIAKSES SEMUA ROLE
+    |--------------------------------------------------------------------------
+    */
+        Route::get('berita', [BeritaController::class, 'index'])->name('berita.index');
+        Route::get('berita/{berita}', [BeritaController::class, 'show'])->name('berita.show');
+
+    /*
+    |--------------------------------------------------------------------------
+    | GURU & SISWA - KHUSUS ADMIN & VIEWERS
     |--------------------------------------------------------------------------
     */
         Route::middleware(['role:super_admin,admin_sa,guru_kepsek_wakil'])->group(function () {
-            Route::get('berita', [BeritaController::class, 'index'])->name('berita.index');
-            Route::get('berita/{berita}', [BeritaController::class, 'show'])->name('berita.show');
             Route::get('guru', [GuruController::class, 'index'])->name('guru.index');
             Route::get('guru/{guru}', [GuruController::class, 'show'])->name('guru.show');
             Route::get('siswa', [SiswaController::class, 'index'])->name('siswa.index');

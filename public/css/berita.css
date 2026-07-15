@@ -129,3 +129,21 @@
         }
     }
 
+    /* Make iframes (YouTube videos) responsive */
+    .berita-content iframe,
+    .news-show .article iframe,
+    .note-editor .note-editing-area iframe {
+        max-width: 100%;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        min-height: 300px;
+        border: none;
+    }
+
+    /* Fix Summernote Lite modal black screen issue in Bootstrap 5 */
+    .note-modal-backdrop {
+        display: none !important;
+    }
+    .note-modal {
+        z-index: 1050 !important;
+    }

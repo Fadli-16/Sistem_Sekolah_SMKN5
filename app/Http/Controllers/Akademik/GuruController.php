@@ -96,26 +96,38 @@ class GuruController extends Controller
         $request->validate([
             'nama'          => 'required|string|max:255',
             'email'         => 'nullable|email|unique:users',
-            'password'      => 'required|min:6',
+            'password'      => 'nullable|min:6',
             'nip'           => $isOptionalNip ? 'nullable|string|max:20|unique:guru' : 'required|string|max:20|unique:guru',
             'jurusan'       => 'nullable|string',
-            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
-            'agama'         => 'required|string',
+            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
+            'agama'         => 'nullable|string',
             'tempat_lahir'  => 'nullable|string',
-            'tanggal_lahir' => 'required|date',
-            'alamat'        => 'required',
+            'tanggal_lahir' => 'nullable|date',
+            'alamat'        => 'nullable',
             'no_hp'         => 'nullable|string',
             'status'        => 'required|in:guru,guru tidak tetap,pegawai,pegawai tidak tetap,kepala sekolah,wakil kepala,bendahara,kepala jurusan,kepala bengkel',
             'jabatan_jurusan' => 'nullable|string',
             'image'         => 'nullable|image'
         ]);
 
+        $email = $request->email;
+        if (empty($email)) {
+            $baseName = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $request->nama));
+            $email = $baseName . '@gmail.com';
+            // pastikan unik
+            while(User::where('email', $email)->exists()){
+                $email = $baseName . rand(10, 9999) . '@gmail.com';
+            }
+        }
+
+        $password = $request->password ? Hash::make($request->password) : Hash::make('user123');
+
         // Create user with role 'guru'
         $user = User::create([
             'nis_nip'  => $request->nip,
             'nama'     => $request->nama,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
+            'email'    => $email,
+            'password' => $password,
             'role'     => 'guru',
         ]);
 
@@ -126,11 +138,11 @@ class GuruController extends Controller
             'jurusan'       => $request->jurusan,
             'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
-            'alamat'        => $request->alamat,
-            'no_hp'         => $request->no_hp,
+            'alamat'        => $request->alamat ?? '-',
+            'no_hp'         => $request->no_hp ?? '-',
             'status'        => $request->status,
             'spesialisasi' => in_array($request->status, ['wakil kepala', 'bendahara', 'kepala jurusan', 'kepala bengkel']) ? $request->spesialisasi : null,
-            'jenis_kelamin' => $request->jenis_kelamin,
+            'jenis_kelamin' => $request->jenis_kelamin ?? 'Laki-laki',
             'agama'         => $request->agama,
         ]);
 
@@ -199,11 +211,11 @@ class GuruController extends Controller
             'jurusan'       => $request->jurusan,
             'tempat_lahir'  => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
-            'alamat'        => $request->alamat,
-            'no_hp'         => $request->no_hp,
+            'alamat'        => $request->alamat ?? '-',
+            'no_hp'         => $request->no_hp ?? '-',
             'status'        => $request->status,
             'spesialisasi' => in_array($request->status, ['wakil kepala', 'bendahara', 'kepala jurusan', 'kepala bengkel']) ? $request->spesialisasi : null,
-            'jenis_kelamin' => $request->jenis_kelamin,
+            'jenis_kelamin' => $request->jenis_kelamin ?? 'Laki-laki',
             'agama'         => $request->agama,
         ]);
 

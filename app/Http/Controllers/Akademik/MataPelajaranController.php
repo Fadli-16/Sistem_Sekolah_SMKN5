@@ -20,7 +20,7 @@ class MataPelajaranController extends Controller
 
         if ($user && $user->role === 'guru') {
             $status = $user->guru->status ?? '';
-            if (!in_array($status, ['kepala sekolah', 'wakil kepala'])) {
+            if (!in_array(strtolower($status), ['kepala sekolah', 'wakil kepala', 'kepala jurusan'])) {
                 $query->where('guru_id', $user->id);
             }
         }

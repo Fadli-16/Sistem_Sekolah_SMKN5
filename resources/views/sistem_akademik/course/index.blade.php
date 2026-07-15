@@ -12,11 +12,11 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">{{ $header }}</h1>
-            <p class="page-subtitle"><i class="bi bi-calendar3 me-1"></i>Kelola jadwal dan course pembelajaran</p>
+            <p class="page-subtitle"><i class="bi bi-calendar3 me-1"></i>Kelola jadwal pembelajaran</p>
         </div>
         @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
         <a href="{{ route('sistem_akademik.course.create') }}" class="btn-primary-app">
-            <i class="bi bi-plus-lg"></i> Tambah Course
+            <i class="bi bi-plus-lg"></i> Tambah Jadwal
         </a>
         @endif
     </div>

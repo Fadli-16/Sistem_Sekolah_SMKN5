@@ -64,7 +64,7 @@
                         @error('nama')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
-                        <label for="email" class="form-label">Email</label>
+                        <label for="email" class="form-label">Email <small class="text-muted fw-normal">(Opsional - otomatis dibuat jika kosong)</small></label>
                         <input type="email" class="form-control @error('email') is-invalid @enderror"
                                id="email" name="email" value="{{ old('email', $guru->user->email ?? '') }}">
                         @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -80,12 +80,12 @@
                     </div>
                     <div class="col-md-6">
                         <label for="password" class="form-label">
-                            Password
-                            <small class="text-muted fw-normal">({{ isset($guru) ? 'kosongkan jika tidak diubah' : 'wajib diisi' }})</small>
+                            Password <span class="text-danger">*</span>
+                            <small class="text-muted fw-normal">({{ isset($guru) ? 'kosongkan jika tidak diubah' : 'jika dikosongkan, default: user123' }})</small>
                         </label>
                         <div class="input-group has-validation">
                             <input type="password" class="form-control @error('password') is-invalid @enderror"
-                                   id="password" name="password" {{ isset($guru) ? '' : 'required' }}>
+                                   id="password" name="password">
                             <span class="input-group-text toggle-password" style="cursor: pointer;">
                                 <i class="bi bi-eye"></i>
                             </span>

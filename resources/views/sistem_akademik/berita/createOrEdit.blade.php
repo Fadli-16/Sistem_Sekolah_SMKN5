@@ -2,7 +2,7 @@
 
 @section('css')
     <link href="{{ asset('css/berita.css') }}" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
 @endsection
 
 @section('content')
@@ -70,8 +70,14 @@
                     <div class="col-md-6">
                         <label for="upload" class="form-label">Foto Berita</label>
                         @if(isset($berita) && $berita->foto)
-                            <img src="{{ asset('assets/berita/' . $berita->foto) }}" id="output_image"
-                                 class="d-block mb-2" style="max-width:200px;max-height:150px;object-fit:cover;border-radius:8px;">
+                            <div class="mb-2 d-flex flex-column align-items-start gap-2">
+                                <img src="{{ asset('assets/berita/' . $berita->foto) }}" id="output_image"
+                                     class="d-block" style="max-width:200px;max-height:150px;object-fit:cover;border-radius:8px;">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="remove_foto" id="remove_foto" value="1">
+                                    <label class="form-check-label" for="remove_foto" style="font-size:0.8rem;color:#ef4444;">Hapus foto</label>
+                                </div>
+                            </div>
                         @else
                             <img src="" id="output_image" class="d-block mb-2"
                                  style="max-width:200px;max-height:150px;object-fit:cover;border-radius:8px;display:none!important;">
@@ -138,6 +144,67 @@
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 <script>
     $(document).ready(function() {
+        // Custom button for YouTube
+        var YoutubeButton = function(context) {
+            var ui = $.summernote.ui;
+            var button = ui.button({
+                contents: '<i class="bi bi-youtube text-danger"></i> Video YT',
+                tooltip: 'Sisipkan Video YouTube',
+                click: function() {
+                    context.invoke('editor.saveRange');
+                    
+                    Swal.fire({
+                        title: 'Sisipkan Video',
+                        text: 'Masukkan Tautan YouTube',
+                        input: 'text',
+                        inputPlaceholder: 'https://www.youtube.com/watch?v=...',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sisipkan',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#e1306c',
+                        inputValidator: (value) => {
+                            if (!value) {
+                                return 'URL YouTube tidak boleh kosong!';
+                            }
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            context.invoke('editor.restoreRange');
+                            context.invoke('editor.focus');
+                            
+                            var url = result.value;
+                            var match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+                            
+                            if (match && match[1].length === 11) {
+                                var videoId = match[1];
+                                var embedUrl = "https://www.youtube-nocookie.com/embed/" + videoId;
+                                
+                                var iframe = $('<iframe>', {
+                                    src: embedUrl,
+                                    width: '100%',
+                                    height: '400',
+                                    frameborder: '0',
+                                    allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
+                                    referrerpolicy: 'strict-origin-when-cross-origin',
+                                    allowfullscreen: 'true'
+                                });
+                                
+                                var wrapper = $('<div>', {
+                                    class: 'ratio ratio-16x9 my-3'
+                                }).append(iframe);
+                                
+                                context.invoke('editor.insertNode', wrapper[0]);
+                            } else {
+                                Swal.fire('Gagal!', 'Tautan YouTube tidak valid atau ID video tidak ditemukan.', 'error');
+                            }
+                        }
+                    });
+                }
+            });
+            return button.render();
+        };
+
         $('#isi').summernote({
             placeholder: 'Tulis isi berita di sini...',
             tabsize: 2,
@@ -148,9 +215,12 @@
                 ['color', ['color']],
                 ['para', ['ul', 'ol', 'paragraph']],
                 ['table', ['table']],
-                ['insert', ['link', 'picture', 'video']],
+                ['insert', ['link', 'picture', 'youtube']],
                 ['view', ['fullscreen', 'codeview', 'help']]
             ],
+            buttons: {
+                youtube: YoutubeButton
+            },
             callbacks: {
                 onInit: function() {
                     $(this).summernote('code', $(this).val());

@@ -61,6 +61,207 @@
         </div>
     </section>
 
+    <!-- Berita & Informasi Section -->
+    <section id="berita-section" class="py-5 bg-light">
+        <div class="container">
+            <div class="section-header text-center mb-5" data-aos="fade-up">
+                <h2>Berita & Informasi Terkini</h2>
+                <p>Ikuti perkembangan terbaru dan prestasi dari SMK Negeri 5 Padang.</p>
+            </div>
+
+            <div id="berita-content-wrapper">
+                <!-- Filter & Search -->
+                <div class="row mb-5" data-aos="fade-up" data-aos-delay="100">
+                    <div class="col-12">
+                        <form action="{{ route('dashboard') }}" method="GET" class="berita-filter-form d-flex flex-column flex-md-row gap-3 bg-white p-3 rounded-4 shadow-sm border border-light-subtle">
+                            <div class="flex-grow-1 position-relative">
+                                <i class="bi bi-search position-absolute top-50 translate-middle-y ms-4 text-muted"></i>
+                                <input type="text" name="search" class="form-control border-0 bg-light ps-5 rounded-pill" placeholder="Cari berita atau informasi terbaru..." value="{{ request('search') }}">
+                            </div>
+                            <div class="d-flex gap-2">
+                                <select name="kategori" class="form-select border-0 bg-light rounded-pill px-4" style="min-width: 200px;">
+                                    <option value="">Semua Kategori</option>
+                                    <option value="informasi" {{ request('kategori') == 'informasi' ? 'selected' : '' }}>Informasi</option>
+                                    <option value="prestasi" {{ request('kategori') == 'prestasi' ? 'selected' : '' }}>Prestasi</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm"><i class="bi bi-search d-md-none"></i><span class="d-none d-md-inline">Cari</span></button>
+                                @if(request('search') || request('kategori'))
+                                    <a href="{{ route('dashboard') }}" class="btn btn-light rounded-pill px-4 shadow-sm border"><i class="bi bi-x-circle d-md-none"></i><span class="d-none d-md-inline">Reset</span></a>
+                                @endif
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            <!-- Berita List -->
+            <div class="row g-4">
+                @forelse($berita as $item)
+                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="{{ $loop->iteration * 100 }}">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden transition-hover">
+                            @if($item->foto)
+                                <img src="{{ asset('assets/berita/' . $item->foto) }}" class="card-img-top" alt="{{ $item->judul }}" style="height: 220px; object-fit: cover;">
+                            @else
+                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 220px;">
+                                    <i class="bi bi-image" style="font-size: 3rem;"></i>
+                                </div>
+                            @endif
+                            <div class="card-body p-4 flex-grow-1 d-flex flex-column">
+                                <div class="mb-3 d-flex align-items-center justify-content-between">
+                                    <span class="badge bg-{{ $item->kategori == 'prestasi' ? 'warning' : 'primary' }} rounded-pill px-3 py-2">
+                                        {{ ucfirst($item->kategori) }}
+                                    </span>
+                                    <small class="text-muted"><i class="bi bi-calendar3"></i> {{ $item->created_at->format('d M Y') }}</small>
+                                </div>
+                                <h5 class="card-title fw-bold mb-3" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                    {{ $item->judul }}
+                                </h5>
+                                <p class="card-text text-muted mb-4 flex-grow-1" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                    {{ Str::limit(strip_tags($item->isi), 120) }}
+                                </p>
+                                <button type="button" class="btn btn-outline-primary w-100 rounded-pill mt-auto" data-bs-toggle="modal" data-bs-target="#beritaModal{{ $item->id }}">
+                                    Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal for Full Content -->
+                    <div class="modal fade" id="beritaModal{{ $item->id }}" tabindex="-1" aria-labelledby="beritaModalLabel{{ $item->id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+                            <div class="modal-content border-0 rounded-4 shadow">
+                                <div class="modal-header border-bottom-0 pb-0 px-4 pt-4">
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4 pt-2">
+                                    <div class="text-center mb-4">
+                                        <span class="badge bg-{{ $item->kategori == 'prestasi' ? 'warning' : 'primary' }} rounded-pill px-3 py-2 mb-3">
+                                            {{ ucfirst($item->kategori) }}
+                                        </span>
+                                        <h3 class="fw-bold" id="beritaModalLabel{{ $item->id }}">{{ $item->judul }}</h3>
+                                        <div class="text-muted small mt-2">
+                                            <span><i class="bi bi-calendar3"></i> {{ $item->created_at->format('d F Y') }}</span>
+                                            <span class="ms-3"><i class="bi bi-person"></i> {{ $item->user->name ?? 'Admin' }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    @if($item->foto)
+                                        <img src="{{ asset('assets/berita/' . $item->foto) }}" class="img-fluid rounded-4 mb-4 w-100" alt="{{ $item->judul }}" style="max-height: 400px; object-fit: cover;">
+                                    @endif
+                                    
+                                    <div class="berita-content" style="line-height: 1.8;">
+                                        {!! $item->isi !!}
+                                    </div>
+
+                                    @if($item->file)
+                                        <div class="mt-4 p-3 bg-light rounded border border-light-subtle">
+                                            <h6 class="fw-bold mb-2"><i class="bi bi-paperclip"></i> Lampiran File:</h6>
+                                            <a href="{{ asset('file/' . $item->file) }}" target="_blank" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-download"></i> Unduh File
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="modal-footer border-top-0 px-4 pb-4 d-flex justify-content-between align-items-center">
+                                    <div class="share-buttons">
+                                        <span class="text-muted small me-2">Bagikan:</span>
+                                        <a href="https://api.whatsapp.com/send?text={{ urlencode($item->judul . ' - ' . route('dashboard') . '?berita_id=' . $item->id) }}" target="_blank" class="btn btn-sm btn-success rounded-circle" title="Bagikan ke WhatsApp"><i class="bi bi-whatsapp"></i></a>
+                                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(route('dashboard') . '?berita_id=' . $item->id) }}" target="_blank" class="btn btn-sm btn-primary rounded-circle" title="Bagikan ke Facebook"><i class="bi bi-facebook"></i></a>
+                                        <button type="button" class="btn btn-sm rounded-circle text-white" style="background: #E1306C;" title="Bagikan ke Instagram" onclick="navigator.clipboard.writeText('{{ route('dashboard') }}?berita_id={{ $item->id }}'); alert('Tautan disalin! Silakan buka aplikasi Instagram untuk membagikan tautan ini.');"><i class="bi bi-instagram"></i></button>
+                                        <button type="button" class="btn btn-sm btn-light border rounded-circle" title="Salin Tautan" onclick="navigator.clipboard.writeText('{{ route('dashboard') }}?berita_id={{ $item->id }}'); const icon = this.innerHTML; this.innerHTML = '<i class=\'bi bi-check2 text-success\'></i>'; setTimeout(() => this.innerHTML = icon, 2000);"><i class="bi bi-link-45deg"></i></button>
+                                    </div>
+                                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-12 text-center py-5">
+                        <div class="bg-white p-5 rounded-4 shadow-sm border border-light-subtle d-inline-block">
+                            <i class="bi bi-newspaper text-muted mb-3" style="font-size: 4rem;"></i>
+                            <h5 class="text-muted mb-0">Belum ada berita atau informasi saat ini.</h5>
+                        </div>
+                    </div>
+                @endforelse
+            </div>
+
+            <!-- Pagination -->
+            @if($berita->hasPages())
+                <div class="d-flex justify-content-center mt-5 custom-pagination" data-aos="fade-up">
+                    {{ $berita->links('pagination::bootstrap-4') }}
+                </div>
+            @endif
+            </div>
+        </div>
+    </section>
+
+    @if(isset($sharedBerita))
+    <!-- Shared Modal for Full Content -->
+    <div class="modal fade" id="sharedBeritaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-bottom-0 pb-0 px-4 pt-4">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 pt-2">
+                    <div class="text-center mb-4">
+                        <span class="badge bg-{{ $sharedBerita->kategori == 'prestasi' ? 'warning' : 'primary' }} rounded-pill px-3 py-2 mb-3">
+                            {{ ucfirst($sharedBerita->kategori) }}
+                        </span>
+                        <h3 class="fw-bold">{{ $sharedBerita->judul }}</h3>
+                        <div class="text-muted small mt-2">
+                            <span><i class="bi bi-calendar3"></i> {{ $sharedBerita->created_at->format('d F Y') }}</span>
+                            <span class="ms-3"><i class="bi bi-person"></i> {{ $sharedBerita->user->name ?? 'Admin' }}</span>
+                        </div>
+                    </div>
+                    
+                    @if($sharedBerita->foto)
+                        <img src="{{ asset('assets/berita/' . $sharedBerita->foto) }}" class="img-fluid rounded-4 mb-4 w-100" alt="{{ $sharedBerita->judul }}" style="max-height: 400px; object-fit: cover;">
+                    @endif
+                    
+                    <div class="berita-content" style="line-height: 1.8;">
+                        {!! $sharedBerita->isi !!}
+                    </div>
+
+                    @if($sharedBerita->file)
+                        <div class="mt-4 p-3 bg-light rounded border border-light-subtle">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-paperclip"></i> Lampiran File:</h6>
+                            <a href="{{ asset('file/' . $sharedBerita->file) }}" target="_blank" class="btn btn-sm btn-primary">
+                                <i class="bi bi-download"></i> Unduh File
+                            </a>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer border-top-0 px-4 pb-4 d-flex justify-content-between align-items-center">
+                    <div class="share-buttons">
+                        <span class="text-muted small me-2">Bagikan:</span>
+                        <a href="https://api.whatsapp.com/send?text={{ urlencode($sharedBerita->judul . ' - ' . route('dashboard') . '?berita_id=' . $sharedBerita->id) }}" target="_blank" class="btn btn-sm btn-success rounded-circle" title="Bagikan ke WhatsApp"><i class="bi bi-whatsapp"></i></a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(route('dashboard') . '?berita_id=' . $sharedBerita->id) }}" target="_blank" class="btn btn-sm btn-primary rounded-circle" title="Bagikan ke Facebook"><i class="bi bi-facebook"></i></a>
+                        <button type="button" class="btn btn-sm rounded-circle text-white" style="background: #E1306C;" title="Bagikan ke Instagram" onclick="navigator.clipboard.writeText('{{ route('dashboard') }}?berita_id={{ $sharedBerita->id }}'); alert('Tautan disalin! Silakan buka aplikasi Instagram untuk membagikan tautan ini.');"><i class="bi bi-instagram"></i></button>
+                        <button type="button" class="btn btn-sm btn-light border rounded-circle" title="Salin Tautan" onclick="navigator.clipboard.writeText('{{ route('dashboard') }}?berita_id={{ $sharedBerita->id }}'); const icon = this.innerHTML; this.innerHTML = '<i class=\'bi bi-check2 text-success\'></i>'; setTimeout(() => this.innerHTML = icon, 2000);"><i class="bi bi-link-45deg"></i></button>
+                    </div>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if(isset($sharedBerita))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var sharedModal = new bootstrap.Modal(document.getElementById('sharedBeritaModal'));
+            sharedModal.show();
+            
+            // Clean up the URL without reloading
+            if (window.history.replaceState) {
+                const url = new URL(window.location);
+                url.searchParams.delete('berita_id');
+                window.history.replaceState({}, '', url);
+            }
+        });
+    </script>
+    @endif
+
     <!-- About Section -->
     <section id="tentang" class="about-section">
         <div class="container">
@@ -389,6 +590,76 @@
                 }
             });
         }
+        // AJAX for Berita Section
+        document.addEventListener('DOMContentLoaded', function() {
+            const wrapper = document.getElementById('berita-content-wrapper');
+            if (!wrapper) return;
+
+            // Handle Pagination and Reset Button Clicks
+            wrapper.addEventListener('click', function(e) {
+                const link = e.target.closest('.pagination a') || e.target.closest('a.btn-light');
+                if (link) {
+                    e.preventDefault();
+                    fetchBerita(link.href);
+                }
+            });
+
+            // Handle Form Submission (Search/Filter)
+            wrapper.addEventListener('submit', function(e) {
+                if (e.target.classList.contains('berita-filter-form')) {
+                    e.preventDefault();
+                    const url = e.target.action + '?' + new URLSearchParams(new FormData(e.target)).toString();
+                    fetchBerita(url);
+                }
+            });
+
+            // Handle Dropdown Change
+            wrapper.addEventListener('change', function(e) {
+                if (e.target.name === 'kategori') {
+                    e.preventDefault();
+                    const form = e.target.closest('form');
+                    const url = form.action + '?' + new URLSearchParams(new FormData(form)).toString();
+                    fetchBerita(url);
+                }
+            });
+
+            function fetchBerita(url) {
+                wrapper.style.opacity = '0.5';
+                wrapper.style.pointerEvents = 'none';
+                
+                fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContent = doc.getElementById('berita-content-wrapper');
+                    
+                    if (newContent) {
+                        wrapper.innerHTML = newContent.innerHTML;
+                        
+                        // Re-initialize AOS if used on the dynamically added elements
+                        if (typeof AOS !== 'undefined') {
+                            // Strip data-aos so it doesn't stay invisible if it hasn't scrolled
+                            wrapper.querySelectorAll('[data-aos]').forEach(el => {
+                                el.removeAttribute('data-aos');
+                                el.style.opacity = '1';
+                                el.style.transform = 'none';
+                            });
+                        }
+                        
+                        // Update URL silently
+                        window.history.pushState({}, '', url);
+                    }
+                })
+                .catch(err => console.error('Error fetching berita:', err))
+                .finally(() => {
+                    wrapper.style.opacity = '1';
+                    wrapper.style.pointerEvents = 'auto';
+                });
+            }
+        });
     </script>
 </body>
 </html>

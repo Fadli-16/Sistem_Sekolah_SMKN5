@@ -27,7 +27,7 @@ class CheckRole
             // Pseudo-role for kepala sekolah and wakil kepala
             if (in_array('guru_kepsek_wakil', $roles) && Auth::user()->role === 'guru') {
                 $guruStatus = Auth::user()->guru->status ?? '';
-                if (in_array($guruStatus, ['kepala sekolah', 'wakil kepala'])) {
+                if (in_array(strtolower($guruStatus), ['kepala sekolah', 'wakil kepala', 'kepala jurusan'])) {
                     return $next($request);
                 }
             }

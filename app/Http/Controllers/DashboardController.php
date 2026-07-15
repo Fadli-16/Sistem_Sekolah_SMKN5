@@ -7,11 +7,37 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $title = 'Dashboard';
         $header = 'Sistem Informasi SMK Padang';
-        return view('home.index', compact('title', 'header'));
+
+        // Hanya tampilkan status publish dan kategori informasi & prestasi
+        $query = \App\Models\Berita::where('status', 'publish')
+            ->whereIn('kategori', ['informasi', 'prestasi']);
+
+        if ($request->filled('search')) {
+            $q = $request->search;
+            $query->where(function ($sub) use ($q) {
+                $sub->where('judul', 'like', "%{$q}%")
+                    ->orWhere('isi', 'like', "%{$q}%");
+            });
+        }
+
+        if ($request->filled('kategori')) {
+            if (in_array($request->kategori, ['informasi', 'prestasi'])) {
+                $query->where('kategori', $request->kategori);
+            }
+        }
+        
+        $sharedBerita = null;
+        if ($request->filled('berita_id')) {
+            $sharedBerita = \App\Models\Berita::where('status', 'publish')->find($request->berita_id);
+        }
+
+        $berita = $query->latest()->paginate(3)->withQueryString();
+
+        return view('home.index', compact('title', 'header', 'berita', 'sharedBerita'));
     }
 
     public function labor()

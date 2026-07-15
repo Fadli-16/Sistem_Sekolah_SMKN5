@@ -358,7 +358,7 @@ class CourseController extends Controller
 
         $guruModel = $user->guru;
         $status = $guruModel->status ?? '';
-        if (in_array($status, ['kepala sekolah', 'wakil kepala'])) {
+        if (in_array(strtolower($status), ['kepala sekolah', 'wakil kepala', 'kepala jurusan'])) {
             return []; // no filter for kepsek/wakil
         }
 
@@ -445,7 +445,7 @@ class CourseController extends Controller
         if ($user?->role === 'guru') {
             $guruModel = $user->guru;
             $status = $guruModel->status ?? '';
-            if (!in_array($status, ['kepala sekolah', 'wakil kepala'])) {
+            if (!in_array(strtolower($status), ['kepala sekolah', 'wakil kepala', 'kepala jurusan'])) {
                 $isBiasaGuru = true;
                 $guruUserId = $guruModel?->user_id ?? $user->id;
                 $guruModelId = $guruModel?->id;
@@ -963,7 +963,7 @@ class CourseController extends Controller
         if ($user?->role === 'guru') {
             $guruModel = $user->guru;
             $status = $guruModel->status ?? '';
-            if (!in_array($status, ['kepala sekolah', 'wakil kepala'])) {
+            if (!in_array(strtolower($status), ['kepala sekolah', 'wakil kepala', 'kepala jurusan'])) {
                 $guruUserId = $guruModel?->user_id ?? $user->id;
                 $guruModelId = $guruModel?->id;
 

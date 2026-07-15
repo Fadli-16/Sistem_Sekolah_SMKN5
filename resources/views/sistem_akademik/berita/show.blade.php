@@ -39,6 +39,14 @@
                 {!! $berita->isi !!}
             </div>
 
+            <div class="share-section mt-4 mb-3 p-3 bg-light rounded border border-light-subtle d-flex align-items-center">
+                <span class="text-muted fw-bold me-3"><i class="fas fa-share-alt me-1"></i> Bagikan:</span>
+                <a href="https://api.whatsapp.com/send?text={{ urlencode($berita->judul . ' - ' . route('dashboard') . '?berita_id=' . $berita->id) }}" target="_blank" class="btn btn-sm btn-success rounded-circle me-2" title="Bagikan ke WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(route('dashboard') . '?berita_id=' . $berita->id) }}" target="_blank" class="btn btn-sm btn-primary rounded-circle me-2" title="Bagikan ke Facebook"><i class="fab fa-facebook-f"></i></a>
+                <button type="button" class="btn btn-sm rounded-circle me-2 text-white" style="background: #E1306C;" title="Bagikan ke Instagram" onclick="navigator.clipboard.writeText('{{ route('dashboard') }}?berita_id={{ $berita->id }}'); alert('Tautan disalin! Silakan buka aplikasi Instagram untuk membagikan tautan ini.');"><i class="fab fa-instagram"></i></button>
+                <button type="button" class="btn btn-sm btn-secondary rounded-circle" title="Salin Tautan" onclick="navigator.clipboard.writeText('{{ route('dashboard') }}?berita_id={{ $berita->id }}'); const icon = this.innerHTML; this.innerHTML = '<i class=\'fas fa-check text-white\'></i>'; setTimeout(() => this.innerHTML = icon, 2000);"><i class="fas fa-link"></i></button>
+            </div>
+
             <div class="actions">
                 @php
                     $role = Auth::user()->role;
