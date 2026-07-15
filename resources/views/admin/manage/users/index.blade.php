@@ -300,21 +300,40 @@
         }
 
         // Toggle all checkboxes
-        $('#selectAll').on('change', function() {
+        $(document).on('change', '#selectAll', function() {
             const checked = $(this).is(':checked');
             $('.select-row').prop('checked', checked).trigger('change');
         });
 
         // Enable/disable bulk delete button
-        $('.select-row').on('change', function() {
-            const anyChecked = $('.select-row:checked').length > 0;
-            $('#bulkDeleteBtn').prop('disabled', !anyChecked);
+        $(document).on('change', '.select-row', function() {
+            let table = $('#usersTable').DataTable();
+            let checkedCount = table.$('.select-row:checked').length;
+            
+            if (checkedCount === 0) {
+                checkedCount = $('.select-row:checked').length;
+            }
+            
+            $('#bulkDeleteBtn').prop('disabled', checkedCount === 0);
         });
 
         // When bulk delete clicked, confirm then submit form
-        $('#bulkDeleteBtn').on('click', function() {
+        $('#bulkDeleteBtn').on('click', function(e) {
+            e.preventDefault();
+            
+            let table = $('#usersTable').DataTable();
+            let checkedNodes = table.$('.select-row:checked');
+            let checkedCount = checkedNodes.length;
+
+            if (checkedCount === 0) {
+                checkedNodes = $('.select-row:checked');
+                checkedCount = checkedNodes.length;
+            }
+            
+            if (checkedCount === 0) return;
+
             Swal.fire({
-                title: "Yakin ingin menghapus semua user yang dipilih?",
+                title: `Yakin ingin menghapus ${checkedCount} data user yang dipilih?`,
                 text: "Operasi ini tidak bisa dibatalkan!",
                 icon: "warning",
                 showCancelButton: true,
@@ -324,7 +343,23 @@
                 cancelButtonText: "Batal"
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $('#bulkDeleteForm').submit();
+                    const form = $('#bulkDeleteForm');
+                    
+                    form.find('.hidden-selected-user').remove();
+                    
+                    checkedNodes.each(function() {
+                        if (!document.body.contains(this)) {
+                            form.append(
+                                $('<input>')
+                                    .attr('type', 'hidden')
+                                    .attr('name', this.name)
+                                    .val(this.value)
+                                    .addClass('hidden-selected-user')
+                            );
+                        }
+                    });
+
+                    form.submit();
                 }
             });
         });
