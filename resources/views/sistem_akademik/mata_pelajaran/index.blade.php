@@ -51,6 +51,7 @@
                         @endif
                         <th width="5%">No</th>
                         <th>Nama Mata Pelajaran</th>
+                        <th>JP</th>
                         <th>Jurusan</th>
                         <th>Guru Pengampu</th>
                         @if(Auth::check() && (Auth::user()->role == 'super_admin' || Auth::user()->role == 'admin_sa'))
@@ -75,6 +76,9 @@
                                 </div>
                                 <span style="font-weight:500;font-size:1rem;">{{ $mapel->nama_mata_pelajaran }}</span>
                             </div>
+                        </td>
+                        <td>
+                            <span class="badge-modern badge-gray" style="font-size: 0.85rem;">{{ $mapel->jp }} JP</span>
                         </td>
                         <td>
                             @if($mapel->jurusan)

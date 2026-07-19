@@ -51,6 +51,22 @@
                     <small class="text-muted"><i class="bi bi-lightbulb me-1"></i>Mulai ketik untuk melihat saran nama mapel yang sudah ada.</small>
                 </div>
 
+                {{-- ── JP ── --}}
+                <div class="mb-3">
+                    <label for="jp" class="form-label">
+                        Jam Pelajaran (JP) <span class="text-danger">*</span>
+                    </label>
+                    <input type="number"
+                           id="jp"
+                           name="jp"
+                           class="form-control @error('jp') is-invalid @enderror"
+                           value="{{ old('jp', $mapel->jp ?? 1) }}"
+                           min="1"
+                           required>
+                    @error('jp')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Jumlah slot waktu yang digunakan per sesi pertemuan (misal: 2 JP).</small>
+                </div>
+
                 {{-- ── JURUSAN ── --}}
                 <div class="mb-3">
                     <label for="jurusan" class="form-label">

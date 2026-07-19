@@ -18,7 +18,7 @@
         cfg.initialHari = cfg.initialHari || "";
         cfg.currentCourseId = cfg.currentCourseId || null;
 
-        var slotIds = cfg.slotIds || [];
+        var slotIds = (cfg.slotIds || []).map(String);
         var slotDetails = cfg.slotDetails || {};
 
         function slotIndex(id) {
@@ -297,9 +297,66 @@
             });
         }
 
-        $("#hari, #mata_pelajaran_id").on("change", fetchRecommendations);
+        function calculateSlotEnd() {
+            var mpId = $("#mata_pelajaran_id").val();
+            var sStart = $slotStart.val();
+            if (!mpId || !sStart) return;
+
+            var jp = 1;
+            var optUmum = $("#mata_pelajaran_umum").find('option:selected');
+            var optJurusan = $("#mata_pelajaran_jurusan").find('option:selected');
+
+            if (optUmum.length && optUmum.val()) {
+                jp = parseInt(optUmum.attr('data-jp')) || 1;
+            } else if (optJurusan.length && optJurusan.val()) {
+                jp = parseInt(optJurusan.attr('data-jp')) || 1;
+            }
+
+            var sIndex = slotIndex(sStart);
+            if (sIndex < 0) return;
+
+            var currentJp = 0;
+            var eIndex = sIndex;
+            for (var i = sIndex; i < slotIds.length; i++) {
+                var sid = slotIds[i];
+                var details = slotDetails[sid];
+                if (details && details.selectable) {
+                    currentJp++;
+                    eIndex = i;
+                }
+                if (currentJp >= jp) break;
+            }
+
+            var calcEndId = slotIds[eIndex];
+
+            // Add warning container if it doesn't exist
+            if ($('#jp-warning').length === 0) {
+                $slotEnd.closest('.mb-3').append('<div id="jp-warning" class="mt-2 text-danger small" style="display:none;"></div>');
+            }
+
+            if (currentJp < jp) {
+                $('#jp-warning').html('<i class="bi bi-x-circle me-1"></i> Sisa slot pada hari ini ('+currentJp+' JP) tidak mencukupi untuk ' + jp + ' JP.').show();
+                $slotEnd.val("").trigger('change');
+                return;
+            } else {
+                $('#jp-warning').hide();
+            }
+
+            if (calcEndId) {
+                var opt = $slotEnd.find('option[value="' + calcEndId + '"]');
+                opt.prop("disabled", false);
+                $slotEnd.val(calcEndId).trigger('change');
+            }
+        }
+
+        $("#hari").on("change", fetchRecommendations);
+        $("#mata_pelajaran_id").on("change", function() {
+            fetchRecommendations();
+            calculateSlotEnd();
+        });
         $slotStart.on("change", function () {
             rebuildSlotEndOptions($(this).val(), availableSlotsCache);
+            calculateSlotEnd();
             markRecommendationButtons();
             checkConflictsLive();
         });

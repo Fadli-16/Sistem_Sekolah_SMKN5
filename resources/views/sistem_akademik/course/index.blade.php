@@ -106,11 +106,11 @@
                             @endif
                         </select>
                         
-                        <select name="kelas_id" class="form-select form-select-sm border-success" style="width:140px;" onchange="this.form.submit()">
+                        <select name="kelas_id" class="form-select form-select-sm border-success" style="width:180px;" onchange="this.form.submit()">
                             <option value="">-- Pilih Kelas --</option>
                             @foreach($kelasList as $k)
                                 <option value="{{ $k->id }}" {{ $selectedKelasId == $k->id ? 'selected' : '' }}>
-                                    {{ $k->nama_kelas }}
+                                    {{ $k->nama_kelas }} ({{ $k->tahun_ajaran }})
                                 </option>
                             @endforeach
                         </select>

@@ -91,6 +91,7 @@ class MataPelajaranController extends Controller
 
         $request->validate([
             'nama_mata_pelajaran' => 'required|string|max:255',
+            'jp' => 'required|integer|min:1',
             'guru_id' => [
                 'required',
                 'integer',
@@ -110,6 +111,7 @@ class MataPelajaranController extends Controller
 
         MataPelajaran::create([
             'nama_mata_pelajaran' => $request->nama_mata_pelajaran,
+            'jp' => $request->jp,
             'guru_id' => $request->guru_id,
             'jurusan' => $request->jurusan,
         ]);
@@ -155,6 +157,7 @@ class MataPelajaranController extends Controller
 
         $request->validate([
             'nama_mata_pelajaran' => 'required|string|max:255',
+            'jp' => 'required|integer|min:1',
             'guru_id' => [
                 'required',
                 'integer',
@@ -175,6 +178,7 @@ class MataPelajaranController extends Controller
 
         $mataPelajaran->update([
             'nama_mata_pelajaran' => $request->nama_mata_pelajaran,
+            'jp' => $request->jp,
             'guru_id' => $request->guru_id,
             'jurusan' => $request->jurusan,
         ]);

@@ -576,6 +576,15 @@ class CourseController extends Controller
 
         $guruId = $mp->guru_id;
 
+        $jp = $mp->jp ?? 1;
+        $sIdx = array_search($request->slot_start, $selectableSlots);
+        $eIdx = array_search($request->slot_end, $selectableSlots);
+        $selectedCount = ($eIdx !== false && $sIdx !== false && $eIdx >= $sIdx) ? ($eIdx - $sIdx + 1) : 0;
+        
+        if ($selectedCount != $jp) {
+             return back()->withErrors(['slot_end' => 'Durasi slot yang dipilih (' . $selectedCount . ' JP) tidak mencukupi untuk Jam Pelajaran mata pelajaran (' . $jp . ' JP). Silakan pilih slot awal yang memiliki sisa slot cukup.'])->withInput();
+        }
+
         // cek konflik (termasuk ruangan)
         $conflicts = $this->checkConflicts
         ($request->hari, $jamMulai, $jamSelesai, $guruId, $request->ruangan, $request->kelas_id);
@@ -615,7 +624,6 @@ class CourseController extends Controller
             return back()
                 ->with('status', 'error')
                 ->with('message', 'Terjadi bentrok jadwal (guru/ruangan/kelas). Lihat rekomendasi slot kosong.')
-                ->with('conflicts', $conflicts)
                 ->with('conflict_details', $conflictDetails)
                 ->with('recommendations', $recommendations)
                 ->withInput();
@@ -710,6 +718,15 @@ class CourseController extends Controller
 
         $guruId = $mp->guru_id;
 
+        $jp = $mp->jp ?? 1;
+        $sIdx = array_search($request->slot_start, $selectableSlots);
+        $eIdx = array_search($request->slot_end, $selectableSlots);
+        $selectedCount = ($eIdx !== false && $sIdx !== false && $eIdx >= $sIdx) ? ($eIdx - $sIdx + 1) : 0;
+        
+        if ($selectedCount != $jp) {
+             return back()->withErrors(['slot_end' => 'Durasi slot yang dipilih (' . $selectedCount . ' JP) tidak mencukupi untuk Jam Pelajaran mata pelajaran (' . $jp . ' JP). Silakan pilih slot awal yang memiliki sisa slot cukup.'])->withInput();
+        }
+
         $oldHari = $course->hari ?? '';
         $oldJamMulai = substr($course->jam_mulai ?? '', 0, 5);
         $oldJamSelesai = substr($course->jam_selesai ?? '', 0, 5);
@@ -793,7 +810,6 @@ class CourseController extends Controller
                     ->with('status', 'error')
                     ->with('message', 
                     'Terjadi bentrok jadwal saat update. Lihat rekomendasi slot.')
-                    ->with('conflicts', $conflicts)
                     ->with('conflict_details', $conflictDetails)
                     ->with('recommendations', $recommendations)
                     ->withInput();

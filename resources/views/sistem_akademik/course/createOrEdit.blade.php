@@ -39,6 +39,18 @@ $conflictDetails = session('conflict_details', null);
     <h1 class="page-title">{{ $header }}</h1>
 
     <div class="card p-4">
+        @if (session('status') === 'error' && session('message'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Gagal!</strong> {{ session('message') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @elseif (session('status') === 'success' && session('message'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>Berhasil!</strong> {{ session('message') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         @if ($errors->any())
             <div class="alert alert-danger">
                 <strong>Gagal menyimpan data!</strong>
@@ -97,7 +109,7 @@ $conflictDetails = session('conflict_details', null);
                         @foreach($mpList as $mp)
                             @if(strtolower(trim($mp->jurusan)) == 'umum' || empty(trim($mp->jurusan)))
                                 @php $mpGuruName = data_get($mp, 'guru.nama', data_get($mp, 'guru.name', '')); @endphp
-                                <option value="{{ $mp->id }}" data-jurusan="{{ $mp->jurusan }}" {{ (string)$selectedMataPelajaran === (string)$mp->id ? 'selected' : '' }}>
+                                <option value="{{ $mp->id }}" data-jurusan="{{ $mp->jurusan }}" data-jp="{{ $mp->jp ?? 1 }}" {{ (string)$selectedMataPelajaran === (string)$mp->id ? 'selected' : '' }}>
                                     {{ $mp->nama_mata_pelajaran }} @if($mpGuruName) - {{ $mpGuruName }} @endif
                                 </option>
                             @endif
@@ -111,7 +123,7 @@ $conflictDetails = session('conflict_details', null);
                         @foreach($mpList as $mp)
                             @if(strtolower(trim($mp->jurusan)) != 'umum' && !empty(trim($mp->jurusan)))
                                 @php $mpGuruName = data_get($mp, 'guru.nama', data_get($mp, 'guru.name', '')); @endphp
-                                <option value="{{ $mp->id }}" data-jurusan="{{ $mp->jurusan }}" {{ (string)$selectedMataPelajaran === (string)$mp->id ? 'selected' : '' }}>
+                                <option value="{{ $mp->id }}" data-jurusan="{{ $mp->jurusan }}" data-jp="{{ $mp->jp ?? 1 }}" {{ (string)$selectedMataPelajaran === (string)$mp->id ? 'selected' : '' }}>
                                     {{ $mp->nama_mata_pelajaran }} @if($mpGuruName) - {{ $mpGuruName }} @endif
                                 </option>
                             @endif
@@ -149,8 +161,8 @@ $conflictDetails = session('conflict_details', null);
                 </div>
 
                 <div class="col-md-6 mb-3">
-                    <label for="slot_end" class="form-label">Slot Akhir</label>
-                    <select class="form-control" id="slot_end" name="slot_end" required>
+                    <label for="slot_end" class="form-label">Slot Akhir (Otomatis)</label>
+                    <select class="form-control" id="slot_end" name="slot_end" required style="pointer-events: none; background-color: #e9ecef;" tabindex="-1">
                         <option value="" disabled {{ $selectedSlotEnd ? '' : 'selected' }}>-- Pilih Slot Akhir --</option>
                         @foreach($slots as $id => $s)
                         <option value="{{ $id }}" {{ (string)$selectedSlotEnd === (string)$id ? 'selected' : '' }}>
@@ -258,5 +270,5 @@ $conflictDetails = session('conflict_details', null);
     });
 </script>
 
-<script src="{{ asset('assets/js/course.js') }}"></script>
+<script src="{{ asset('assets/js/course.js') }}?v={{ filemtime(public_path('assets/js/course.js')) }}"></script>
 @endsection

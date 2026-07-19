@@ -14,6 +14,7 @@ class MataPelajaran extends Model
     protected $fillable = [
         'guru_id',
         'nama_mata_pelajaran',
+        'jp',
         'jurusan',
     ];
 
