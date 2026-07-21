@@ -62,7 +62,7 @@
                 </a>
             </li>
 
-            <li class="{{ request()->routeIs('sistem_akademik.course.*') ? 'active' : '' }}">
+            <li class="{{ request()->routeIs('sistem_akademik.course.*') || request()->routeIs('sistem_akademik.auto-schedule.*') ? 'active' : '' }}">
                 <a href="{{ route('sistem_akademik.course.index') }}" data-title="Kelola Jadwal">
                     <i class="bi bi-calendar3"></i>
                     <span class="menu-text">Kelola Jadwal</span>

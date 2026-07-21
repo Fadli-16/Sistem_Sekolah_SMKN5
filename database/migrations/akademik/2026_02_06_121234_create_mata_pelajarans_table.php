@@ -19,6 +19,8 @@ class CreateMataPelajaransTable extends Migration
             $table->integer('jp')->default(1);
             $table->string('kategori')->nullable();
             $table->string('jurusan')->nullable();
+            $table->string('kategori_penjadwalan')->nullable()->comment('Contoh: umum, jurusan');
+            $table->string('tefa_group_id')->nullable()->comment('Untuk mengelompokkan mapel sejenis dalam project');
             $table->foreignId('guru_id')->constrained('users')->cascadeOnUpdate()->restrictOnDelete();
             $table->timestamps();
         });

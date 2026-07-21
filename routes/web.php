@@ -12,6 +12,7 @@ use App\Http\Controllers\Akademik\PeminatanController;
 use App\Http\Controllers\Akademik\GuruController;
 use App\Http\Controllers\Akademik\MataPelajaranController;
 use App\Http\Controllers\Akademik\ProfileController;
+use App\Http\Controllers\Akademik\AutoScheduleController;
 
 use App\Http\Controllers\BukuController;
 use App\Http\Controllers\KategoriController;
@@ -201,6 +202,18 @@ Route::prefix('sistem-akademik')
         ->name('course.timetable');
         Route::get('course/timetable/download', [CourseController::class, 'downloadTimetable'])
         ->name('course.download-timetable');
+
+        // Auto-Scheduling Routes
+        Route::prefix('auto-schedule')->name('auto-schedule.')->group(function() {
+            Route::get('/', [AutoScheduleController::class, 'index'])->name('index');
+            Route::get('/get-classes', [AutoScheduleController::class, 'getClasses'])->name('get-classes');
+            Route::get('/get-mapel', [AutoScheduleController::class, 'getMapel'])->name('get-mapel');
+            Route::post('/validate', [AutoScheduleController::class, 'validateData'])->name('validate');
+            Route::post('/generate', [AutoScheduleController::class, 'generate'])->name('generate');
+            Route::get('/status/{id}', [AutoScheduleController::class, 'status'])->name('status');
+            Route::get('/result/{id}', [AutoScheduleController::class, 'result'])->name('result');
+            Route::post('/apply/{id}', [AutoScheduleController::class, 'apply'])->name('apply');
+        });
 });
 
 // Perpustakaan Routes - Split into public and admin routes

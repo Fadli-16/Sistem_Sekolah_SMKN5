@@ -15,9 +15,14 @@
             <p class="page-subtitle"><i class="bi bi-calendar3 me-1"></i>Kelola jadwal pembelajaran</p>
         </div>
         @if(in_array(Auth::user()->role, ['admin','super_admin','admin_sa']))
-        <a href="{{ route('sistem_akademik.course.create') }}" class="btn-primary-app">
-            <i class="bi bi-plus-lg"></i> Tambah Jadwal
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('sistem_akademik.auto-schedule.index') }}" class="btn-primary-app" style="background-color: #10b981; border-color: #10b981;">
+                <i class="bi bi-magic"></i> Auto-Schedule AI
+            </a>
+            <a href="{{ route('sistem_akademik.course.create') }}" class="btn-primary-app">
+                <i class="bi bi-plus-lg"></i> Tambah Jadwal
+            </a>
+        </div>
         @endif
     </div>
 
