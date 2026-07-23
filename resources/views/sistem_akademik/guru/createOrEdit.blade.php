@@ -116,13 +116,15 @@
                             <option value="bendahara" {{ old('status', $guru->status ?? '') == 'bendahara' ? 'selected' : '' }}>Bendahara</option>
                             <option value="kepala jurusan" {{ old('status', $guru->status ?? '') == 'kepala jurusan' ? 'selected' : '' }}>Kepala Jurusan</option>
                             <option value="kepala bengkel" {{ old('status', $guru->status ?? '') == 'kepala bengkel' ? 'selected' : '' }}>Kepala Bengkel</option>
+                            <option value="kepala bidang" {{ old('status', $guru->status ?? '') == 'kepala bidang' ? 'selected' : '' }}>Kepala Bidang</option>
+                            <option value="koordinator" {{ old('status', $guru->status ?? '') == 'koordinator' ? 'selected' : '' }}>Koordinator</option>
                         </select>
                     </div>
                     <div class="{{ (isset($guru) && $guru->waliKelasDi) ? 'col-md-12' : 'col-md-6' }}">
-                        <label for="jurusan" class="form-label">Jurusan</label>
+                        <label for="jurusan" class="form-label">Jurusan/Bidang</label>
                         <input type="text" class="form-control" id="jurusan" name="jurusan" 
                                value="{{ old('jurusan', $guru->jurusan ?? '') }}" list="jurusan_options" 
-                               placeholder="-- Ketik atau Pilih Jurusan --" autocomplete="off">
+                               placeholder="-- Ketik atau Pilih Jurusan/Bidang --" autocomplete="off">
                         <datalist id="jurusan_options">
                             @php
                                 $defaultJurusans = [
@@ -265,7 +267,7 @@
 
         function toggleJurusan() {
             if (statusSelect && spesialisasiContainer && spesialisasiInput) {
-                if (statusSelect.value === 'kepala jurusan' || statusSelect.value === 'kepala bengkel' || statusSelect.value === 'wakil kepala' || statusSelect.value === 'bendahara') {
+                if (statusSelect.value === 'kepala jurusan' || statusSelect.value === 'kepala bengkel' || statusSelect.value === 'wakil kepala' || statusSelect.value === 'bendahara' || statusSelect.value === 'kepala bidang' || statusSelect.value === 'koordinator') {
                     spesialisasiContainer.style.display = 'block';
                     spesialisasiInput.setAttribute('required', 'required');
                     
@@ -275,6 +277,12 @@
                     } else if(statusSelect.value === 'bendahara') {
                         document.getElementById('label-spesialisasi').innerHTML = 'Spesialisasi Bendahara <span class="text-danger">*</span>';
                         spesialisasiInput.placeholder = 'Contoh: BOS, Gaji, dsb.';
+                    } else if(statusSelect.value === 'kepala bidang') {
+                        document.getElementById('label-spesialisasi').innerHTML = 'Spesialisasi Kepala Bidang <span class="text-danger">*</span>';
+                        spesialisasiInput.placeholder = 'Contoh: Akademik, dsb.';
+                    } else if(statusSelect.value === 'koordinator') {
+                        document.getElementById('label-spesialisasi').innerHTML = 'Spesialisasi Koordinator <span class="text-danger">*</span>';
+                        spesialisasiInput.placeholder = 'Contoh: PKL, Bursa Kerja, dsb.';
                     } else {
                         document.getElementById('label-spesialisasi').innerHTML = 'Jurusan <span class="text-danger">*</span>';
                         spesialisasiInput.placeholder = '-- Ketik atau Pilih Jurusan --';

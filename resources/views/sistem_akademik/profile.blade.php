@@ -106,7 +106,7 @@
 
                     {{-- Jurusan --}}
                     <div class="col-md-6">
-                        <label class="form-label">Jurusan</label>
+                        <label class="form-label">Jurusan/Bidang</label>
                         <input name="jurusan"
                             type="text"
                             class="form-control {{ $isStudentOrTeacher ? 'locked-field' : '' }}"

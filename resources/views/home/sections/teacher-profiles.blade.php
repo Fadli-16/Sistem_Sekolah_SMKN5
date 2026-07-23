@@ -15,14 +15,18 @@
                                 <div class="principal-img-wrapper position-relative mx-auto">
                                     <div class="principal-img-border"></div>
                                     <div class="principal-img rounded-circle overflow-hidden mx-auto">
-                                        <img src="{{ asset('assets/images/kepsek.jpg') }}" loading="lazy" alt="Kepala Sekolah" class="img-fluid">
+                                        @php
+                                            $kepsekImg = ($kepsek && $kepsek->image) ? asset('assets/profile/' . ltrim($kepsek->image,'/')) : asset('assets/images/kepsek.jpg');
+                                            $kepsekName = $kepsek->user->nama ?? 'Rizka Fauzi Yosfi, S.Pd., S.T., M.Kom';
+                                        @endphp
+                                        <img src="{{ $kepsekImg }}" loading="lazy" alt="Kepala Sekolah" class="img-fluid">
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-8">
                                 <div class="d-flex align-items-center mb-3">
                                     <div class="principal-title-line me-3"></div>
-                                    <h3 class="principal-name m-0">Rizka Fauzi Yosfi, S.Pd., S.T., M.Kom</h3>
+                                    <h3 class="principal-name m-0">{{ $kepsekName }}</h3>
                                 </div>
                                 <p class="principal-title fw-semibold mb-3">Kepala Sekolah</p>
                                 <p class="principal-quote fst-italic mb-4">"Pendidikan adalah kunci untuk membuka pintu kesuksesan. Kami berkomitmen untuk mengembangkan potensi setiap siswa kami menjadi insan yang cerdas, terampil, dan berakhlak mulia."</p>
@@ -39,300 +43,101 @@
         </div>
         
 <!-- Department Heads Section -->
-<h3 class="department-heading text-center mb-4" data-aos="fade-up" data-aos-delay="200">Kepala Program Keahlian & Staf</h3>
-
-<div class="teachers-grid">
-    <!-- Waka dan Staff -->
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="300">
+@if($wakas->count() > 0)
+<h3 class="department-heading text-center mb-4 mt-5" data-aos="fade-up" data-aos-delay="200">Wakil Kepala</h3>
+<div class="teachers-grid mb-5">
+    @foreach($wakas as $index => $guru)
+    @php
+        $img = $guru->image ? asset('assets/profile/' . ltrim($guru->image,'/')) : asset('assets/images/profile.png');
+        $delay = 300 + ($index * 100);
+        $jabatan = trim('Wakil Kepala ' . ($guru->spesialisasi ?: ''));
+    @endphp
+    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="{{ $delay }}">
         <div class="teacher-img-wrapper">
             <div class="teacher-img">
-                <img src="{{ asset('assets/images/pakyan.jpg') }}" loading="lazy" alt="Supri Yanto, S.Pd,MT">
+                <img src="{{ $img }}" loading="lazy" alt="{{ $guru->user->nama ?? '' }}">
             </div>
         </div>
         <div class="teacher-info">
-            <h4 class="teacher-name">Supri Yanto, S.Pd, MT</h4>
-            <span class="teacher-badge">Waka Kurikulum</span>
+            <h4 class="teacher-name">{{ $guru->user->nama ?? '' }}</h4>
+            <span class="teacher-badge">{{ $jabatan }}</span>
         </div>
     </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="400">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/afrizal.jpg') }}" loading="lazy" alt="Afrizal, S.Ag">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Afrizal, S.Ag</h4>
-            <span class="teacher-badge">Waka Kesiswaan</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="500">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/trys.jpg') }}" loading="lazy" alt="Trys Supriadi, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Trys Supriadi, S.Pd</h4>
-            <span class="teacher-badge">Waka Humas</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="600">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/zuraida.jpg') }}" loading="lazy" alt="Zuraida, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Zuraida, S.Pd</h4>
-            <span class="teacher-badge">Waka Sarana dan Prasarana</span>
-        </div>
-    </div>
-
-    <!-- Keuangan -->
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="700">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/mardiani.jpg') }}" loading="lazy" alt="Mardiani">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Mardiani</h4>
-            <span class="teacher-badge">KTU</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="800">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Rijalul Fathani, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Rijalul Fathani, S.Pd</h4>
-            <span class="teacher-badge">Bendahara Pengeluaran BLUD</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="900">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Ronal Fujianto, M.PdT,Gr">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Ronal Fujianto, M.PdT, Gr</h4>
-            <span class="teacher-badge">Bendahara Penerimaan BLUD</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="1000">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Gusriani, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Gusriani, S.Pd</h4>
-            <span class="teacher-badge">Bendahara BOS</span>
-        </div>
-    </div>
-
-    <!-- Kepala Jurusan & Teknisi -->
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="1100">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/hurriyatul.jpg') }}" loading="lazy" alt="Huriyatul Rahmi, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Huriyatul Rahmi, S.Pd</h4>
-            <span class="teacher-badge">Kajur T. Inst. Tenaga Listrik</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="1200">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Refira Mafitra">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Refira Mafitra</h4>
-            <span class="teacher-badge">Teknisi Listrik</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="1300">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Reno Dwi Putra">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Reno Dwi Putra</h4>
-            <span class="teacher-badge">Teknisi TPTU</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="1400">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/harmen.jpg') }}" loading="lazy" alt="Herman Junaidi, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Herman Junaidi, S.Pd</h4>
-            <span class="teacher-badge">Kajur DPIB</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="1500">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Andhika Prasetya, A.Md.T">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Andhika Prasetya, A.Md.T</h4>
-            <span class="teacher-badge">Teknisi DPIB</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="1600">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Ermalinda, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Ermalinda, S.Pd</h4>
-            <span class="teacher-badge">Kajur BKP</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="1700">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Apridinata">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Apridinata</h4>
-            <span class="teacher-badge">Teknisi TKP</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="1800">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Erlina, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Erlina, S.Pd</h4>
-            <span class="teacher-badge">Kajur T. Audio Video</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="1900">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/yuli.jpg') }}" loading="lazy" alt="Yulia Dewi Elfita">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Yulia Dewi Elfita</h4>
-            <span class="teacher-badge">Teknisi Elektronika</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="2000">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/FIFI.jpg') }}" loading="lazy" alt="Fifi Sukmawati, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Fifi Sukmawati, S.Pd</h4>
-            <span class="teacher-badge">Kajur T. Permesinan</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="2100">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Yuhendrik">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Yuhendrik</h4>
-            <span class="teacher-badge">Teknisi Mesin</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="2200">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Sufri Ali Darma, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Sufri Ali Darma, S.Pd</h4>
-            <span class="teacher-badge">Kajur T. Otomotif</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="2300">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Syafriandi">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Syafriandi</h4>
-            <span class="teacher-badge">Teknisi TKRO</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="2400">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Beni Saputra">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Beni Saputra</h4>
-            <span class="teacher-badge">Teknisi TBSM</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="2500">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/fitri3.jpg') }}" loading="lazy" alt="Wici Aan Savitri, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Wici Aan Savitri, S.Pd</h4>
-            <span class="teacher-badge">Kajur TKJ</span>
-        </div>
-    </div>
-
-    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="2600">
-        <div class="teacher-img-wrapper">
-            <div class="teacher-img">
-                <img src="{{ asset('assets/images/profile.png') }}" loading="lazy" alt="Ariandi Hidayat, S.Pd">
-            </div>
-        </div>
-        <div class="teacher-info">
-            <h4 class="teacher-name">Ariandi Hidayat, S.Pd</h4>
-            <span class="teacher-badge">Teknisi TKJ</span>
-        </div>
-    </div>
+    @endforeach
 </div>
+@endif
+
+@if($bendaharas->count() > 0)
+<h3 class="department-heading text-center mb-4 mt-5" data-aos="fade-up" data-aos-delay="200">Keuangan / Bendahara</h3>
+<div class="teachers-grid mb-5">
+    @foreach($bendaharas as $index => $guru)
+    @php
+        $img = $guru->image ? asset('assets/profile/' . ltrim($guru->image,'/')) : asset('assets/images/profile.png');
+        $delay = 300 + ($index * 100);
+        $jabatan = trim('Bendahara ' . ($guru->spesialisasi ?: ''));
+    @endphp
+    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="{{ $delay }}">
+        <div class="teacher-img-wrapper">
+            <div class="teacher-img">
+                <img src="{{ $img }}" loading="lazy" alt="{{ $guru->user->nama ?? '' }}">
+            </div>
+        </div>
+        <div class="teacher-info">
+            <h4 class="teacher-name">{{ $guru->user->nama ?? '' }}</h4>
+            <span class="teacher-badge">{{ $jabatan }}</span>
+        </div>
+    </div>
+    @endforeach
+</div>
+@endif
+
+@if($kajurs->count() > 0)
+<h3 class="department-heading text-center mb-4 mt-5" data-aos="fade-up" data-aos-delay="200">Kepala Jurusan</h3>
+<div class="teachers-grid mb-5">
+    @foreach($kajurs as $index => $guru)
+    @php
+        $img = $guru->image ? asset('assets/profile/' . ltrim($guru->image,'/')) : asset('assets/images/profile.png');
+        $delay = 300 + ($index * 100);
+        $jabatan = trim('Kepala Jurusan ' . ($guru->spesialisasi ?: $guru->jurusan));
+    @endphp
+    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="{{ $delay }}">
+        <div class="teacher-img-wrapper">
+            <div class="teacher-img">
+                <img src="{{ $img }}" loading="lazy" alt="{{ $guru->user->nama ?? '' }}">
+            </div>
+        </div>
+        <div class="teacher-info">
+            <h4 class="teacher-name">{{ $guru->user->nama ?? '' }}</h4>
+            <span class="teacher-badge">{{ $jabatan }}</span>
+        </div>
+    </div>
+    @endforeach
+</div>
+@endif
+
+@if($kabengs->count() > 0)
+<h3 class="department-heading text-center mb-4 mt-5" data-aos="fade-up" data-aos-delay="200">Kepala Bengkel / Teknisi</h3>
+<div class="teachers-grid">
+    @foreach($kabengs as $index => $guru)
+    @php
+        $img = $guru->image ? asset('assets/profile/' . ltrim($guru->image,'/')) : asset('assets/images/profile.png');
+        $delay = 300 + ($index * 100);
+        $jabatan = trim('Kepala Bengkel ' . ($guru->spesialisasi ?: ''));
+    @endphp
+    <div class="teacher-card" data-aos="zoom-in-up" data-aos-delay="{{ $delay }}">
+        <div class="teacher-img-wrapper">
+            <div class="teacher-img">
+                <img src="{{ $img }}" loading="lazy" alt="{{ $guru->user->nama ?? '' }}">
+            </div>
+        </div>
+        <div class="teacher-info">
+            <h4 class="teacher-name">{{ $guru->user->nama ?? '' }}</h4>
+            <span class="teacher-badge">{{ $jabatan }}</span>
+        </div>
+    </div>
+    @endforeach
+</div>
+@endif
 
 
 </section>
@@ -502,13 +307,17 @@
     
     /* Teachers Grid Styling */
     .teachers-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         gap: 1.8rem;
         margin-bottom: 2.5rem;
     }
     
     .teacher-card {
+        width: 220px;
+        flex-grow: 1;
+        max-width: 260px;
         background-color: white;
         border-radius: 12px;
         overflow: hidden;
@@ -672,10 +481,14 @@
         }
         
         .teachers-grid {
-            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
             gap: 1.5rem;
         }
         
+        .teacher-card {
+            width: 190px;
+            max-width: 220px;
+        }
+
         .teacher-img {
             width: 110px;
             height: 110px;
@@ -713,10 +526,14 @@
         }
         
         .teachers-grid {
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 1.2rem;
         }
         
+        .teacher-card {
+            width: 160px;
+            max-width: 190px;
+        }
+
         .teacher-img {
             width: 100px;
             height: 100px;

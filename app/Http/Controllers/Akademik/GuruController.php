@@ -105,7 +105,7 @@ class GuruController extends Controller
             'tanggal_lahir' => 'nullable|date',
             'alamat'        => 'nullable',
             'no_hp'         => 'nullable|string',
-            'status'        => 'required|in:guru,guru tidak tetap,pegawai,pegawai tidak tetap,kepala sekolah,wakil kepala,bendahara,kepala jurusan,kepala bengkel',
+            'status'        => 'required|in:guru,guru tidak tetap,pegawai,pegawai tidak tetap,kepala sekolah,wakil kepala,bendahara,kepala jurusan,kepala bengkel,kepala bidang,koordinator',
             'jabatan_jurusan' => 'nullable|string',
             'image'         => 'nullable|image'
         ]);
@@ -141,7 +141,7 @@ class GuruController extends Controller
             'alamat'        => $request->alamat ?? '-',
             'no_hp'         => $request->no_hp ?? '-',
             'status'        => $request->status,
-            'spesialisasi' => in_array($request->status, ['wakil kepala', 'bendahara', 'kepala jurusan', 'kepala bengkel']) ? $request->spesialisasi : null,
+            'spesialisasi' => in_array($request->status, ['wakil kepala', 'bendahara', 'kepala jurusan', 'kepala bengkel', 'kepala bidang', 'koordinator']) ? $request->spesialisasi : null,
             'jenis_kelamin' => $request->jenis_kelamin ?? 'Laki-laki',
             'agama'         => $request->agama,
         ]);
@@ -190,7 +190,7 @@ class GuruController extends Controller
             'tanggal_lahir' => 'nullable|date',
             'alamat'        => 'nullable|string',
             'no_hp'         => 'nullable|string',
-            'status'        => 'required|in:guru,guru tidak tetap,pegawai,pegawai tidak tetap,kepala sekolah,wakil kepala,bendahara,kepala jurusan,kepala bengkel',
+            'status'        => 'required|in:guru,guru tidak tetap,pegawai,pegawai tidak tetap,kepala sekolah,wakil kepala,bendahara,kepala jurusan,kepala bengkel,kepala bidang,koordinator',
             'spesialisasi' => 'nullable|string',
             'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
             'agama'         => 'nullable|string',
@@ -214,7 +214,7 @@ class GuruController extends Controller
             'alamat'        => $request->alamat ?? '-',
             'no_hp'         => $request->no_hp ?? '-',
             'status'        => $request->status,
-            'spesialisasi' => in_array($request->status, ['wakil kepala', 'bendahara', 'kepala jurusan', 'kepala bengkel']) ? $request->spesialisasi : null,
+            'spesialisasi' => in_array($request->status, ['wakil kepala', 'bendahara', 'kepala jurusan', 'kepala bengkel', 'kepala bidang', 'koordinator']) ? $request->spesialisasi : null,
             'jenis_kelamin' => $request->jenis_kelamin ?? 'Laki-laki',
             'agama'         => $request->agama,
         ]);

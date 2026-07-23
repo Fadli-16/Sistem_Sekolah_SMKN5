@@ -25,7 +25,7 @@ class CreateGurusTable extends Migration
             $table->string('agama', 50)->nullable();
             $table->text('alamat');
             $table->string('no_hp');
-            $table->enum('status', ['guru', 'guru tidak tetap', 'pegawai', 'pegawai tidak tetap', 'kepala sekolah', 'wakil kepala', 'bendahara', 'kepala jurusan', 'kepala bengkel'])->default('guru');
+            $table->enum('status', ['guru', 'guru tidak tetap', 'pegawai', 'pegawai tidak tetap', 'kepala sekolah', 'wakil kepala', 'bendahara', 'kepala jurusan', 'kepala bengkel', 'kepala bidang', 'koordinator'])->default('guru');
             $table->string('spesialisasi')->nullable();
             $table->timestamps();
         });

@@ -90,6 +90,18 @@
                                 <option value="{{ $r }}" {{ $selectedRuangan == $r ? 'selected' : '' }}>{{ $r }}</option>
                             @endforeach
                         </select>
+
+                        {{-- Filter Tahun Ajaran --}}
+                        <select name="tahun_ajaran" class="form-select form-select-sm" style="width:130px;" onchange="this.form.submit()">
+                            <option value="">-- Th. Ajaran --</option>
+                            @if(isset($tahunAjaranList))
+                                @foreach($tahunAjaranList as $ta)
+                                    <option value="{{ $ta }}" {{ (isset($selectedTahunAjaran) && $selectedTahunAjaran == $ta) ? 'selected' : '' }}>
+                                        {{ $ta }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
                     </div>
 
                     {{-- Area Kanan: Filter Kelas & Aksi Cetak --}}
@@ -115,17 +127,15 @@
                             <option value="">-- Pilih Kelas --</option>
                             @foreach($kelasList as $k)
                                 <option value="{{ $k->id }}" {{ $selectedKelasId == $k->id ? 'selected' : '' }}>
-                                    {{ $k->nama_kelas }} ({{ $k->tahun_ajaran }})
+                                    {{ $k->nama_kelas }}
                                 </option>
                             @endforeach
                         </select>
 
                         @php
-                            $canDownloadAll = in_array(Auth::user()->role, ['admin','super_admin','admin_sa']);
-                            $isDisabled = !$selectedKelasId && !$canDownloadAll;
-                            $titleText = $isDisabled ? 'title="Pilih kelas terlebih dahulu"' : ($canDownloadAll && !$selectedKelasId ? 'title="Cetak Seluruh Jadwal"' : 'title="Cetak Jadwal Kelas"');
+                            $titleText = !$selectedKelasId ? 'title="Cetak Seluruh Jadwal"' : 'title="Cetak Jadwal Kelas"';
                         @endphp
-                        <button type="button" id="download-timetable" class="btn btn-sm btn-primary-app px-3" {{ $isDisabled ? 'disabled' : '' }} {!! $titleText !!}>
+                        <button type="button" id="download-timetable" class="btn btn-sm btn-primary-app px-3" {!! $titleText !!}>
                             <i class="bi bi-file-earmark-pdf-fill me-1"></i> Cetak PDF
                         </button>
                         

@@ -19,8 +19,18 @@ class MataPelajaranController extends Controller
         $query = MataPelajaran::with('guru');
 
         if ($user && $user->role === 'guru') {
-            $status = $user->guru->status ?? '';
-            if (!in_array(strtolower($status), ['kepala sekolah', 'wakil kepala', 'kepala jurusan'])) {
+            $status = strtolower($user->guru->status ?? '');
+            if ($status === 'kepala jurusan') {
+                $kaprogJurusan = trim($user->guru->jurusan ?: $user->guru->spesialisasi);
+                if (!empty($kaprogJurusan)) {
+                    $query->where(function ($sub) use ($kaprogJurusan) {
+                        $sub->where('jurusan', 'like', "%{$kaprogJurusan}%")
+                            ->orWhere('jurusan', $kaprogJurusan);
+                    })
+                    ->where('jurusan', '!=', 'Umum')
+                    ->where('jurusan', '!=', 'umum');
+                }
+            } elseif (!in_array($status, ['kepala sekolah', 'wakil kepala'])) {
                 $query->where('guru_id', $user->id);
             }
         }
@@ -45,6 +55,21 @@ class MataPelajaranController extends Controller
             'Teknik Pendingin dan Tata Udara',
             'Teknik Komputer Jaringan'
         ];
+
+        if ($user && $user->role === 'guru') {
+            $status = strtolower($user->guru->status ?? '');
+            if ($status === 'kepala jurusan') {
+                $kaprogJurusan = trim($user->guru->jurusan ?: $user->guru->spesialisasi);
+                if (!empty($kaprogJurusan)) {
+                    $jurusans = array_filter($jurusans, function($j) use ($kaprogJurusan) {
+                        return stripos($j, $kaprogJurusan) !== false && strtolower($j) !== 'umum';
+                    });
+                    if (empty($jurusans)) {
+                        $jurusans = [$kaprogJurusan];
+                    }
+                }
+            }
+        }
 
         return view('sistem_akademik.mata_pelajaran.index', [
             'mapels' => $mapels,

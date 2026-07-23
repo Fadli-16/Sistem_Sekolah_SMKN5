@@ -377,8 +377,16 @@ class CourseController extends Controller
         }
     }
 
-    protected function resolveVisibleKelas(array $guruIds)
+    protected function resolveVisibleKelas(array $guruIds, ?User $user = null)
     {
+        $user = $user ?? Auth::user();
+        if ($user?->role === 'guru' && strtolower($user->guru->status ?? '') === 'kepala jurusan') {
+            $kaprogJurusan = trim($user->guru->jurusan ?: $user->guru->spesialisasi);
+            if (!empty($kaprogJurusan)) {
+                return Kelas::where('jurusan', 'like', "%{$kaprogJurusan}%")->orderBy('nama_kelas')->get();
+            }
+        }
+
         if (empty($guruIds)) {
             return Kelas::orderBy('nama_kelas')->get();
         }
@@ -412,6 +420,7 @@ class CourseController extends Controller
         $selectedHari    = $request->query('hari');
         $selectedRuangan = $request->query('ruangan');
         $selectedJurusan = $request->query('jurusan');
+        $selectedTahunAjaran = $request->query('tahun_ajaran');
 
         $query = Course::with(['mataPelajaran.guru', 'kelas'])
             ->orderBy('hari')
@@ -436,16 +445,38 @@ class CourseController extends Controller
                 $q->where('jurusan', $selectedJurusan);
             });
         }
+        if ($selectedTahunAjaran) {
+            $query->whereHas('kelas', function($q) use ($selectedTahunAjaran) {
+                $q->where('tahun_ajaran', $selectedTahunAjaran);
+            });
+        }
 
         $guruKelasIds = [];
 
         $isBiasaGuru = false;
+        $isKepalaJurusan = false;
+        $kaprogJurusan = null;
 
         // Role based restriction
         if ($user?->role === 'guru') {
             $guruModel = $user->guru;
-            $status = $guruModel->status ?? '';
-            if (!in_array(strtolower($status), ['kepala sekolah', 'wakil kepala', 'kepala jurusan'])) {
+            $status = strtolower($guruModel->status ?? '');
+            if ($status === 'kepala jurusan') {
+                $isKepalaJurusan = true;
+                $kaprogJurusan = trim($guruModel->jurusan ?: $guruModel->spesialisasi);
+                if (!empty($kaprogJurusan)) {
+                    $query->whereHas('kelas', function ($q) use ($kaprogJurusan) {
+                        $q->where('jurusan', 'like', "%{$kaprogJurusan}%");
+                    })->whereHas('mataPelajaran', function ($mq) use ($kaprogJurusan) {
+                        $mq->where(function ($sub) use ($kaprogJurusan) {
+                            $sub->where('jurusan', 'like', "%{$kaprogJurusan}%")
+                                ->orWhere('jurusan', $kaprogJurusan);
+                        })
+                        ->where('jurusan', '!=', 'Umum')
+                        ->where('jurusan', '!=', 'umum');
+                    });
+                }
+            } elseif (!in_array($status, ['kepala sekolah', 'wakil kepala'])) {
                 $isBiasaGuru = true;
                 $guruUserId = $guruModel?->user_id ?? $user->id;
                 $guruModelId = $guruModel?->id;
@@ -475,9 +506,14 @@ class CourseController extends Controller
         $kelasQuery = Kelas::query();
         if ($isBiasaGuru) {
             $kelasQuery->whereIn('id', $guruKelasIds);
+        } elseif ($isKepalaJurusan && !empty($kaprogJurusan)) {
+            $kelasQuery->where('jurusan', 'like', "%{$kaprogJurusan}%");
         }
         if ($selectedJurusan) {
             $kelasQuery->where('jurusan', $selectedJurusan);
+        }
+        if ($selectedTahunAjaran) {
+            $kelasQuery->where('tahun_ajaran', $selectedTahunAjaran);
         }
         $kelasList = $kelasQuery->orderBy('nama_kelas')->get();
         
@@ -487,6 +523,13 @@ class CourseController extends Controller
                 $subQ->where('guru_id', $guruUserId);
                 if ($guruModelId) $subQ->orWhere('guru_id', $guruModelId);
             });
+        } elseif ($isKepalaJurusan && !empty($kaprogJurusan)) {
+            $mapelQuery->where(function ($sub) use ($kaprogJurusan) {
+                $sub->where('jurusan', 'like', "%{$kaprogJurusan}%")
+                    ->orWhere('jurusan', $kaprogJurusan);
+            })
+            ->where('jurusan', '!=', 'Umum')
+            ->where('jurusan', '!=', 'umum');
         }
         $mapelList = $mapelQuery->orderBy('nama_mata_pelajaran')->get();
         
@@ -511,12 +554,22 @@ class CourseController extends Controller
         $jurusanQuery = Kelas::select('jurusan')->whereNotNull('jurusan')->distinct();
         if ($isBiasaGuru) {
             $jurusanQuery->whereIn('id', $guruKelasIds);
+        } elseif ($isKepalaJurusan && !empty($kaprogJurusan)) {
+            $jurusanQuery->where('jurusan', 'like', "%{$kaprogJurusan}%");
         }
         $jurusanList = $jurusanQuery->orderBy('jurusan')->get();
 
+        $tahunAjaranQuery = Kelas::select('tahun_ajaran')->whereNotNull('tahun_ajaran')->where('tahun_ajaran', '!=', '')->distinct();
+        if ($isBiasaGuru) {
+            $tahunAjaranQuery->whereIn('id', $guruKelasIds);
+        } elseif ($isKepalaJurusan && !empty($kaprogJurusan)) {
+            $tahunAjaranQuery->where('jurusan', 'like', "%{$kaprogJurusan}%");
+        }
+        $tahunAjaranList = $tahunAjaranQuery->orderBy('tahun_ajaran', 'desc')->pluck('tahun_ajaran');
+
         return view('sistem_akademik.course.index', compact(
-            'courses', 'title', 'header', 'kelasList', 'mapelList', 'guruList', 'hariList', 'ruanganList', 'jurusanList',
-            'selectedKelasId', 'selectedMapelName', 'selectedGuruId', 'selectedHari', 'selectedRuangan', 'selectedJurusan'
+            'courses', 'title', 'header', 'kelasList', 'mapelList', 'guruList', 'hariList', 'ruanganList', 'jurusanList', 'tahunAjaranList',
+            'selectedKelasId', 'selectedMapelName', 'selectedGuruId', 'selectedHari', 'selectedRuangan', 'selectedJurusan', 'selectedTahunAjaran'
         ));
     }
 
@@ -978,8 +1031,22 @@ class CourseController extends Controller
 
         if ($user?->role === 'guru') {
             $guruModel = $user->guru;
-            $status = $guruModel->status ?? '';
-            if (!in_array(strtolower($status), ['kepala sekolah', 'wakil kepala', 'kepala jurusan'])) {
+            $status = strtolower($guruModel->status ?? '');
+            if ($status === 'kepala jurusan') {
+                $kaprogJurusan = trim($guruModel->jurusan ?: $guruModel->spesialisasi);
+                if (!empty($kaprogJurusan)) {
+                    $query->whereHas('kelas', function ($q) use ($kaprogJurusan) {
+                        $q->where('jurusan', 'like', "%{$kaprogJurusan}%");
+                    })->whereHas('mataPelajaran', function ($mq) use ($kaprogJurusan) {
+                        $mq->where(function ($sub) use ($kaprogJurusan) {
+                            $sub->where('jurusan', 'like', "%{$kaprogJurusan}%")
+                                ->orWhere('jurusan', $kaprogJurusan);
+                        })
+                        ->where('jurusan', '!=', 'Umum')
+                        ->where('jurusan', '!=', 'umum');
+                    });
+                }
+            } elseif (!in_array($status, ['kepala sekolah', 'wakil kepala'])) {
                 $guruUserId = $guruModel?->user_id ?? $user->id;
                 $guruModelId = $guruModel?->id;
 
@@ -994,16 +1061,8 @@ class CourseController extends Controller
 
                 $query->whereHas('mataPelajaran', $guruFilter);
 
-                $kelasIds = Course::whereHas('mataPelajaran', $guruFilter)
-                    ->pluck('kelas_id')
-                    ->unique()
-                    ->filter()
-                    ->values()
-                    ->toArray();
-
-                $kelasList = Kelas::whereIn('id', $kelasIds)
-                    ->orderBy('nama_kelas')
-                    ->get();
+                $guruKelasIds = Course::whereHas('mataPelajaran', $guruFilter)->pluck('kelas_id')->unique()->filter()->values()->toArray();
+                $kelasList = Kelas::whereIn('id', $guruKelasIds)->orderBy('nama_kelas')->get();
             }
         } elseif ($user?->role === 'siswa' && $user->siswa) {
             $selectedKelasId = $user->siswa->kelas_id;
@@ -1037,6 +1096,12 @@ class CourseController extends Controller
         $slotOrder = $this->slotOrder();
         $slotDetails = $this->slotDetails();
         $selectedKelasId = $request->input('kelas_id');
+        $selectedMapelName = $request->input('nama_mata_pelajaran');
+        $selectedGuruId  = $request->input('guru_id');
+        $selectedHari    = $request->input('hari');
+        $selectedRuangan = $request->input('ruangan');
+        $selectedJurusan = $request->input('jurusan');
+        $selectedTahunAjaran = $request->input('tahun_ajaran');
 
         $user = Auth::user();
         $guruIds = $this->resolveGuruIds($user);
@@ -1051,13 +1116,60 @@ class CourseController extends Controller
 
         $pages = [];
 
+        $applyFilters = function ($query) use ($selectedMapelName, $selectedGuruId, $selectedHari, $selectedRuangan, $selectedJurusan, $selectedTahunAjaran, $user, $guruIds) {
+            if ($selectedMapelName) {
+                $query->whereHas('mataPelajaran', function($q) use ($selectedMapelName) {
+                    $q->where('nama_mata_pelajaran', $selectedMapelName);
+                });
+            }
+            if ($selectedHari)    $query->where('hari', $selectedHari);
+            if ($selectedRuangan) $query->where('ruangan', 'like', "%{$selectedRuangan}%");
+            if ($selectedGuruId) {
+                $query->whereHas('mataPelajaran', function($q) use ($selectedGuruId) {
+                    $q->where('guru_id', $selectedGuruId);
+                });
+            }
+            if ($selectedJurusan) {
+                $query->whereHas('kelas', function($q) use ($selectedJurusan) {
+                    $q->where('jurusan', $selectedJurusan);
+                });
+            }
+            if ($selectedTahunAjaran) {
+                $query->whereHas('kelas', function($q) use ($selectedTahunAjaran) {
+                    $q->where('tahun_ajaran', $selectedTahunAjaran);
+                });
+            }
+
+            if ($user?->role === 'guru') {
+                $guruModel = $user->guru;
+                $status = strtolower($guruModel->status ?? '');
+                if ($status === 'kepala jurusan') {
+                    $kaprogJurusan = trim($guruModel->jurusan ?: $guruModel->spesialisasi);
+                    if (!empty($kaprogJurusan)) {
+                        $query->whereHas('kelas', function ($q) use ($kaprogJurusan) {
+                            $q->where('jurusan', 'like', "%{$kaprogJurusan}%");
+                        })->whereHas('mataPelajaran', function ($mq) use ($kaprogJurusan) {
+                            $mq->where(function ($sub) use ($kaprogJurusan) {
+                                $sub->where('jurusan', 'like', "%{$kaprogJurusan}%")
+                                    ->orWhere('jurusan', $kaprogJurusan);
+                            })
+                            ->where('jurusan', '!=', 'Umum')
+                            ->where('jurusan', '!=', 'umum');
+                        });
+                    }
+                } elseif (!in_array($status, ['kepala sekolah', 'wakil kepala'])) {
+                    $this->applyGuruFilter($query, $guruIds);
+                }
+            }
+        };
+
         if ($selectedKelasId) {
             $kelas = Kelas::findOrFail($selectedKelasId);
 
             $query = Course::with(['mataPelajaran.guru', 'kelas'])
                 ->where('kelas_id', $kelas->id);
 
-            $this->applyGuruFilter($query, $guruIds);
+            $applyFilters($query);
 
             $courses = $query->get();
             $timetable = $this->buildTimetableData($courses, $slotOrder, $slotDetails);
@@ -1067,21 +1179,47 @@ class CourseController extends Controller
                 'timetable' => $timetable,
             ];
         } else {
-            $kelasList = $this->resolveVisibleKelas($guruIds);
+            $kelasQuery = Kelas::query();
+            if ($selectedJurusan) {
+                $kelasQuery->where('jurusan', $selectedJurusan);
+            }
+            if ($selectedTahunAjaran) {
+                $kelasQuery->where('tahun_ajaran', $selectedTahunAjaran);
+            }
+
+            if ($user?->role === 'guru') {
+                $status = strtolower($user->guru->status ?? '');
+                if ($status === 'kepala jurusan') {
+                    $kaprogJurusan = trim($user->guru->jurusan ?: $user->guru->spesialisasi);
+                    if (!empty($kaprogJurusan)) {
+                        $kelasQuery->where('jurusan', 'like', "%{$kaprogJurusan}%");
+                    }
+                } elseif (!in_array($status, ['kepala sekolah', 'wakil kepala'])) {
+                    if (!empty($guruIds)) {
+                        $kelasIds = Course::whereHas('mataPelajaran', function ($q) use ($guruIds) {
+                            $q->whereIn('guru_id', $guruIds);
+                        })->pluck('kelas_id')->unique()->filter()->toArray();
+                        $kelasQuery->whereIn('id', $kelasIds);
+                    }
+                }
+            }
+
+            $kelasList = $kelasQuery->orderBy('nama_kelas')->get();
 
             foreach ($kelasList as $kelas) {
                 $query = Course::with(['mataPelajaran.guru', 'kelas'])
                     ->where('kelas_id', $kelas->id);
 
-                $this->applyGuruFilter($query, $guruIds);
+                $applyFilters($query);
 
                 $courses = $query->get();
-                $timetable = $this->buildTimetableData($courses, $slotOrder, $slotDetails);
-
-                $pages[] = [
-                    'kelas' => $kelas,
-                    'timetable' => $timetable,
-                ];
+                if ($courses->isNotEmpty()) {
+                    $timetable = $this->buildTimetableData($courses, $slotOrder, $slotDetails);
+                    $pages[] = [
+                        'kelas' => $kelas,
+                        'timetable' => $timetable,
+                    ];
+                }
             }
         }
 

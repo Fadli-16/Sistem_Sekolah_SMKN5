@@ -450,6 +450,29 @@ class PeminatanController extends Controller
     {
         $header = 'Edit Data Peminatan';
 
+        if (Auth::user()->role === 'siswa') {
+            $siswaId = Auth::user()->siswa->id ?? null;
+            if ($peminatan->siswa_id !== $siswaId) {
+                abort(403);
+            }
+            $peminatanSetting = PeminatanSetting::first();
+            if ($peminatanSetting && ($peminatanSetting->start_date || $peminatanSetting->end_date)) {
+                $now = Carbon::now();
+                $isWithinTimeframe = true;
+                if ($peminatanSetting->start_date && $now->lt(Carbon::parse($peminatanSetting->start_date))) {
+                    $isWithinTimeframe = false;
+                }
+                if ($peminatanSetting->end_date && $now->gt(Carbon::parse($peminatanSetting->end_date))) {
+                    $isWithinTimeframe = false;
+                }
+                if (!$isWithinTimeframe) {
+                    return redirect()->route('sistem_akademik.peminatan.index')
+                        ->with('status', 'error')
+                        ->with('message', 'Batas waktu pengisian/pengeditan data peminatan telah habis.');
+                }
+            }
+        }
+
         $users = User::with('siswa')
             ->where('role', 'siswa')
             ->whereHas('siswa', function ($q) use ($peminatan) {
@@ -493,6 +516,22 @@ class PeminatanController extends Controller
             // siswa hanya boleh update miliknya sendiri
             if ($peminatan->siswa_id !== $siswaId) {
                 abort(403);
+            }
+            $peminatanSetting = PeminatanSetting::first();
+            if ($peminatanSetting && ($peminatanSetting->start_date || $peminatanSetting->end_date)) {
+                $now = Carbon::now();
+                $isWithinTimeframe = true;
+                if ($peminatanSetting->start_date && $now->lt(Carbon::parse($peminatanSetting->start_date))) {
+                    $isWithinTimeframe = false;
+                }
+                if ($peminatanSetting->end_date && $now->gt(Carbon::parse($peminatanSetting->end_date))) {
+                    $isWithinTimeframe = false;
+                }
+                if (!$isWithinTimeframe) {
+                    return back()
+                        ->withInput()
+                        ->withErrors(['minat' => 'Batas waktu pengisian/pengeditan data peminatan telah habis.']);
+                }
             }
         } else {
             $siswaId = $validated['siswa_id'] ?? $request->input('siswa_id');

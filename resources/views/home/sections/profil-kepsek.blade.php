@@ -162,7 +162,7 @@ footer.footer .footer-links li a:hover {
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ route('sistem_akademik.dashboard') }}">Dashboard Akademik</a></li>
-                        <li><a class="dropdown-item" href="{{ route('sistem_akademik.mataPelajaran.index') }}">Mata Pelajaran</a></li>
+                        <li><a class="dropdown-item" href="{{ route('sistem_akademik.mata_pelajaran.index') }}">Mata Pelajaran</a></li>
                         <li><a class="dropdown-item" href="#kompetensi-keahlian">Kompetensi Keahlian</a></li>
                     </ul>
                 </li>
@@ -317,7 +317,7 @@ footer.footer .footer-links li a:hover {
                     <li><a href="{{ route('lab.jadwal') }}"><i class="bi bi-chevron-right"></i> Jadwal Laboratorium</a></li>
                     <li><a href="{{ route('inv.index') }}"><i class="bi bi-chevron-right"></i> Inventaris Lab</a></li>
                     <li><a href="{{ route('inv.laporan') }}"><i class="bi bi-chevron-right"></i> Laporan Kerusakan</a></li>
-                    <li><a href="{{ route('sistem_akademik.mataPelajaran.index') }}"><i class="bi bi-chevron-right"></i> Mata Pelajaran</a></li>
+                    <li><a href="{{ route('sistem_akademik.mata_pelajaran.index') }}"><i class="bi bi-chevron-right"></i> Mata Pelajaran</a></li>
                     <li><a href="{{ route('perpustakaan.buku.index') }}"><i class="bi bi-chevron-right"></i> Buku Perpustakaan</a></li>
                 </ul>
             </div>

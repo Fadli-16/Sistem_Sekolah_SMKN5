@@ -28,9 +28,9 @@
     <div class="table-container mb-3 p-3">
         <form action="{{ route('sistem_akademik.guru.index') }}" method="GET" class="row g-2">
             <div class="col-md-3">
-                <label class="small fw-bold text-muted mb-1">Filter Jurusan</label>
+                <label class="small fw-bold text-muted mb-1">Filter Jurusan/Bidang</label>
                 <select name="jurusan" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="">Semua Jurusan</option>
+                    <option value="">Semua Jurusan/Bidang</option>
                     @foreach($jurusanList as $j)
                         <option value="{{ $j->jurusan }}" {{ request('jurusan') == $j->jurusan ? 'selected' : '' }}>{{ $j->jurusan }}</option>
                     @endforeach
@@ -57,6 +57,8 @@
                     <option value="bendahara" {{ request('status') == 'bendahara' ? 'selected' : '' }}>Bendahara</option>
                     <option value="kepala jurusan" {{ request('status') == 'kepala jurusan' ? 'selected' : '' }}>Kepala Jurusan</option>
                     <option value="kepala bengkel" {{ request('status') == 'kepala bengkel' ? 'selected' : '' }}>Kepala Bengkel</option>
+                    <option value="kepala bidang" {{ request('status') == 'kepala bidang' ? 'selected' : '' }}>Kepala Bidang</option>
+                    <option value="koordinator" {{ request('status') == 'koordinator' ? 'selected' : '' }}>Koordinator</option>
                 </select>
             </div>
             <div class="col-md-2 d-flex align-items-end">
@@ -80,7 +82,7 @@
                         @endif
                         <th width="5%">No</th>
                         <th>Guru</th>
-                        <th>Jurusan</th>
+                        <th>Jurusan/Bidang</th>
                         @if(request('wali_kelas') == 'ya')
                         <th>Kelas</th>
                         @endif
@@ -152,6 +154,10 @@
                                 Kepala Jurusan {{ $guru->spesialisasi ? '- ' . $guru->spesialisasi : '' }}
                             @elseif($guru->status === 'kepala bengkel')
                                 Kepala Bengkel {{ $guru->spesialisasi ? '- ' . $guru->spesialisasi : '' }}
+                            @elseif($guru->status === 'kepala bidang')
+                                Kepala Bidang {{ $guru->spesialisasi ? '- ' . $guru->spesialisasi : '' }}
+                            @elseif($guru->status === 'koordinator')
+                                Koordinator {{ $guru->spesialisasi ? '- ' . $guru->spesialisasi : '' }}
                             @else
                                 Guru
                             @endif
@@ -210,7 +216,7 @@
                     <tr>
                         <th width="5%">No</th>
                         <th>Administrator</th>
-                        <th>Jurusan</th>
+                        <th>Jurusan/Bidang</th>
                         <th>Status</th>
                         <th>Jenis Kelamin</th>
                         <th>Tempat, Tgl Lahir</th>

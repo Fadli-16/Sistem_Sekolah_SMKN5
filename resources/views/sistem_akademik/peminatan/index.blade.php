@@ -40,11 +40,11 @@
     </div>
 
 
-    @if($userRole === 'siswa' && !$isWithinTimeframe && !($hasOwnPeminatan ?? false))
+    @if($userRole === 'siswa' && !$isWithinTimeframe)
     <div class="alert alert-warning mb-4 d-flex align-items-center gap-2" role="alert">
         <i class="bi bi-info-circle-fill fs-5"></i>
         <div>
-            <strong>Perhatian:</strong> Saat ini di luar waktu pengisian data peminatan. Silakan hubungi admin jika ada pertanyaan.
+            <strong>Perhatian:</strong> Saat ini di luar waktu pengisian atau pengeditan data peminatan. Silakan hubungi admin jika ada pertanyaan.
         </div>
     </div>
     @endif
@@ -144,7 +144,9 @@
                         <th>Detail Tujuan</th>
                         <th>Ekonomi</th>
                         <th class="text-center">Dokumen</th>
+                        @if(Auth::user()->role !== 'guru')
                         <th width="80px" class="text-center">Aksi</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -228,6 +230,7 @@
                                 @endif
                             </div>
                         </td>
+                        @if(Auth::user()->role !== 'guru')
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1">
                                 @php
@@ -247,13 +250,18 @@
                                     </form>
                                 @elseif($isSiswa && $isOwner)
                                     {{-- Siswa Only Edit Own Data --}}
-                                    <a href="{{ route('sistem_akademik.peminatan.edit', $p->id) }}" class="btn-icon btn-icon-warning"><i class="bi bi-pencil-fill"></i></a>
+                                    @if($isWithinTimeframe)
+                                        <a href="{{ route('sistem_akademik.peminatan.edit', $p->id) }}" class="btn-icon btn-icon-warning" title="Edit Peminatan"><i class="bi bi-pencil-fill"></i></a>
+                                    @else
+                                        <span class="text-muted small" title="Waktu pengeditan telah habis"><i class="bi bi-lock-fill"></i></span>
+                                    @endif
                                 @else
-                                    {{-- Guru or Other Siswa: View Only --}}
+                                    {{-- Other Siswa: View Only --}}
                                     <span class="text-muted small">-</span>
                                 @endif
                             </div>
                         </td>
+                        @endif
                     </tr>
                     @endforeach
                 </tbody>

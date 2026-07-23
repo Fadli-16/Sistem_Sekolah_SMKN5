@@ -37,7 +37,15 @@ class DashboardController extends Controller
 
         $berita = $query->latest()->paginate(3)->withQueryString();
 
-        return view('home.index', compact('title', 'header', 'berita', 'sharedBerita'));
+        $kepsek = \App\Models\Guru::with('user')->where('status', 'kepala sekolah')->first();
+        $koordinators = \App\Models\Guru::with('user')->where('status', 'koordinator')->get();
+        $kepala_bidangs = \App\Models\Guru::with('user')->where('status', 'kepala bidang')->get();
+        $wakas = \App\Models\Guru::with('user')->where('status', 'wakil kepala')->get();
+        $bendaharas = \App\Models\Guru::with('user')->where('status', 'bendahara')->get();
+        $kajurs = \App\Models\Guru::with('user')->where('status', 'kepala jurusan')->get();
+        $kabengs = \App\Models\Guru::with('user')->where('status', 'kepala bengkel')->get();
+
+        return view('home.index', compact('title', 'header', 'berita', 'sharedBerita', 'kepsek', 'koordinators', 'kepala_bidangs', 'wakas', 'bendaharas', 'kajurs', 'kabengs'));
     }
 
     public function labor()

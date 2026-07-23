@@ -447,7 +447,7 @@ Route::prefix('magang/wakil_perusahaan')->middleware(['auth', 'role:admin_magang
 Route::get('/admin/magang/wakil_perusahaan/nilai-akhir', [NilaiAkhirController::class, 'index'])->name('magang.admin.wakil_perusahaan.nilai-akhir.index');
 
 Route::get('/profil-kepsek', function () {
-    return view('home.sections.profilkepsek');
+    return view('home.sections.profil-kepsek');
 });
 
 Route::middleware(['auth', 'role:super_admin,admin_magang'])->prefix('magang/perusahaan')->name('magang.perusahaan.')->group(function () {
